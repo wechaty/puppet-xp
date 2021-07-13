@@ -1,4 +1,4 @@
-# PUPPET-MOCK
+# Wechaty Puppet XP
 
 [![NPM Version](https://badge.fury.io/js/wechaty-puppet-mock.svg)](https://badge.fury.io/js/wechaty-puppet-mock)
 [![npm (tag)](https://img.shields.io/npm/v/wechaty-puppet-mock/next.svg)](https://www.npmjs.com/package/wechaty-puppet-mock?activeTab=versions)
@@ -134,16 +134,13 @@ Initial version.
 
 `PuppetMock` is a skelton Puppet without do anything, it will make testing easy when developing Wechaty
 
-## AUTHOR
+## Author
 
-[Huan LI](http://linkedin.com/in/zixia) \<zixia@zixia.net\>
+1. Hua ZHANG @cixingguangming55555
+2. Yuchao LU @atorber
 
-<a href="https://stackexchange.com/users/265499">
-  <img src="https://stackexchange.com/users/flair/265499.png" width="208" height="58" alt="profile for zixia on Stack Exchange, a network of free, community-driven Q&amp;A sites" title="profile for zixia on Stack Exchange, a network of free, community-driven Q&amp;A sites">
-</a>
+## Copyright & License
 
-## COPYRIGHT & LICENSE
-
-* Code & Docs © 2018 Huan LI \<zixia@zixia.net\>
+* Code & Docs © 2021 Wechaty Contributors
 * Code released under the Apache-2.0 License
 * Docs released under Creative Commons
