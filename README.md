@@ -136,8 +136,8 @@ Initial version.
 
 ## Author
 
-1. Hua ZHANG @cixingguangming55555
-2. Yuchao LU @atorber
+1. Hua ZHANG [@cixingguangming55555](https://github.com/cixingguangming55555)
+2. Yuchao LU [@atorber](https://github.com/atorber)
 
 ## Copyright & License
 
