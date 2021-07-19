@@ -1,9 +1,5 @@
 # Wechaty Puppet XP
 
-[![NPM Version](https://badge.fury.io/js/wechaty-puppet-mock.svg)](https://badge.fury.io/js/wechaty-puppet-mock)
-[![npm (tag)](https://img.shields.io/npm/v/wechaty-puppet-mock/next.svg)](https://www.npmjs.com/package/wechaty-puppet-mock?activeTab=versions)
-[![NPM](https://github.com/wechaty/wechaty-puppet-mock/workflows/NPM/badge.svg)](https://github.com/wechaty/wechaty-puppet-mock/actions?query=workflow%3ANPM)
-
 ![chatie puppet xp](https://camo.githubusercontent.com/6c7c7e10053c8e1936c084d17ea74c3437759fd1c4d3e02acca9256e2bfe9bb3/68747470733a2f2f692e6c6f6c692e6e65742f323032302f30352f30392f4858436c49663541324570554734752e706e67)
 
 [![Powered by Wechaty](https://img.shields.io/badge/Powered%20By-Wechaty-brightgreen.svg)](https://github.com/wechaty/wechaty)
@@ -83,7 +79,7 @@ Puppet|xp👍|wxwork|paimon|padlocal
 
 ### master
 
-### v0.0.1 (Jun 27, 2018)
+### v0.0.1 (July 19, 2021)
 
 Initial version.
 
