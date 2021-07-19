@@ -4,135 +4,88 @@
 [![npm (tag)](https://img.shields.io/npm/v/wechaty-puppet-mock/next.svg)](https://www.npmjs.com/package/wechaty-puppet-mock?activeTab=versions)
 [![NPM](https://github.com/wechaty/wechaty-puppet-mock/workflows/NPM/badge.svg)](https://github.com/wechaty/wechaty-puppet-mock/actions?query=workflow%3ANPM)
 
-![chatie puppet](https://wechaty.github.io/wechaty-puppet-mock/images/mock.png)
-
-> Picture Credit: <https://softwareautotools.com/2017/03/01/mocking-explained-in-python/>
+![chatie puppet xp](https://camo.githubusercontent.com/6c7c7e10053c8e1936c084d17ea74c3437759fd1c4d3e02acca9256e2bfe9bb3/68747470733a2f2f692e6c6f6c692e6e65742f323032302f30352f30392f4858436c49663541324570554734752e706e67)
 
 [![Powered by Wechaty](https://img.shields.io/badge/Powered%20By-Wechaty-brightgreen.svg)](https://github.com/wechaty/wechaty)
 [![TypeScript](https://img.shields.io/badge/%3C%2F%3E-TypeScript-blue.svg)](https://www.typescriptlang.org/)
 
-Puppet Mocker & Starter Template for Wechaty, it is very useful when you:
+## WECHATY PUPPET YOUTH STAR
+wechaty-puppet-xp is a local puppet for Wecaty:
 
-1. Want to test the Wechaty framework with a mock puppet, or
-1. You want to write your own Puppet implenmentation.
+1. If you are a user of Windows,You can use this puppet to implement your chatbot.
+1. It's a completely free service and doesn't need token.
 
-Then `PuppetMock` will helps you a lot.
+## GETTING STARTED
 
-## USAGE
+  * STEP 1: Install wechat client in your Windows computer.
+  * STEP 2: Getting Started with TypeScript/JavaScript (RECOMMENDED)
 
-### Puppet Mock
+## PUPPET COMPARISON
 
-```ts
-import { Wechaty }   from 'wechaty'
-import { PuppetMock } from 'wechaty-puppet-mock'
+Xp is a young puppet now. 
 
-const puppet  = new PuppetMock()
-const wechaty = new Wechaty({ puppet })
+Puppet|xp👍|wxwork|paimon|padlocal
+:---|:---:|:---:|:---:|:---:
+支持账号|个人微信|企业微信|个人微信|个人微信
+**<消息>**|
+收发文本|✅|✅|✅|✅
+收发个人名片|❌|✅|✅|✅
+收发图文链接|❌|✅|✅|✅
+发送图片、文件|❌|✅|✅（较慢）|✅
+接收图片、文件|❌|✅|✅|✅
+发送视频|❌|✅|✅（较慢）|✅
+接收视频|❌|✅|✅|✅
+发送小程序|❌|✅|✅|✅
+接收动图|❌|✅|❌|✅
+发送动图|❌|✅|✅（以文件形式发送）|✅（以文件形式发送）
+接收语音消息|❌|✅|❌|✅
+发送语音消息|❌|❌|❌|✅
+转发文本|❌|✅|✅|✅
+转发图片|❌|✅|✅|✅
+转发图文链接|✅|✅|❌|✅
+转发音频|❌|✅|❌|✅
+转发视频|❌|✅|✅|✅
+转发文件|❌|✅|✅|✅
+转发动图|❌|✅|❌|✅
+转发小程序|❌|✅|✅|✅
+**<群组>**|
+创建群聊|❌|✅|✅|✅
+设置群公告|❌|✅|✅|✅
+获取群公告|❌|❌|✅|✅
+群二维码|❌|❌|❌|✅
+拉人进群|❌|✅|✅|✅
+踢人出群|❌|✅|✅|✅
+退出群聊|❌|❌|✅|✅
+改群名称|❌|✅|❌|✅
+入群事件|❌|✅|✅|✅
+离群事件|❌|✅|✅|✅
+群名称变更事件|❌|✅|❌|✅
+@群成员|✅|✅|✅|✅
+群列表|✅|✅|✅|✅
+群成员列表|✅|✅|✅|✅
+群详情|✅|✅|✅|✅
+**<联系人>**|
+修改备注|❌|✅|❌|✅
+添加好友|❌|✅|❌|✅
+自动通过好友|❌|✅|✅|✅
+好友列表|✅|✅|✅|✅
+好友详情|✅|✅|✅|✅
+**<其他>**|
+登录事件|❌|✅|✅|✅
+扫码状态|❌|❌|❌|✅
+登出事件|❌|✅|❌|✅
+主动退出登录|❌|❌|✅|✅
+依赖协议|Windows|Windows|iPad|iPad
 
-wechaty.start()
-```
-
-### Mocker & Environment
-
-```ts
-import {
-  PuppetMock,
-  Mocker,
-  SimpleEnvironment,
-}                     from 'wechaty-puppet-mock'
-
-const mocker = new Mocker()
-mocker.use(SimpleEnvironment())
-
-const puppet = new PuppetMock({ mocker })
-const wechaty = new Wechaty({ puppet })
-
-wechaty.start()
-
-// The Mocker will start perform the SimpleEnvironment...
-```
-
-See: [SimpleEnvironment](src/mocker/environment.ts)
-
-## API Reference
-
-### Mocker
-
-```ts
-import { Wechaty }  from 'wechaty'
-import { PuppetMock, mock }   from 'wechaty-puppet-mock'
-
-const mocker = new mock.Mocker()
-const puppet = new PuppetMock({ mocker })
-const bot = new Wechaty({ puppet })
-
-await bot.start()
-
-mocker.scan('https://github.com/wechaty', 1)
-
-const user = mocker.createContact()
-mocker.login(user)
-
-const contact = mocker.createContact()
-const room = mocker.createRoom()
-
-user.say('Hello').to(contact)
-contact.say('World').to(user)
-```
-
-## HELPER UTILITIES
-
-### StateSwitch
-
-```ts
-this.state.on('pending')
-this.state.on(true)
-this.state.off('pending')
-this.state.off(true)
-
-await this.state.ready('on')
-await this.state.ready('off')
-
-```
-
-### Watchdog
-
-```ts
-```
-
-### MemoryCard
-
-```ts
-await memory.set('config', { id: 1, key: 'xxx' })
-const config = await memory.get('config')
-console.log(config)
-// Output: { id: 1, key: 'xxx' }
-```
+> [Wechaty puppet compatibility](https://github.com/wechaty/wechaty-puppet/wiki/Compatibility)
 
 ## HISTORY
 
 ### master
 
-### v0.25 (July 13, 2020)
-
-1. Rename `MockXXX` to `XXXMock` for keep the consistent naming style with `PuppetMock`.
-1. Export `mock` namespace and move all related modules under it.
-
-### v0.22 (June 4, 2020)
-
-`Mocker` Released. `Mocker` is a manager for controlling the behavior of the Puppet activities.
-
-1. Add `MockContact`, `MockRoom`, and `MockMessage` for `Mockers`
-1. Add `MockEnvironment` for mocking the server behaviors.
-1. Support `Wechaty#Contact.find()` from the `mocker.createContacts()`
-1. Support `Wechaty#Room.find()` from the `mocker.createRooms()`
-1. Support `message` event for `talker`, `listener`, and `room` of `MockMessage`
-
 ### v0.0.1 (Jun 27, 2018)
 
 Initial version.
-
-`PuppetMock` is a skelton Puppet without do anything, it will make testing easy when developing Wechaty
 
 ## Author
 
