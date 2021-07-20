@@ -16,6 +16,7 @@
  *   limitations under the License.
  *
  */
+import cuid from 'cuid'
 import path  from 'path'
 
 import {
@@ -41,6 +42,7 @@ import {
 
   log,
   PayloadType,
+  MessageType,
 }                           from 'wechaty-puppet'
 
 import {
@@ -57,6 +59,18 @@ import {
 }                     from './mock/mod'
 // import { UrlLink, MiniProgram } from 'wechaty'
 
+import {
+  attach,
+  detach,
+}           from 'frida-sidecar'
+
+import { WeChatSidecar } from './wechat-sidecar'
+
+  console.log('WeChat Sidecar starting...')
+
+  //await sidecar.getContact()
+
+
 export type PuppetMockOptions = PuppetOptions & {
   mocker?: Mocker,
 }
@@ -66,6 +80,10 @@ class PuppetMock extends Puppet {
   static override readonly VERSION = VERSION
 
   private loopTimer?: NodeJS.Timer
+
+  private messageStore = {} as { [k: string]: MessagePayload }
+
+  private sidecar = new WeChatSidecar()
 
   mocker: Mocker
 
@@ -97,6 +115,30 @@ class PuppetMock extends Puppet {
 
     this.state.on('pending')
 
+    await attach(this.sidecar)
+
+    this.sidecar.on('recvMsg', args => {
+
+      if (args instanceof Error) {
+        throw args
+      }
+
+      const messageId = cuid()
+
+      const messagePayload: MessagePayload = {
+        fromId    : String (args[3]),
+        id        : messageId,
+        text      : String(args[2]) ,
+        timestamp : Date.now(),
+        toId      : String (args[1]),
+        type      : MessageType.Text,
+      }
+
+      this.messageStore[messageId] = messagePayload
+
+      this.emit('message', { messageId })
+    })
+
     // Do some async initializing tasks
 
     this.state.on(true)
@@ -123,6 +165,7 @@ class PuppetMock extends Puppet {
     }
 
     this.mocker.stop()
+    await detach(this.sidecar)
 
     if (this.logonoff()) {
       await this.logout()
@@ -360,7 +403,7 @@ class PuppetMock extends Puppet {
     conversationId: string,
     text     : string,
   ): Promise<void> {
-    return this.#messageSend(conversationId, text)
+    await this.sidecar.sendMsg(conversationId, text)
   }
 
   override async messageSendFile (
