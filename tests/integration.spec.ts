@@ -9,13 +9,13 @@ import {
 }                 from '../src/mock/mod'
 
 import {
-  PuppetMock,
+  PuppetXp,
   mock,
 }                         from '../src/mod'
 
 async function * wechatyFixture () {
   const mocker  = new mock.Mocker()
-  const puppet  = new PuppetMock({ mocker })
+  const puppet  = new PuppetXp({ mocker })
   const wechaty = new Wechaty({ puppet })
 
   try {
@@ -33,7 +33,7 @@ async function * wechatyFixture () {
 
 test('integration testing', async t => {
   const mocker = new mock.Mocker()
-  const puppet = new PuppetMock({ mocker })
+  const puppet = new PuppetXp({ mocker })
   const wechaty = new Wechaty({ puppet })
 
   t.ok(wechaty, 'should instantiate wechaty with puppet mocker')

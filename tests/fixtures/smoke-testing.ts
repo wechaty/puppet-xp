@@ -1,7 +1,7 @@
 #!/usr/bin/env ts-node
 
 import {
-  PuppetMock,
+  PuppetXp,
   VERSION,
 }                 from 'wechaty-puppet-mock'
 
@@ -10,7 +10,7 @@ async function main () {
     throw new Error('version should not be 0.0.0 when prepare for publishing')
   }
 
-  const puppet = new PuppetMock()
+  const puppet = new PuppetXp()
   console.info(`Puppet v${puppet.version()} smoke testing passed.`)
   return 0
 }

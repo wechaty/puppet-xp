@@ -23,8 +23,11 @@ import {
   EventErrorPayload,
   EventMessagePayload,
 }                         from 'wechaty-puppet'
+
+const qrcode = require('qrcode-terminal')
+
 import {
-  PuppetMock,
+  PuppetXp,
   mock,
 }               from '../src/mod'
 
@@ -36,13 +39,14 @@ mocker.use(mock.SimpleEnvironment())
  * 1. Declare your Bot!
  *
  */
-const puppet = new PuppetMock({ mocker })
+const puppet = new PuppetXp({ mocker })
 
 /**
  *
  * 2. Register event handlers for Bot
  *
  */
+
 puppet
   .on('logout', onLogout)
   .on('login',  onLogin)
@@ -76,9 +80,11 @@ puppet.start()
  */
 function onScan (payload: EventScanPayload) {
   if (payload.qrcode) {
+    qrcode.generate(payload.qrcode, { small: true })
+
     const qrcodeImageUrl = [
       'https://wechaty.js.org/qrcode/',
-      encodeURIComponent(payload.qrcode),
+      payload.qrcode,
     ].join('')
     console.info(`[${payload.status}] ${qrcodeImageUrl}\nScan QR Code above to log in: `)
   } else {
@@ -88,7 +94,6 @@ function onScan (payload: EventScanPayload) {
 
 function onLogin (payload: EventLoginPayload) {
   console.info(`${payload.contactId} login`)
-  puppet.messageSendText(payload.contactId, 'Wechaty login').catch(console.error)
 }
 
 function onLogout (payload: EventLogoutPayload) {
@@ -112,7 +117,6 @@ function onError (payload: EventErrorPayload) {
  */
 async function onMessage (payload: EventMessagePayload) {
   const msgPayload = await puppet.messagePayload(payload.messageId)
-  console.info(JSON.stringify(msgPayload))
   if ((/ding/.test(msgPayload.text || '') )) {
     await puppet.messageSendText(msgPayload.fromId!, 'dong')
   }
