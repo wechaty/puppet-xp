@@ -32,6 +32,8 @@ async function main () {
   console.info('WeChat Sidecar started.')
 
   sidecar.on('recvMsg', async args => {
+    console.info('recvMsg:', args)
+
     if (args instanceof Error) {
       console.error(args)
       return
@@ -40,17 +42,23 @@ async function main () {
     // const toId      = String(args[1])
     const text      = String(args[2])
     const talkerId  = String(args[3])
+    console.info('recvMsg: talkerId =', talkerId)
+    console.info('recvMsg: text =', text)
 
     /**
      * The world's famous ding-dong bot.
      */
     if (talkerId && text === 'ding') {
+      console.info('recvMsg: ding found, reply dong')
       await sidecar.sendMsg(talkerId, 'dong')
     }
 
   })
 
-  const clean = () => detach(sidecar)
+  const clean = async () => {
+    console.info('Sidecar detaching...')
+    await detach(sidecar)
+  }
 
   process.on('SIGINT',  clean)
   process.on('SIGTERM', clean)
