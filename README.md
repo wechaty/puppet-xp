@@ -84,7 +84,7 @@ Puppet|xp👍|wxwork|paimon|padlocal
 
 ## HISTORY
 
-### main
+### main v0.3
 
 ### v0.2 (July 23, 2021)
 
