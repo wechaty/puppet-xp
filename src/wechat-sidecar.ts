@@ -39,10 +39,8 @@ class WeChatSidecar extends SidecarBody {
 
   @Call(agentTarget('getContactNativeFunction'))
   @RetType('void')
-  getContact(
-  ){ return Ret() }
+  getContact () { return Ret() }
 
-  
   @Call(agentTarget('sendMsgNativeFunction'))
   @RetType('void')
   sendMsg (
@@ -57,7 +55,7 @@ class WeChatSidecar extends SidecarBody {
     @ParamType('pointer', 'Utf16String') text: string,
     @ParamType('pointer', 'Utf16String') groupMsgSenderId: string,
     @ParamType('pointer', 'Utf16String') xmlContent: string,
-  ) { return Ret(msgType,contactId, text,groupMsgSenderId,xmlContent) }
+  ) { return Ret(msgType, contactId, text, groupMsgSenderId, xmlContent) }
 
 }
 

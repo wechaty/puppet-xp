@@ -43,6 +43,9 @@ import {
   log,
   PayloadType,
   MessageType,
+  ContactGender,
+  ContactType,
+  throwUnsupportedError,
 }                           from 'wechaty-puppet'
 
 import {
@@ -51,14 +54,6 @@ import {
   VERSION,
 }                                   from './config'
 
-// import { Attachment } from './mock/user/types'
-
-import {
-  Mocker,
-  // ContactMock,
-}                     from './mock/mod'
-// import { UrlLink, MiniProgram } from 'wechaty'
-
 import {
   attach,
   detach,
@@ -66,42 +61,25 @@ import {
 
 import { WeChatSidecar } from './wechat-sidecar'
 
-  console.log('WeChat Sidecar starting...')
-
-  //await sidecar.getContact()
-
-
-export type PuppetXpOptions = PuppetOptions & {
-  mocker?: Mocker,
-}
+export type PuppetXpOptions = PuppetOptions
 
 class PuppetXp extends Puppet {
 
   static override readonly VERSION = VERSION
 
-  private loopTimer?: NodeJS.Timer
+  private messageStore: { [k: string]: MessagePayload }
 
-  private messageStore = {} as { [k: string]: MessagePayload }
-
-  private sidecar = new WeChatSidecar()
-
-  mocker: Mocker
+  protected sidecar: WeChatSidecar
 
   constructor (
     public override options: PuppetXpOptions = {},
   ) {
     super(options)
-    log.verbose('PuppetXp', 'constructor()')
+    log.verbose('PuppetXp', 'constructor(%s)', JSON.stringify(options))
 
-    if (options.mocker) {
-      log.verbose('PuppetXp', 'constructor() use options.mocker')
-      this.mocker = options.mocker
-    } else {
-      log.verbose('PuppetXp', 'constructor() creating the default mocker')
-      this.mocker = new Mocker()
-      // this.mocker.use(SimpleBehavior())
-    }
-    this.mocker.puppet = this
+    // FIXME: use LRU cache for message store so that we can reduce memory usage
+    this.messageStore = {}
+    this.sidecar = new WeChatSidecar()
   }
 
   override async start (): Promise<void> {
@@ -118,35 +96,30 @@ class PuppetXp extends Puppet {
     await attach(this.sidecar)
 
     this.sidecar.on('recvMsg', args => {
-
       if (args instanceof Error) {
         throw args
       }
 
-      const messageId = cuid()
+      const toId   = String(args[1])
+      const text   = String(args[2])
+      const fromId = String(args[3])
 
-      const messagePayload: MessagePayload = {
-        fromId    : String (args[3]),
-        id        : messageId,
-        text      : String(args[2]) ,
-        timestamp : Date.now(),
-        toId      : String (args[1]),
-        type      : MessageType.Text,
+      const payload: MessagePayload = {
+        fromId,
+        id: cuid(),
+        text,
+        timestamp: Date.now(),
+        toId,
+        type: MessageType.Text,
       }
 
-      this.messageStore[messageId] = messagePayload
-
-      this.emit('message', { messageId })
+      this.messageStore[payload.id] = payload
+      this.emit('message', { messageId: payload.id })
     })
 
     // Do some async initializing tasks
 
     this.state.on(true)
-
-    /**
-     * Start mocker after the puppet fully turned ON.
-     */
-    setImmediate(() => this.mocker.start())
   }
 
   override async stop (): Promise<void> {
@@ -160,16 +133,13 @@ class PuppetXp extends Puppet {
 
     this.state.off('pending')
 
-    if (this.loopTimer) {
-      clearInterval(this.loopTimer)
-    }
-
-    this.mocker.stop()
-    await detach(this.sidecar)
+    this.sidecar.removeAllListeners()
 
     if (this.logonoff()) {
       await this.logout()
     }
+
+    await detach(this.sidecar)
 
     // await some tasks...
     this.state.off(true)
@@ -201,9 +171,6 @@ class PuppetXp extends Puppet {
   override unref (): void {
     log.verbose('PuppetXp', 'unref()')
     super.unref()
-    if (this.loopTimer) {
-      this.loopTimer.unref()
-    }
   }
 
   /**
@@ -261,7 +228,7 @@ class PuppetXp extends Puppet {
 
   override async contactList (): Promise<string[]> {
     log.verbose('PuppetXp', 'contactList()')
-    return [...this.mocker.cacheContactPayload.keys()]
+    return []
   }
 
   override async contactAvatar (contactId: string)                : Promise<FileBox>
@@ -287,7 +254,14 @@ class PuppetXp extends Puppet {
   override async contactRawPayloadParser (payload: ContactPayload) { return payload }
   override async contactRawPayload (id: string): Promise<ContactPayload> {
     log.verbose('PuppetXp', 'contactRawPayload(%s)', id)
-    return this.mocker.contactPayload(id)
+    return {
+      avatar : 'to be added',
+      gender : ContactGender.Unknown,
+      id,
+      name  : 'To be named',
+      phone : [],
+      type  : ContactType.Unknown,
+    }
   }
 
   /**
@@ -375,28 +349,12 @@ class PuppetXp extends Puppet {
   override async messageRawPayloadParser (payload: MessagePayload) { return payload }
   override async messageRawPayload (id: string): Promise<MessagePayload> {
     log.verbose('PuppetXp', 'messageRawPayload(%s)', id)
-    return this.mocker.messagePayload(id)
-  }
 
-  async #messageSend (
-    conversationId: string,
-    something: string | FileBox, // | Attachment
-  ): Promise<void> {
-    log.verbose('PuppetXp', 'messageSend(%s, %s)', conversationId, something)
-    if (!this.id) {
-      throw new Error('no this.id')
+    const payload = this.messageStore[id]
+    if (!payload) {
+      throw new Error('no payload')
     }
-
-    const user = this.mocker.ContactMock.load(this.id)
-    let conversation
-
-    if (/@/.test(conversationId)) {
-      // FIXME: extend a new puppet method messageRoomSendText, etc, for Room message?
-      conversation = this.mocker.RoomMock.load(conversationId)
-    } else {
-      conversation = this.mocker.ContactMock.load(conversationId)
-    }
-    user.say(something).to(conversation)
+    return  payload
   }
 
   override async messageSendText (
@@ -410,7 +368,7 @@ class PuppetXp extends Puppet {
     conversationId: string,
     file     : FileBox,
   ): Promise<void> {
-    return this.#messageSend(conversationId, file)
+    throwUnsupportedError(conversationId, file)
   }
 
   override async messageSendContact (
@@ -460,12 +418,12 @@ class PuppetXp extends Puppet {
   override async roomRawPayloadParser (payload: RoomPayload) { return payload }
   override async roomRawPayload (id: string): Promise<RoomPayload> {
     log.verbose('PuppetXp', 'roomRawPayload(%s)', id)
-    return this.mocker.roomPayload(id)
+    return {} as any
   }
 
   override async roomList (): Promise<string[]> {
     log.verbose('PuppetXp', 'roomList()')
-    return [...this.mocker.cacheRoomPayload.keys()]
+    return []
   }
 
   override async roomDel (

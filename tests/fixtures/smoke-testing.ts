@@ -3,7 +3,7 @@
 import {
   PuppetXp,
   VERSION,
-}                 from 'wechaty-puppet-mock'
+}                 from 'wechaty-puppet-xp'
 
 async function main () {
   if (VERSION === '0.0.0') {
@@ -11,7 +11,7 @@ async function main () {
   }
 
   const puppet = new PuppetXp()
-  console.info(`Puppet v${puppet.version()} smoke testing passed.`)
+  console.info(`Puppet Xp v${puppet.version()} smoke testing passed.`)
   return 0
 }
 

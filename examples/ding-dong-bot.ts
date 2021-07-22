@@ -24,22 +24,18 @@ import {
   EventMessagePayload,
 }                         from 'wechaty-puppet'
 
-const qrcode = require('qrcode-terminal')
-
 import {
   PuppetXp,
-  mock,
 }               from '../src/mod'
 
-const mocker = new mock.Mocker()
-mocker.use(mock.SimpleEnvironment())
+const qrcode = require('qrcode-terminal')
 
 /**
  *
  * 1. Declare your Bot!
  *
  */
-const puppet = new PuppetXp({ mocker })
+const puppet = new PuppetXp()
 
 /**
  *
@@ -115,10 +111,17 @@ function onError (payload: EventErrorPayload) {
  *    dealing with Messages.
  *
  */
-async function onMessage (payload: EventMessagePayload) {
-  const msgPayload = await puppet.messagePayload(payload.messageId)
-  if ((/ding/.test(msgPayload.text || '') )) {
-    await puppet.messageSendText(msgPayload.fromId!, 'dong')
+async function onMessage ({
+  messageId,
+}: EventMessagePayload) {
+  const {
+    fromId,
+    roomId,
+    text,
+  } = await puppet.messagePayload(messageId)
+
+  if (/ding/i.test(text || '')) {
+    await puppet.messageSendText(roomId! || fromId!, 'dong')
   }
 }
 
