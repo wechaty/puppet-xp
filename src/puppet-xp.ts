@@ -117,6 +117,9 @@ class PuppetXp extends Puppet {
       this.emit('message', { messageId: payload.id })
     })
 
+    // FIXME: use the real login contact id
+    await this.login('filehelper')
+
     // Do some async initializing tasks
 
     this.state.on(true)
