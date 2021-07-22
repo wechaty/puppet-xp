@@ -86,6 +86,11 @@ Puppet|xp👍|wxwork|paimon|padlocal
 
 ### master
 
+### v0.1 (July 23, 2021)
+
+1. Fix all unit tests
+1. Code clean
+
 ### v0.0.1 (July 19, 2021)
 
 Initial version.
