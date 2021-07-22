@@ -1,7 +1,7 @@
 /**
- *   Wechaty - https://github.com/chatie/wechaty
+ *   Wechaty - https://github.com/wechaty/wechaty
  *
- *   @copyright 2016-2018 Huan LI <zixia@zixia.net>
+ *   @copyright 2021 Wechaty Contributors <https://github.com/wechaty>
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -24,22 +24,16 @@ import {
   EventMessagePayload,
 }                         from 'wechaty-puppet'
 
-const qrcode = require('qrcode-terminal')
-
 import {
   PuppetXp,
-  mock,
 }               from '../src/mod'
-
-const mocker = new mock.Mocker()
-mocker.use(mock.SimpleEnvironment())
 
 /**
  *
  * 1. Declare your Bot!
  *
  */
-const puppet = new PuppetXp({ mocker })
+const puppet = new PuppetXp()
 
 /**
  *
@@ -80,8 +74,6 @@ puppet.start()
  */
 function onScan (payload: EventScanPayload) {
   if (payload.qrcode) {
-    qrcode.generate(payload.qrcode, { small: true })
-
     const qrcodeImageUrl = [
       'https://wechaty.js.org/qrcode/',
       payload.qrcode,
@@ -115,10 +107,17 @@ function onError (payload: EventErrorPayload) {
  *    dealing with Messages.
  *
  */
-async function onMessage (payload: EventMessagePayload) {
-  const msgPayload = await puppet.messagePayload(payload.messageId)
-  if ((/ding/.test(msgPayload.text || '') )) {
-    await puppet.messageSendText(msgPayload.fromId!, 'dong')
+async function onMessage ({
+  messageId,
+}: EventMessagePayload) {
+  const {
+    fromId,
+    roomId,
+    text,
+  } = await puppet.messagePayload(messageId)
+
+  if (/ding/i.test(text || '')) {
+    await puppet.messageSendText(roomId! || fromId!, 'dong')
   }
 }
 

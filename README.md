@@ -1,11 +1,18 @@
 # Wechaty Puppet XP
 
-![chatie puppet xp](https://camo.githubusercontent.com/6c7c7e10053c8e1936c084d17ea74c3437759fd1c4d3e02acca9256e2bfe9bb3/68747470733a2f2f692e6c6f6c692e6e65742f323032302f30352f30392f4858436c49663541324570554734752e706e67)
+[![NPM Version](https://img.shields.io/npm/v/wechaty-puppet-xp?color=brightgreen)](https://www.npmjs.com/package/wechaty-puppet-xp)
+[![NPM](https://github.com/wechaty/wechaty-puppet-xp/workflows/NPM/badge.svg)](https://github.com/wechaty/wechaty/actions?query=workflow%3ANPM)
 
 [![Powered by Wechaty](https://img.shields.io/badge/Powered%20By-Wechaty-brightgreen.svg)](https://github.com/wechaty/wechaty)
 [![TypeScript](https://img.shields.io/badge/%3C%2F%3E-TypeScript-blue.svg)](https://www.typescriptlang.org/)
+[![Downloads](https://img.shields.io/npm/dm/wechaty-puppet-xp.svg?style=flat-square)](https://www.npmjs.com/package/wechaty)
+[![GitHub stars](https://img.shields.io/github/stars/wechaty/wechaty-puppet-xp.svg?label=github%20stars)](https://github.com/wechaty/wechaty)
+[![Gitter](https://badges.gitter.im/wechaty/wechaty.svg)](https://gitter.im/wechaty/wechaty?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
+
+![chatie puppet xp](https://camo.githubusercontent.com/6c7c7e10053c8e1936c084d17ea74c3437759fd1c4d3e02acca9256e2bfe9bb3/68747470733a2f2f692e6c6f6c692e6e65742f323032302f30352f30392f4858436c49663541324570554734752e706e67)
 
 ## WECHATY PUPPET YOUTH STAR
+
 wechaty-puppet-xp is a local puppet for Wecaty:
 
 1. If you are a user of Windows,You can use this puppet to implement your chatbot.
@@ -13,12 +20,12 @@ wechaty-puppet-xp is a local puppet for Wecaty:
 
 ## GETTING STARTED
 
-  * STEP 1: Install wechat client in your Windows computer.
-  * STEP 2: Getting Started with TypeScript/JavaScript (RECOMMENDED)
+- STEP 1: Install wechat client in your Windows computer.
+- STEP 2: Getting Started with TypeScript/JavaScript (RECOMMENDED)
 
 ## PUPPET COMPARISON
 
-Xp is a young puppet now. 
+Xp is a young puppet now.
 
 Puppet|xp👍|wxwork|paimon|padlocal
 :---|:---:|:---:|:---:|:---:
@@ -77,7 +84,12 @@ Puppet|xp👍|wxwork|paimon|padlocal
 
 ## HISTORY
 
-### master
+### main
+
+### v0.1 (July 23, 2021)
+
+1. Fix all unit tests
+1. Code clean
 
 ### v0.0.1 (July 19, 2021)
 
@@ -90,6 +102,6 @@ Initial version.
 
 ## Copyright & License
 
-* Code & Docs © 2021 Wechaty Contributors
-* Code released under the Apache-2.0 License
-* Docs released under Creative Commons
+- Code & Docs © 2021 Wechaty Contributors
+- Code released under the Apache-2.0 License
+- Docs released under Creative Commons

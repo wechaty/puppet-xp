@@ -7,8 +7,8 @@ jobs:
     name: Build
     strategy:
       matrix:
-        os: [ubuntu-latest]
-        node: [16]
+        os: [windows-latest]
+        node: [12, 14, 16]
 
     runs-on: ${{ matrix.os }}
     steps:
@@ -27,12 +27,12 @@ jobs:
   pack:
     name: Pack
     needs: build
-    runs-on: ubuntu-latest
     strategy:
       matrix:
-        os: [ubuntu-latest]
+        os: [windows-latest]
         node: [12, 14, 16]
 
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v1
@@ -49,10 +49,10 @@ jobs:
         run: ./scripts/npm-pack-testing.sh
 
   publish:
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/v'))
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/v'))
     name: Publish
     needs: [build, pack]
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v1
@@ -75,7 +75,7 @@ jobs:
       - name: Check Branch
         id: check-branch
         run: |
-          if [[ ${{ github.ref }} =~ ^refs/heads/(master|v[0-9]+\.[0-9]+.*)$ ]]; then
+          if [[ ${{ github.ref }} =~ ^refs/heads/(main|v[0-9]+\.[0-9]+.*)$ ]]; then
               echo ::set-output name=match::true
           fi  # See: https://stackoverflow.com/a/58869470/1123955
       - name: Is A Publish Branch

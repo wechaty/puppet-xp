@@ -2,12 +2,18 @@
 
 import test  from 'blue-tape'
 
-import { PuppetXp } from './puppet-mock'
+import { PuppetXp } from './puppet-xp'
+import { WeChatSidecar } from './wechat-sidecar'
 
 class PuppetXpTest extends PuppetXp {
+
+  protected override sidecar: WeChatSidecar = {
+    // TODO: debug symbols
+  } as any
+
 }
 
-test('PuppetXp perfect restart testing', async (t) => {
+test.skip('PuppetXp perfect restart testing', async (t) => {
   const puppet = new PuppetXpTest()
   try {
 
