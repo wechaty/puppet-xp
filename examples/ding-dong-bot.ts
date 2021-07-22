@@ -28,8 +28,6 @@ import {
   PuppetXp,
 }               from '../src/mod'
 
-const qrcode = require('qrcode-terminal')
-
 /**
  *
  * 1. Declare your Bot!
@@ -76,8 +74,6 @@ puppet.start()
  */
 function onScan (payload: EventScanPayload) {
   if (payload.qrcode) {
-    qrcode.generate(payload.qrcode, { small: true })
-
     const qrcodeImageUrl = [
       'https://wechaty.js.org/qrcode/',
       payload.qrcode,
