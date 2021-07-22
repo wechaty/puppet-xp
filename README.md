@@ -92,6 +92,8 @@ Puppet|xp👍|wxwork|paimon|padlocal
 1. Fix all unit tests
 1. Run unit testings under Windows
 1. Deploy to NPM with GitHub actions
+1. [examples/ding-dong-bot.ts] works on Windows!
+1. [examples/raw-sidecar.ts] works on Windows!
 
 ### v0.0.1 (July 19, 2021)
 
