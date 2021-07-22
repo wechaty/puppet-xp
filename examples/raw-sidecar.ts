@@ -39,9 +39,9 @@ async function main () {
       return
     }
 
-    // const toId      = String(args[1])
+    const talkerId  = String(args[1])
     const text      = String(args[2])
-    const talkerId  = String(args[3])
+
     console.info('recvMsg: talkerId =', talkerId)
     console.info('recvMsg: text =', text)
 

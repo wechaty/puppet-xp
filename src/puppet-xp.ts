@@ -100,9 +100,9 @@ class PuppetXp extends Puppet {
         throw args
       }
 
-      const toId   = String(args[1])
-      const text   = String(args[2])
-      const fromId = String(args[3])
+      const fromId  = String(args[1])
+      const text    = String(args[2])
+      const toId    = String(args[3])
 
       const payload: MessagePayload = {
         fromId,
