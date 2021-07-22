@@ -86,10 +86,12 @@ Puppet|xp👍|wxwork|paimon|padlocal
 
 ### main
 
-### v0.1 (July 23, 2021)
+### v0.2 (July 23, 2021)
 
-1. Fix all unit tests
 1. Code clean
+1. Fix all unit tests
+1. Run unit testings under Windows
+1. Deploy to NPM with GitHub actions
 
 ### v0.0.1 (July 19, 2021)
 
