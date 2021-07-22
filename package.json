@@ -12,7 +12,7 @@
   },
   "scripts": {
     "clean": "shx rm -fr dist/*",
-    "dist": "npm run clean && tsc",
+    "dist": "npm run clean && tsc && shx cp src/init-agent-script.js dist/src/init-agent-script.js",
     "pack": "npm pack",
     "start": "ts-node examples/ding-dong-bot.ts",
     "lint": "npm run lint:es && npm run lint:ts && npm run lint:md",
