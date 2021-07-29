@@ -114,7 +114,7 @@ is using [prebuild-install](https://www.npmjs.com/package/prebuild-install)
 to install binary files
 from [GitHub Release](https://github.com/frida/frida/releases/).
 
-If your server has any trouble with visiting the Amazon S3 servers (which is all the GitHub release artifiacts are hosted on), then your NPM install will fail to download the binary files (`frida_binding.node` in our case).
+If your server has any trouble with visiting the Amazon S3 servers (which is all the GitHub release artifacts are hosted on), then your NPM install will fail to download the binary files (`frida_binding.node` in our case).
 
 ## Author
 
