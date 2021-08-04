@@ -12,21 +12,80 @@
 //3.3.0.115
 const offset={
    node_offset:0x1DB9728,
-   handle_offset:0x28+0xbc,
+   handle_offset:0xe4,
    send_txt_call_offset:0x3E3B80,
-   hook_point:0x40D3B1
+   hook_point:0x40D3B1,
+   chatroom_node_offset:0xb08
 }
 //3.3.0.115
 
 
-
+/*------------------global-------------------------------------------*/
  const moduleBaseAddress = Module.getBaseAddress('WeChatWin.dll')
  const moduleLoad        = Module.load('WeChatWin.dll')
  
- const baseNodeAddress   = moduleBaseAddress.add(offset.node_offset).readPointer()
- const headerNodeAddress = baseNodeAddress.add(offset.handle_offset).readPointer()
- let nodeList=[]
- let contactList=[]
+ const baseNodeAddress    = moduleBaseAddress.add(offset.node_offset).readPointer()
+ const headerNodeAddress  = baseNodeAddress.add(offset.handle_offset).readPointer()
+ 
+ const chatroomNodeAddress= baseNodeAddress.add(offset.chatroom_node_offset).readPointer()
+ 
+ let nodeList=[]  //for contact
+ let contactList=[] //for contact
+
+ let chatroomNodeList=[] //for chatroom
+ let chatroomMemberList=[]//for chatroom
+
+/*------------------global-------------------------------------------*/
+
+
+// chatroom member
+ const chatroomRecurse = ((node)=>{
+
+  
+  if(node.equals(chatroomNodeAddress)){return}
+ 
+  for (const item in chatroomNodeList){
+    if(node.equals(chatroomNodeList[item])){  
+       return
+     }
+  }
+
+  chatroomNodeList.push(node)
+  const roomid = Memory.readUtf16String(node.add(0x10).readPointer())
+
+  const len = Memory.readU32(node.add(0x50))   //
+  //const memberJson={}
+  if(len >4){//
+    const memberStr = Memory.readAnsiString(node.add(0x40).readPointer(),len)
+    if(memberStr.length>0){
+        const memberList = memberStr.split(/[\\^][G]/)
+        const memberJson ={
+           roomid:roomid,
+           roomMember:memberList
+        }
+        
+        chatroomMemberList.push(memberJson)
+    }
+    
+  }
+
+  const leftNode   = node.add(0x0).readPointer()
+  const centerNode = node.add(0x04).readPointer()
+  const rightNode  = node.add(0x08).readPointer()
+  
+  chatroomRecurse(leftNode)
+  chatroomRecurse(centerNode)
+  chatroomRecurse(rightNode)
+
+  const allChatroomMemberJson={
+    chatroomMember:chatroomMemberList
+  }
+  return allChatroomMemberJson
+ })
+
+
+
+ //contact
  const recurse = ((node) =>{
   
    if(node.equals(headerNodeAddress)){return}
@@ -83,6 +142,25 @@ const offset={
 
  })*/
 
+const getChatroomMemberInfoFunction = (()=>{
+  const node = chatroomNodeAddress.add(0x0).readPointer()
+  const ret = chatroomRecurse(node)
+  
+  const cloneRet = JSON.stringify(ret)
+  chatroomNodeList.length = 0//empty
+  chatroomMemberList.length = 0 //empty
+  //console.log(JSON.stringify(ret))
+  return cloneRet
+})
+
+ /*const getWechatVersionFunction =(()=>{
+    const ver  = Memory.readU32(moduleBaseAddress.add(0x1DC90C0))
+    if(ver == 0x63030073){//3.3.0.115
+      return true
+    }
+    return false;
+ })
+ */
  const getContactNativeFunction = (() => {
   const node = headerNodeAddress.add(0x0).readPointer()
   const ret = recurse(node)
