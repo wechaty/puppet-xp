@@ -38,11 +38,41 @@ const offset={
 
 /*------------------global-------------------------------------------*/
 
+// get myself info
+const getMyselfInfoFunction = (() => {
 
+  const sign = moduleBaseAddress.add(0x1DDF534+0x174).readU32()
+  let   wx_code      = ''
+  let   wx_id        = ''
+  let   wx_name      = ''
+
+  if(sign == 0){//old version
+    wx_id   = Memory.readAnsiString(moduleBaseAddress.add(0x1DDF534+0x41c))
+    wx_code = Memory.readAnsiString(moduleBaseAddress.add(0x1DDF534+0x41c))
+
+  }else{
+    wx_id   = Memory.readAnsiString(moduleBaseAddress.add(0x1DDF534+0x41c).readPointer())
+    wx_code = Memory.readAnsiString(moduleBaseAddress.add(0x1DDF534+0x164))
+  }
+
+  const nick_sign = moduleBaseAddress.add(0x1DDF534+0x14).readU32()
+  if(nick_sign == 0xF){
+    wx_name = Memory.readUtf8String(moduleBaseAddress.add(0x1DDF534))
+  }else{
+    wx_name = Memory.readUtf8String(moduleBaseAddress.add(0x1DDF534).readPointer())
+  }
+  
+  const myself = {
+      wx_id:wx_id,
+      wx_code:wx_code,
+      wx_name:wx_name
+  }
+
+  return JSON.stringify(myself)
+  
+})
 // chatroom member
  const chatroomRecurse = ((node)=>{
-
-  
   if(node.equals(chatroomNodeAddress)){return}
  
   for (const item in chatroomNodeList){
