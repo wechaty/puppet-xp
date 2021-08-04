@@ -41,16 +41,13 @@ class WeChatSidecar extends SidecarBody {
   @RetType('pointer')
   getChatroomMemberInfo ():Promise<string> { return Ret() }
 
-  /**
-   * @Call(agentTarget('getWechatVersionFunction'))
-   * @RetType('bool')
-   * getWeChatVersion ():Promise<Boolean> { return Ret() }
-   *
-  */
-
+  @Call(agentTarget('getWechatVersionFunction'))
+  @RetType('bool')
+  getWeChatVersion ():Promise<Boolean> { return Ret() }
+  
   @Call(agentTarget('getContactNativeFunction'))
-  @RetType('void')
-  getContact () { return Ret() }
+  @RetType('pointer')
+  getContact ():Promise<string> { return Ret() }
 
   @Call(agentTarget('sendMsgNativeFunction'))
   @RetType('void')
