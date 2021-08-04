@@ -21,6 +21,7 @@ const offset={
 
 
 /*------------------global-------------------------------------------*/
+ const availableVersion  = 1661141107 ////3.3.0.115
  const moduleBaseAddress = Module.getBaseAddress('WeChatWin.dll')
  const moduleLoad        = Module.load('WeChatWin.dll')
  
@@ -98,8 +99,17 @@ const offset={
 
  
    nodeList.push(node)
-   const wxid    = Memory.readUtf16String(node.add(0x38).readPointer());
-   //const wx_code = Memory.readUtf16String(node.add(0x80).readPointer());
+   const wxid    = Memory.readUtf16String(node.add(0x38).readPointer())
+   
+   const sign    = node.add(0x4c+0x4).readU32()//
+   let wx_code=''
+   if(sign == 0){
+     wx_code = Memory.readUtf16String(node.add(0x38).readPointer())
+   }else{
+     wx_code = Memory.readUtf16String(node.add(0x4c).readPointer())
+   }
+   
+   
    const name = Memory.readUtf16String(node.add(0x94).readPointer());
 
    const contactJson={
@@ -126,41 +136,33 @@ const offset={
  
  })
 
- /*
- const scanNativeFunction=(()=>{
-   const pattern='E8 ?? ?? ?? ?? 8D ?? ?? ?? ?? ?? E8 ?? ?? ?? ?? 8D ?? ?? E8 ?? ?? ?? ?? 8D ?? ?? ?? ?? ?? E8 ?? ?? ?? ?? 8D ?? ?? ?? ?? ?? E8 ?? ?? ?? ?? 8D ?? ?? ?? ?? ?? E8 ?? ?? ?? ?? 8D ?? ?? C7 ?? ?? ?? ?? ?? ?? E8 ?? ?? ?? ?? 8D ?? ?? E8'
-
-  Memory.scan(moduleLoad.base, moduleLoad.size, pattern, {
-    onMatch(address, size) {
-      return 'stop'
-    },
-    onComplete() {
-      console.log('Memory.scan() complete')
-    }
-  })  
-  return ()=>{}
-
- })*/
-
-const getChatroomMemberInfoFunction = (()=>{
+const getChatroomMemberInfoFunction = (() => {
   const node = chatroomNodeAddress.add(0x0).readPointer()
   const ret = chatroomRecurse(node)
   
   const cloneRet = JSON.stringify(ret)
   chatroomNodeList.length = 0//empty
   chatroomMemberList.length = 0 //empty
-  //console.log(JSON.stringify(ret))
   return cloneRet
 })
 
- /*const getWechatVersionFunction =(()=>{
-    const ver  = Memory.readU32(moduleBaseAddress.add(0x1DC90C0))
-    if(ver == 0x63030073){//3.3.0.115
-      return true
+ const getWechatVersionFunction = (() => {
+    const pattern ='55 8B ?? 83 ?? ?? A1 ?? ?? ?? ?? 83 ?? ?? 85 ?? 7F ?? 8D ?? ?? E8 ?? ?? ?? ?? 84 ?? 74 ?? 8B ?? ?? ?? 85 ?? 75 ?? E8 ?? ?? ?? ?? 0F ?? ?? 0D ?? ?? ?? ?? A3 ?? ?? ?? ?? A3 ?? ?? ?? ?? 8B ?? 5D C3'
+    const results = Memory.scanSync(moduleLoad.base,moduleLoad.size,pattern)
+    if(results.length > 0){
+      const addr = results[0].address
+      const ret  = addr.add(0x07).readPointer()
+      const ver  = ret.add(0x0).readU32()
+      if(ver == availableVersion){
+        return true
+      }
+      else{
+        return false
+      }
     }
-    return false;
+    return false
  })
- */
+ 
  const getContactNativeFunction = (() => {
   const node = headerNodeAddress.add(0x0).readPointer()
   const ret = recurse(node)
@@ -169,10 +171,11 @@ const getChatroomMemberInfoFunction = (()=>{
     console.log(ret.contact[item].wxid,ret.contact[item].wx_code,ret.contact[item].name)
   }*/
   //console.log(ret.contact)
+  const cloneRet = JSON.stringify(ret)
   nodeList.length    = 0
   contactList.length = 0
 
-  return ret
+  return cloneRet
 })
 
   
