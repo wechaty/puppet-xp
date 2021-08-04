@@ -44,7 +44,7 @@ class WeChatSidecar extends SidecarBody {
   @Call(agentTarget('getWechatVersionFunction'))
   @RetType('bool')
   getWeChatVersion ():Promise<Boolean> { return Ret() }
-  
+
   @Call(agentTarget('getContactNativeFunction'))
   @RetType('pointer')
   getContact ():Promise<string> { return Ret() }
