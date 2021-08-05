@@ -285,11 +285,14 @@ const sendMsgNativeFunction = (() => {
   const asmNativeFunction = new NativeFunction(asmSendMsg, 'void', ['pointer', 'pointer'])
 
   const sendMsg = (
-    talkerIdPtr,
-    contentPtr,
+    talkerId,
+    content,
   ) => {
-    const talkerId  = talkerIdPtr.readUtf16String()
-    const content   = contentPtr.readUtf16String()
+    const talkerIdPtr = Memory.alloc(talkerId.length * 2 + 1)
+    const contentPtr  = Memory.alloc(content.length * 2 + 1)
+
+    talkerIdPtr.writeUtf16String(talkerId)
+    contentPtr.writeUtf16String(content)
 
     const sizeOfStringStruct = Process.pointerSize * 3 // + 0xd
 
