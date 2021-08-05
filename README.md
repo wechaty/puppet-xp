@@ -52,7 +52,7 @@ Initial version.
 ### 1. Error: Could not locate the binding file. Tried: `node_modules/frida/build/frida_binding.node`
 
 - Easy solution: use a server outside of China to get an unblocked network connection.
-- Hard solution: download `frida_binding.node` from <https://github.com/frida/frida/releases/> manually, then put it into `node_modules/frida/build` folder.
+- Hard solution: download `frida_binding.node` from <https://github.com/frida/frida/releases/> manually (the packaged file name is `frida-v{version}-node-*.tar.gz`, for example, `frida-v15.0.13-node-v64-darwin-arm64.tar.gz`), then put it into `node_modules/frida/build` folder.
 
 Explanation:
 
