@@ -11,30 +11,30 @@
 
 //3.3.0.115
 const offset={
-   node_offset:0x1DB9728,
-   handle_offset:0xe4,
-   send_txt_call_offset:0x3E3B80,
-   hook_point:0x40D3B1,
-   chatroom_node_offset:0xb08
+  node_offset:0x1DB9728,
+  handle_offset:0xe4,
+  send_txt_call_offset:0x3E3B80,
+  hook_point:0x40D3B1,
+  chatroom_node_offset:0xb08
 }
 //3.3.0.115
 
 
 /*------------------global-------------------------------------------*/
- const availableVersion  = 1661141107 ////3.3.0.115
- const moduleBaseAddress = Module.getBaseAddress('WeChatWin.dll')
- const moduleLoad        = Module.load('WeChatWin.dll')
+const availableVersion  = 1661141107 ////3.3.0.115
+const moduleBaseAddress = Module.getBaseAddress('WeChatWin.dll')
+const moduleLoad        = Module.load('WeChatWin.dll')
 
- const baseNodeAddress    = moduleBaseAddress.add(offset.node_offset).readPointer()
- const headerNodeAddress  = baseNodeAddress.add(offset.handle_offset).readPointer()
+const baseNodeAddress    = moduleBaseAddress.add(offset.node_offset).readPointer()
+const headerNodeAddress  = baseNodeAddress.add(offset.handle_offset).readPointer()
 
- const chatroomNodeAddress= baseNodeAddress.add(offset.chatroom_node_offset).readPointer()
+const chatroomNodeAddress= baseNodeAddress.add(offset.chatroom_node_offset).readPointer()
 
- let nodeList=[]  //for contact
- let contactList=[] //for contact
+let nodeList=[]  //for contact
+let contactList=[] //for contact
 
- let chatroomNodeList=[] //for chatroom
- let chatroomMemberList=[]//for chatroom
+let chatroomNodeList=[] //for chatroom
+let chatroomMemberList=[]//for chatroom
 
 /*------------------global-------------------------------------------*/
 
@@ -72,13 +72,13 @@ const getMyselfInfoFunction = (() => {
 
 })
 // chatroom member
- const chatroomRecurse = ((node)=>{
+const chatroomRecurse = ((node)=>{
   if(node.equals(chatroomNodeAddress)){return}
 
   for (const item in chatroomNodeList){
     if(node.equals(chatroomNodeList[item])){
-       return
-     }
+      return
+    }
   }
 
   chatroomNodeList.push(node)
@@ -91,8 +91,8 @@ const getMyselfInfoFunction = (() => {
     if(memberStr.length>0){
         const memberList = memberStr.split(/[\\^][G]/)
         const memberJson ={
-           roomid:roomid,
-           roomMember:memberList
+          roomid:roomid,
+          roomMember:memberList
         }
 
         chatroomMemberList.push(memberJson)
@@ -112,59 +112,59 @@ const getMyselfInfoFunction = (() => {
     chatroomMember:chatroomMemberList
   }
   return allChatroomMemberJson
- })
+})
 
 
 
- //contact
- const recurse = ((node) =>{
+//contact
+const recurse = ((node) =>{
 
-   if(node.equals(headerNodeAddress)){return}
+  if(node.equals(headerNodeAddress)){return}
 
-   for (const item in nodeList){
-     if(node.equals(nodeList[item])){
-        return
-      }
-   }
-
-
-   nodeList.push(node)
-   const wxid    = Memory.readUtf16String(node.add(0x38).readPointer())
-
-   const sign    = node.add(0x4c+0x4).readU32()//
-   let wx_code=''
-   if(sign == 0){
-     wx_code = Memory.readUtf16String(node.add(0x38).readPointer())
-   }else{
-     wx_code = Memory.readUtf16String(node.add(0x4c).readPointer())
-   }
+  for (const item in nodeList){
+    if(node.equals(nodeList[item])){
+      return
+    }
+  }
 
 
-   const name = Memory.readUtf16String(node.add(0x94).readPointer());
+  nodeList.push(node)
+  const wxid    = Memory.readUtf16String(node.add(0x38).readPointer())
 
-   const contactJson={
-     wxid:wxid,
-     wx_code:wx_code,
-     name:name
-   }
+  const sign    = node.add(0x4c+0x4).readU32()//
+  let wx_code=''
+  if(sign == 0){
+    wx_code = Memory.readUtf16String(node.add(0x38).readPointer())
+  }else{
+    wx_code = Memory.readUtf16String(node.add(0x4c).readPointer())
+  }
 
-   contactList.push(contactJson)
 
-   const leftNode   = node.add(0x0).readPointer()
-   const centerNode = node.add(0x04).readPointer()
-   const rightNode  = node.add(0x08).readPointer()
+  const name = Memory.readUtf16String(node.add(0x94).readPointer());
 
-   recurse(leftNode)
-   recurse(centerNode)
-   recurse(rightNode)
+  const contactJson={
+    wxid:wxid,
+    wx_code:wx_code,
+    name:name
+  }
 
-   const allContactJson={
-     contact:contactList
-   }
+  contactList.push(contactJson)
 
-   return allContactJson
+  const leftNode   = node.add(0x0).readPointer()
+  const centerNode = node.add(0x04).readPointer()
+  const rightNode  = node.add(0x08).readPointer()
 
- })
+  recurse(leftNode)
+  recurse(centerNode)
+  recurse(rightNode)
+
+  const allContactJson={
+    contact:contactList
+  }
+
+  return allContactJson
+
+})
 
 const getChatroomMemberInfoFunction = (() => {
   const node = chatroomNodeAddress.add(0x0).readPointer()
@@ -176,24 +176,24 @@ const getChatroomMemberInfoFunction = (() => {
   return cloneRet
 })
 
- const getWechatVersionFunction = (() => {
-    const pattern ='55 8B ?? 83 ?? ?? A1 ?? ?? ?? ?? 83 ?? ?? 85 ?? 7F ?? 8D ?? ?? E8 ?? ?? ?? ?? 84 ?? 74 ?? 8B ?? ?? ?? 85 ?? 75 ?? E8 ?? ?? ?? ?? 0F ?? ?? 0D ?? ?? ?? ?? A3 ?? ?? ?? ?? A3 ?? ?? ?? ?? 8B ?? 5D C3'
-    const results = Memory.scanSync(moduleLoad.base,moduleLoad.size,pattern)
-    if(results.length > 0){
-      const addr = results[0].address
-      const ret  = addr.add(0x07).readPointer()
-      const ver  = ret.add(0x0).readU32()
-      if(ver == availableVersion){
-        return true
-      }
-      else{
-        return false
-      }
+const getWechatVersionFunction = (() => {
+  const pattern ='55 8B ?? 83 ?? ?? A1 ?? ?? ?? ?? 83 ?? ?? 85 ?? 7F ?? 8D ?? ?? E8 ?? ?? ?? ?? 84 ?? 74 ?? 8B ?? ?? ?? 85 ?? 75 ?? E8 ?? ?? ?? ?? 0F ?? ?? 0D ?? ?? ?? ?? A3 ?? ?? ?? ?? A3 ?? ?? ?? ?? 8B ?? 5D C3'
+  const results = Memory.scanSync(moduleLoad.base,moduleLoad.size,pattern)
+  if(results.length > 0){
+    const addr = results[0].address
+    const ret  = addr.add(0x07).readPointer()
+    const ver  = ret.add(0x0).readU32()
+    if(ver == availableVersion){
+      return true
     }
-    return false
- })
+    else{
+      return false
+    }
+  }
+  return false
+})
 
- const getContactNativeFunction = (() => {
+const getContactNativeFunction = (() => {
   const node = headerNodeAddress.add(0x0).readPointer()
   const ret = recurse(node)
 
@@ -209,9 +209,9 @@ const getChatroomMemberInfoFunction = (() => {
 })
 
 
- /**
-  * @Hook: recvMsg -> recvMsgNativeCallback
-  */
+/**
+* @Hook: recvMsg -> recvMsgNativeCallback
+*/
 const recvMsgNativeCallback = (() => {
   const nativeCallback      = new NativeCallback(() => {}, 'void', ['int32', 'pointer','pointer','pointer','pointer'])
   const nativeativeFunction = new NativeFunction(nativeCallback, 'void', ['int32', 'pointer','pointer','pointer','pointer'])
