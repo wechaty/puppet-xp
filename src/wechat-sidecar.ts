@@ -50,8 +50,8 @@ class WeChatSidecar extends SidecarBody {
 
   @Call(agentTarget('sendMsgNativeFunction'))
   sendMsg (
-    @ParamType('pointer', 'Utf16String') contactId: string,
-    @ParamType('pointer', 'Utf16String') text: string,
+    contactId: string,
+    text: string,
   ): Promise<string> { return Ret(contactId, text) }
 
   @Hook(agentTarget('recvMsgNativeCallback'))
