@@ -324,8 +324,6 @@ const sendMsgNativeFunction = (() => {
    *  and in some cases even longer; the exact semantics depend on how the API was designed.
    */
   const refHolder = {
-    talkerIdPtr,
-    contentPtr,
     asmBuffer,
     asmSendMsg,
     asmNativeFunction,
