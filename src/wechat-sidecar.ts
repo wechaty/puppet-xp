@@ -22,7 +22,6 @@ import {
   Call,
   Hook,
   ParamType,
-  RetType,
   Ret,
 
   agentTarget,
