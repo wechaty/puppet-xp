@@ -25,18 +25,9 @@ wechaty-puppet-xp is a local puppet for Wecaty:
 
 ## QUICK START
 
-1. 运行 examples/ripe-wechaty.ts 基于 Wechaty 的 ding/dong
-```
-`npm run start:ripe` 
-```
-2. 运行 examples/raw-sidecar.ts 基于 sidecar 的 ding/dong
-```
-`npm run start:raw` 
-```
-3. 运行 examples/ding-dong-bot.ts 基于 PuppetXp 的 ding/dong
-```
-`npm start` 
-```
+1. `npm run start:ripe`运行 examples/ripe-wechaty.ts 基于 Wechaty 的 ding/dong
+2. `npm run start:ripe`运行 examples/raw-sidecar.ts 基于 sidecar 的 ding/dong
+3. `npm run start:ripe`运行 examples/ding-dong-bot.ts 基于 PuppetXp 的 ding/dong
 
 ## HISTORY
 
