@@ -24,12 +24,12 @@ const offset={
  const availableVersion  = 1661141107 ////3.3.0.115
  const moduleBaseAddress = Module.getBaseAddress('WeChatWin.dll')
  const moduleLoad        = Module.load('WeChatWin.dll')
- 
+
  const baseNodeAddress    = moduleBaseAddress.add(offset.node_offset).readPointer()
  const headerNodeAddress  = baseNodeAddress.add(offset.handle_offset).readPointer()
- 
+
  const chatroomNodeAddress= baseNodeAddress.add(offset.chatroom_node_offset).readPointer()
- 
+
  let nodeList=[]  //for contact
  let contactList=[] //for contact
 
@@ -61,7 +61,7 @@ const getMyselfInfoFunction = (() => {
   }else{
     wx_name = Memory.readUtf8String(moduleBaseAddress.add(0x1DDF534).readPointer())
   }
-  
+
   const myself = {
       wx_id:wx_id,
       wx_code:wx_code,
@@ -69,14 +69,14 @@ const getMyselfInfoFunction = (() => {
   }
 
   return JSON.stringify(myself)
-  
+
 })
 // chatroom member
  const chatroomRecurse = ((node)=>{
   if(node.equals(chatroomNodeAddress)){return}
- 
+
   for (const item in chatroomNodeList){
-    if(node.equals(chatroomNodeList[item])){  
+    if(node.equals(chatroomNodeList[item])){
        return
      }
   }
@@ -94,16 +94,16 @@ const getMyselfInfoFunction = (() => {
            roomid:roomid,
            roomMember:memberList
         }
-        
+
         chatroomMemberList.push(memberJson)
     }
-    
+
   }
 
   const leftNode   = node.add(0x0).readPointer()
   const centerNode = node.add(0x04).readPointer()
   const rightNode  = node.add(0x08).readPointer()
-  
+
   chatroomRecurse(leftNode)
   chatroomRecurse(centerNode)
   chatroomRecurse(rightNode)
@@ -118,19 +118,19 @@ const getMyselfInfoFunction = (() => {
 
  //contact
  const recurse = ((node) =>{
-  
+
    if(node.equals(headerNodeAddress)){return}
- 
+
    for (const item in nodeList){
-     if(node.equals(nodeList[item])){  
+     if(node.equals(nodeList[item])){
         return
       }
    }
 
- 
+
    nodeList.push(node)
    const wxid    = Memory.readUtf16String(node.add(0x38).readPointer())
-   
+
    const sign    = node.add(0x4c+0x4).readU32()//
    let wx_code=''
    if(sign == 0){
@@ -138,8 +138,8 @@ const getMyselfInfoFunction = (() => {
    }else{
      wx_code = Memory.readUtf16String(node.add(0x4c).readPointer())
    }
-   
-   
+
+
    const name = Memory.readUtf16String(node.add(0x94).readPointer());
 
    const contactJson={
@@ -153,23 +153,23 @@ const getMyselfInfoFunction = (() => {
    const leftNode   = node.add(0x0).readPointer()
    const centerNode = node.add(0x04).readPointer()
    const rightNode  = node.add(0x08).readPointer()
-   
+
    recurse(leftNode)
    recurse(centerNode)
    recurse(rightNode)
- 
+
    const allContactJson={
      contact:contactList
    }
-   
+
    return allContactJson
- 
+
  })
 
 const getChatroomMemberInfoFunction = (() => {
   const node = chatroomNodeAddress.add(0x0).readPointer()
   const ret = chatroomRecurse(node)
-  
+
   const cloneRet = JSON.stringify(ret)
   chatroomNodeList.length = 0//empty
   chatroomMemberList.length = 0 //empty
@@ -192,7 +192,7 @@ const getChatroomMemberInfoFunction = (() => {
     }
     return false
  })
- 
+
  const getContactNativeFunction = (() => {
   const node = headerNodeAddress.add(0x0).readPointer()
   const ret = recurse(node)
@@ -208,7 +208,7 @@ const getChatroomMemberInfoFunction = (() => {
   return cloneRet
 })
 
-  
+
  /**
   * @Hook: recvMsg -> recvMsgNativeCallback
   */
@@ -281,15 +281,18 @@ const sendMsgNativeFunction = (() => {
     console.log(ins.address, '\t', ins.mnemonic, '\t', ins.opStr)
     ins = Instruction.parse(ins.next)
   }
-  
+
   const asmNativeFunction = new NativeFunction(asmSendMsg, 'void', ['pointer', 'pointer'])
 
   const sendMsg = (
-    talkerIdPtr,
-    contentPtr,
+    talkerId,
+    content,
   ) => {
-    const talkerId  = talkerIdPtr.readUtf16String()
-    const content   = contentPtr.readUtf16String()
+    const talkerIdPtr = Memory.alloc(talkerId.length * 2 + 1)
+    const contentPtr  = Memory.alloc(content.length * 2 + 1)
+
+    talkerIdPtr.writeUtf16String(talkerId)
+    contentPtr.writeUtf16String(content)
 
     const sizeOfStringStruct = Process.pointerSize * 3 // + 0xd
 
