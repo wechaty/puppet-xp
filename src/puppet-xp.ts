@@ -426,7 +426,7 @@ class PuppetXp extends Puppet {
 
   override async roomList (): Promise<string[]> {
     log.verbose('PuppetXp', 'roomList()')
-    return JSON.parse(await this.sidecar.getChatroomMemberInfo()).chatroomMember 
+    return JSON.parse(await this.sidecar.getChatroomMemberInfo()).chatroomMember
   }
 
   override async roomDel (
