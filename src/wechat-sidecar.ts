@@ -22,7 +22,6 @@ import {
   Call,
   Hook,
   ParamType,
-  RetType,
   Ret,
 
   agentTarget,
@@ -37,15 +36,22 @@ const initAgentScript = fs.readFileSync(require.resolve(
 @Sidecar('WeChat.exe', initAgentScript)
 class WeChatSidecar extends SidecarBody {
 
+  @Call(agentTarget('getMyselfInfoFunction'))
+  getMyselfInfo ():Promise<string> { return Ret() }
+
+  @Call(agentTarget('getChatroomMemberInfoFunction'))
+  getChatroomMemberInfo ():Promise<string> { return Ret() }
+
+  @Call(agentTarget('getWechatVersionFunction'))
+  getWeChatVersion ():Promise<Boolean> { return Ret() }
+
   @Call(agentTarget('getContactNativeFunction'))
-  @RetType('void')
-  getContact () { return Ret() }
+  getContact ():Promise<string> { return Ret() }
 
   @Call(agentTarget('sendMsgNativeFunction'))
-  @RetType('void')
   sendMsg (
-    @ParamType('pointer', 'Utf16String') contactId: string,
-    @ParamType('pointer', 'Utf16String') text: string,
+    contactId: string,
+    text: string,
   ): Promise<string> { return Ret(contactId, text) }
 
   @Hook(agentTarget('recvMsgNativeCallback'))
