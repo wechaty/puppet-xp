@@ -231,7 +231,7 @@ class PuppetXp extends Puppet {
 
   override async contactList (): Promise<string[]> {
     log.verbose('PuppetXp', 'contactList()')
-    return []
+    return JSON.parse(await this.sidecar.getContact()).contact
   }
 
   override async contactAvatar (contactId: string)                : Promise<FileBox>
@@ -426,7 +426,9 @@ class PuppetXp extends Puppet {
 
   override async roomList (): Promise<string[]> {
     log.verbose('PuppetXp', 'roomList()')
-    return []
+    const ChatroomMemberInfo=await this.sidecar.getChatroomMemberInfo()
+    const Chatrooms=JSON.parse(ChatroomMemberInfo).chatroomMember
+    return Chatrooms 
   }
 
   override async roomDel (
