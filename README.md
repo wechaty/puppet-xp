@@ -27,9 +27,18 @@ wechaty-puppet-xp is a local puppet for Wecaty:
 
 ## QUICK START
 
+```sh
+git clone https://github.com/wechaty/wechaty-puppet-xp.git
+cd wechaty-puppet-xp
+npm install
+#
+# Do not forget to install WeChat with requried version
+#
+```
+
 | Run | Source code | Description |
 | :------------- |:-------------| :-----|
-| `npm run start` | [examples/ding-dong-bot.ts](examples/ding-dong-bot.ts) | Puppet ding/dong |
+| `npm start` | [examples/ding-dong-bot.ts](examples/ding-dong-bot.ts) | Puppet ding/dong |
 | `npm run start:ripe` | [examples/ripe-wechaty.ts](examples/ripe-wechaty.ts) | Wechaty ding/dong |
 | `npm run start:raw` | [examples/raw-sidecar.ts](examples/raw-sidecar.ts) | Sidecar ding/dong |
 
