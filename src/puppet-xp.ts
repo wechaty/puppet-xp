@@ -445,6 +445,10 @@ class PuppetXp extends Puppet {
     const room = roomList.filter(function (item:any) {
       return item.roomid === id
     })
+    const contactList = JSON.parse(await this.sidecar.getContact())
+    const contact = contactList.filter(function (item:any) {
+      return item.id === id
+    })
 
     if (room.length) {
       return {
@@ -454,7 +458,7 @@ class PuppetXp extends Puppet {
         id : room[0].roomid,
         memberIdList : room[0].roomMember,
         ownerId     : '',
-        topic        : '',
+        topic        : contact[0].name,
       } as any
     } else {
       return {} as any
