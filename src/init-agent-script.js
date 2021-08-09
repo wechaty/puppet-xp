@@ -63,9 +63,9 @@ const getMyselfInfoFunction = (() => {
   }
   
   const myself = {
-      wx_id:wx_id,
-      wx_code:wx_code,
-      wx_name:wx_name
+      id:wx_id,
+      code:wx_code,
+      name:wx_name
   }
 
   return JSON.stringify(myself)
@@ -108,9 +108,7 @@ const getMyselfInfoFunction = (() => {
   chatroomRecurse(centerNode)
   chatroomRecurse(rightNode)
 
-  const allChatroomMemberJson={
-    chatroomMember:chatroomMemberList
-  }
+  const allChatroomMemberJson = chatroomMemberList
   return allChatroomMemberJson
  })
 
@@ -143,8 +141,8 @@ const getMyselfInfoFunction = (() => {
    const name = Memory.readUtf16String(node.add(0x94).readPointer());
 
    const contactJson={
-     wxid:wxid,
-     wx_code:wx_code,
+     id:wxid,
+     code:wx_code,
      name:name
    }
 
@@ -158,10 +156,7 @@ const getMyselfInfoFunction = (() => {
    recurse(centerNode)
    recurse(rightNode)
  
-   const allContactJson={
-     contact:contactList
-   }
-   
+   const allContactJson=contactList
    return allContactJson
  
  })
