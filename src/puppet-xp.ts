@@ -232,8 +232,8 @@ class PuppetXp extends Puppet {
   override async contactList (): Promise<string[]> {
     log.verbose('PuppetXp', 'contactList()')
     const contactList = JSON.parse(await this.sidecar.getContact())
-    let idList = []
-    for(let item in contactList){
+    const idList = []
+    for (const item in contactList) {
       const contact = contactList[item]
       const id = contact.id
       idList.push(id)
@@ -261,30 +261,30 @@ class PuppetXp extends Puppet {
     return FileBox.fromFile(WECHATY_ICON_PNG)
   }
 
-  override async contactRawPayloadParser (payload: ContactPayload) { 
+  override async contactRawPayloadParser (payload: ContactPayload) {
     log.verbose('PuppetXp', 'contactRawPayloadParser(%s)', JSON.stringify(payload))
     return payload
-   }
+  }
+
   override async contactRawPayload (id: string): Promise<ContactPayload> {
     log.verbose('PuppetXp', 'contactRawPayload(%s)', id)
     const contactList = JSON.parse(await this.sidecar.getContact())
-    const contact = contactList.filter(function(item:any){
-      return item.id == id; 
- })
+    const contact = contactList.filter(function (item:any) {
+      return item.id === id
+    })
 
- if(contact.length){
-  return {
-    avatar : '',
-    gender : ContactGender.Unknown,
-    id,
-    name  : contact[0].name,
-    phone : [],
-    type  : ContactType.Unknown,
-  }
- }else{
-  return {} as any
- }
-
+    if (contact.length) {
+      return {
+        avatar : '',
+        gender : ContactGender.Unknown,
+        id,
+        name  : contact[0].name,
+        phone : [],
+        type  : ContactType.Unknown,
+      }
+    } else {
+      return {} as any
+    }
   }
 
   /**
@@ -442,30 +442,30 @@ class PuppetXp extends Puppet {
   override async roomRawPayload (id: string): Promise<RoomPayload> {
     log.verbose('PuppetXp', 'roomRawPayload(%s)', id)
     const roomList = JSON.parse(await this.sidecar.getChatroomMemberInfo())
-    const room = roomList.filter(function(item:any){
-      return item.roomid == id; 
- })
+    const room = roomList.filter(function (item:any) {
+      return item.roomid === id
+    })
 
- if(room.length){
-  return {
-    id : room[0].roomid,
-    topic        : '',
-    avatar     : '',
-    memberIdList : room[0].roomMember,
-    ownerId     : '',
-    adminIdList  : [],
-    external    : false,
-  } as any
- }else{
-  return {} as any
- }
+    if (room.length) {
+      return {
+        adminIdList  : [],
+        avatar     : '',
+        external    : false,
+        id : room[0].roomid,
+        memberIdList : room[0].roomMember,
+        ownerId     : '',
+        topic        : '',
+      } as any
+    } else {
+      return {} as any
+    }
   }
 
   override async roomList (): Promise<string[]> {
     log.verbose('PuppetXp', 'roomList()')
     const roomList = JSON.parse(await this.sidecar.getChatroomMemberInfo())
     const idList = []
-    for(let item in roomList){
+    for (const item in roomList) {
       idList.push(roomList[item].roomid)
     }
     return idList
