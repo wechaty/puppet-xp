@@ -1,7 +1,7 @@
 # Wechaty Puppet XP
 
-[![NPM Version](https://img.shields.io/npm/v/wechaty-puppet-xp?color=brightgreen)](https://www.npmjs.com/package/wechaty-puppet-xp)
 [![NPM](https://github.com/wechaty/wechaty-puppet-xp/workflows/NPM/badge.svg)](https://github.com/wechaty/wechaty/actions?query=workflow%3ANPM)
+[![NPM Version](https://img.shields.io/npm/v/wechaty-puppet-xp?color=brightgreen)](https://www.npmjs.com/package/wechaty-puppet-xp)
 [![npm (tag)](https://img.shields.io/npm/v/wechaty-puppet-xp/next.svg)](https://www.npmjs.com/package/wechaty-puppet-xp?activeTab=versions)
 
 [![Powered by Wechaty](https://img.shields.io/badge/Powered%20By-Wechaty-brightgreen.svg)](https://github.com/wechaty/wechaty)
@@ -27,9 +27,20 @@ wechaty-puppet-xp is a local puppet for Wecaty:
 
 ## QUICK START
 
-1. `npm run start:ripe`运行 examples/ripe-wechaty.ts 基于 Wechaty 的 ding/dong
-2. `npm run start:ripe`运行 examples/raw-sidecar.ts 基于 sidecar 的 ding/dong
-3. `npm run start:ripe`运行 examples/ding-dong-bot.ts 基于 PuppetXp 的 ding/dong
+```sh
+git clone https://github.com/wechaty/wechaty-puppet-xp.git
+cd wechaty-puppet-xp
+npm install
+#
+# Do not forget to install WeChat with requried version
+#
+```
+
+| Run | Source code | Description |
+| :------------- |:-------------| :-----|
+| `npm start` | [examples/ding-dong-bot.ts](examples/ding-dong-bot.ts) | Puppet ding/dong |
+| `npm run start:ripe` | [examples/ripe-wechaty.ts](examples/ripe-wechaty.ts) | Wechaty ding/dong |
+| `npm run start:raw` | [examples/raw-sidecar.ts](examples/raw-sidecar.ts) | Sidecar ding/dong |
 
 ## HISTORY
 
