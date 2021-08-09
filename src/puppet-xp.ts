@@ -262,12 +262,12 @@ class PuppetXp extends Puppet {
   }
 
   override async contactRawPayloadParser (payload: ContactPayload) {
-    log.verbose('PuppetXp', 'contactRawPayloadParser(%s)', JSON.stringify(payload))
+    // log.verbose('PuppetXp', 'contactRawPayloadParser(%s)', JSON.stringify(payload))
     return payload
   }
 
   override async contactRawPayload (id: string): Promise<ContactPayload> {
-    log.verbose('PuppetXp', 'contactRawPayload(%s)', id)
+    // log.verbose('PuppetXp', 'contactRawPayload(%s)', id)
     const contactList = JSON.parse(await this.sidecar.getContact())
     const contact = contactList.filter(function (item:any) {
       return item.id === id
@@ -440,7 +440,7 @@ class PuppetXp extends Puppet {
    */
   override async roomRawPayloadParser (payload: RoomPayload) { return payload }
   override async roomRawPayload (id: string): Promise<RoomPayload> {
-    log.verbose('PuppetXp', 'roomRawPayload(%s)', id)
+    // log.verbose('PuppetXp', 'roomRawPayload(%s)', id)
     const roomList = JSON.parse(await this.sidecar.getChatroomMemberInfo())
     const room = roomList.filter(function (item:any) {
       return item.roomid === id
