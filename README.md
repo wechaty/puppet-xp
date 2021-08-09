@@ -44,9 +44,9 @@ npm install
 
 ## HISTORY
 
-### main v0.3
+### main
 
-### v0.3.22
+### v0.4 (Aug 9, 2021)
 
 1. Added some support for classes Contact and Room
 1. support bot.Contact.findAll()/bot.Contact.find(query)
