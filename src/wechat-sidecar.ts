@@ -35,6 +35,7 @@ const initAgentScript = fs.readFileSync(require.resolve(
 
 @Sidecar('WeChat.exe', initAgentScript)
 class WeChatSidecar extends SidecarBody {
+
   @Call(agentTarget('getMyselfInfoFunction'))
   getMyselfInfo ():Promise<string> { return Ret() }
 
@@ -58,7 +59,7 @@ class WeChatSidecar extends SidecarBody {
     roomId:string,
     text: string,
     contactId: string,
-  ): Promise<string> { return Ret(roomId,text,contactId) }
+  ): Promise<string> { return Ret(roomId, text, contactId) }
 
   @Hook(agentTarget('recvMsgNativeCallback'))
   recvMsg (
