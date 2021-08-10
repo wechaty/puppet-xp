@@ -98,7 +98,7 @@ class PuppetXp extends Puppet {
       if (args instanceof Error) {
         throw args
       }
-      console.info(args)
+      // console.info(args)
       const fromId  = String(args[3])
       let roomId = ''
       const text    = String(args[2])
@@ -127,7 +127,7 @@ class PuppetXp extends Puppet {
         toId,
         type,
       }
-      console.info(payload)
+      // console.info(payload)
       this.messageStore[payload.id] = payload
       this.emit('message', { messageId: payload.id })
     })
@@ -248,7 +248,7 @@ class PuppetXp extends Puppet {
   override async contactList (): Promise<string[]> {
     log.verbose('PuppetXp', 'contactList()')
     const contactList = JSON.parse(await this.sidecar.getContact())
-    console.info(contactList)
+    // console.info(contactList)
     const idList = []
     for (const item in contactList) {
       const contact = contactList[item]
@@ -388,7 +388,7 @@ class PuppetXp extends Puppet {
   }
 
   override async messageRawPayloadParser (payload: MessagePayload) {
-    console.info(payload)
+    // console.info(payload)
     return payload
   }
 
@@ -577,7 +577,7 @@ class PuppetXp extends Puppet {
       name      : contact.name || '-',
       roomAlias : contact.name || '-@',
     }
-    console.info(MemberRawPayload)
+    // console.info(MemberRawPayload)
     return MemberRawPayload
   }
 

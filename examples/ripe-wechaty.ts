@@ -42,7 +42,7 @@ async function onMessage (msg: Message) {
   const name = talker.name()
   console.info(name)
   const room = msg.room()
-  console.debug(room)
+  // console.debug(room)
   if (msg.text() === 'ding') {
     await msg.say('dong')
   }
@@ -52,7 +52,6 @@ async function onMessage (msg: Message) {
     console.info(mentionIdList)
     await room.say('ding',...mentionIdList)
   }
-
 }
 
 const puppet = new PuppetXp()
