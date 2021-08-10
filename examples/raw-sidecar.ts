@@ -39,8 +39,9 @@ async function main () {
       return
     }
 
-    const talkerId  = String(args[1])
+    const toId  = String(args[1])
     const text      = String(args[2])
+    const talkerId = String(args[3]) 
 
     console.info('recvMsg: talkerId =', talkerId)
     console.info('recvMsg: text =', text)
@@ -50,7 +51,8 @@ async function main () {
      */
     if (talkerId && text === 'ding') {
       console.info('recvMsg: ding found, reply dong')
-      await sidecar.sendMsg(talkerId, 'dong')
+      await sidecar.sendMsg(toId, 'dong')
+      // await sidecar.sendAtMsg(toId, 'dong',talkerId)
     }
 
   })

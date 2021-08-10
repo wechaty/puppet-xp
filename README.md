@@ -11,7 +11,7 @@
 [![GitHub stars](https://img.shields.io/github/stars/wechaty/wechaty-puppet-xp.svg?label=github%20stars)](https://github.com/wechaty/wechaty)
 [![Gitter](https://badges.gitter.im/wechaty/wechaty.svg)](https://gitter.im/wechaty/wechaty?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
-![chatie puppet xp](https://camo.githubusercontent.com/6c7c7e10053c8e1936c084d17ea74c3437759fd1c4d3e02acca9256e2bfe9bb3/68747470733a2f2f692e6c6f6c692e6e65742f323032302f30352f30392f4858436c49663541324570554734752e706e67)
+<img src="https://camo.githubusercontent.com/6c7c7e10053c8e1936c084d17ea74c3437759fd1c4d3e02acca9256e2bfe9bb3/68747470733a2f2f692e6c6f6c692e6e65742f323032302f30352f30392f4858436c49663541324570554734752e706e67" alt="chatie puppet xp" width="300" height="300" align="bottom" />
 
 ## WECHATY PUPPET YOUTH STAR
 
@@ -23,7 +23,8 @@ wechaty-puppet-xp is a local puppet for Wecaty:
 ## GETTING STARTED
 
 - STEP 1: Install wechat client in your Windows computer.
-- STEP 2: Getting Started with TypeScript/JavaScript (RECOMMENDED)
+- STEP 2: Login the wechat client on the computer.
+- STEP 3: Getting Started with TypeScript/JavaScript (RECOMMENDED).
 
 ## QUICK START
 
@@ -32,7 +33,7 @@ git clone https://github.com/wechaty/wechaty-puppet-xp.git
 cd wechaty-puppet-xp
 npm install
 #
-# Do not forget to install WeChat with requried version
+# Do not forget to install WeChat with requried version and login.
 #
 ```
 
@@ -45,6 +46,10 @@ npm install
 ## HISTORY
 
 ### main
+
+### v0.4.2 (Aug 10, 2021)
+
+support room.say(text, ...mentionList), you can at RoomMember.
 
 ### v0.4 (Aug 9, 2021)
 

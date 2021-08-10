@@ -41,7 +41,6 @@ import {
   MiniProgramPayload,
 
   log,
-  PayloadType,
   MessageType,
   ContactGender,
   ContactType,
@@ -99,20 +98,36 @@ class PuppetXp extends Puppet {
       if (args instanceof Error) {
         throw args
       }
-
-      const fromId  = String(args[1])
+      console.info(args)
+      const fromId  = String(args[3])
+      let roomId = ''
       const text    = String(args[2])
-      const toId    = String(args[3])
+      let toId    = ''
+      let type = MessageType.Unknown
+      if (args[0] === 1) {
+        type = MessageType.Text
+      }
+      if (args[0] === 3) {
+        type = MessageType.Image
+      }
+      const arr = String(args[1]).split('@')
+
+      if (arr.length === 2) {
+        roomId = String(args[1])
+      } else {
+        toId = String(args[1])
+      }
 
       const payload: MessagePayload = {
         fromId,
         id: cuid(),
+        roomId,
         text,
         timestamp: Date.now(),
         toId,
-        type: MessageType.Text,
+        type,
       }
-
+      console.info(payload)
       this.messageStore[payload.id] = payload
       this.emit('message', { messageId: payload.id })
     })
@@ -205,10 +220,11 @@ class PuppetXp extends Puppet {
 
   override async contactAlias (contactId: string, alias?: string | null): Promise<void | string> {
     log.verbose('PuppetXp', 'contactAlias(%s, %s)', contactId, alias)
-
-    if (typeof alias === 'undefined') {
-      return 'mock alias'
-    }
+    const contact = await this.contactRawPayload(contactId)
+    // if (typeof alias === 'undefined') {
+    //   throw new Error('to be implement')
+    // }
+    return contact.alias
   }
 
   override async contactPhone (contactId: string): Promise<string[]>
@@ -232,6 +248,7 @@ class PuppetXp extends Puppet {
   override async contactList (): Promise<string[]> {
     log.verbose('PuppetXp', 'contactList()')
     const contactList = JSON.parse(await this.sidecar.getContact())
+    console.info(contactList)
     const idList = []
     for (const item in contactList) {
       const contact = contactList[item]
@@ -275,6 +292,7 @@ class PuppetXp extends Puppet {
 
     if (contact.length) {
       return {
+        alias : '',
         avatar : '',
         gender : ContactGender.Unknown,
         id,
@@ -369,7 +387,11 @@ class PuppetXp extends Puppet {
     }
   }
 
-  override async messageRawPayloadParser (payload: MessagePayload) { return payload }
+  override async messageRawPayloadParser (payload: MessagePayload) {
+    console.info(payload)
+    return payload
+  }
+
   override async messageRawPayload (id: string): Promise<MessagePayload> {
     log.verbose('PuppetXp', 'messageRawPayload(%s)', id)
 
@@ -383,8 +405,13 @@ class PuppetXp extends Puppet {
   override async messageSendText (
     conversationId: string,
     text     : string,
+    mentionIdList?: string[]
   ): Promise<void> {
-    await this.sidecar.sendMsg(conversationId, text)
+    if (conversationId.split('@').length === 2 && mentionIdList && mentionIdList[0]) {
+      await this.sidecar.sendAtMsg(conversationId, text, mentionIdList[0])
+    } else {
+      await this.sidecar.sendMsg(conversationId, text)
+    }
   }
 
   override async messageSendFile (
@@ -509,12 +536,12 @@ class PuppetXp extends Puppet {
     topic?: string,
   ): Promise<void | string> {
     log.verbose('PuppetXp', 'roomTopic(%s, %s)', roomId, topic)
-
-    if (typeof topic === 'undefined') {
-      return 'mock room topic'
+    const payload = await this.roomPayload(roomId)
+    if (!topic) {
+      return payload.topic
+    } else {
+      return payload.topic
     }
-
-    await this.dirtyPayload(PayloadType.Room, roomId)
   }
 
   override async roomCreate (
@@ -537,17 +564,21 @@ class PuppetXp extends Puppet {
 
   override async roomMemberList (roomId: string) : Promise<string[]> {
     log.verbose('PuppetXp', 'roomMemberList(%s)', roomId)
-    return []
+    return (await this.roomRawPayload(roomId)).memberIdList
   }
 
   override async roomMemberRawPayload (roomId: string, contactId: string): Promise<RoomMemberPayload>  {
     log.verbose('PuppetXp', 'roomMemberRawPayload(%s, %s)', roomId, contactId)
-    return {
-      avatar    : 'mock-avatar-data',
-      id        : 'xx',
-      name      : 'mock-name',
-      roomAlias : 'yy',
+    const contact = await this.contactPayload(contactId)
+    const MemberRawPayload =  {
+      avatar    : '',
+      id        : roomId + '-' + contactId,
+      inviterId : contactId,   // "wxid_7708837087612",
+      name      : contact.name || '-',
+      roomAlias : contact.name || '-@',
     }
+    console.info(MemberRawPayload)
+    return MemberRawPayload
   }
 
   override async roomMemberRawPayloadParser (rawPayload: RoomMemberPayload): Promise<RoomMemberPayload>  {

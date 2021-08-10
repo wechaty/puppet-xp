@@ -35,10 +35,24 @@ function onLogout (user: Contact) {
 
 async function onMessage (msg: Message) {
   log.info('StarterBot', msg.toString())
-
+  const talker = msg.talker()
+  console.debug(talker)
+  // const alias = await talker.alias()
+  // console.info(alias)
+  const name = talker.name()
+  console.info(name)
+  const room = msg.room()
+  console.debug(room)
   if (msg.text() === 'ding') {
     await msg.say('dong')
   }
+  if (msg.text() === 'dong' && room) {
+    const mentionIdList = []
+    mentionIdList.push(talker)
+    console.info(mentionIdList)
+    await room.say('ding',...mentionIdList)
+  }
+
 }
 
 const puppet = new PuppetXp()
@@ -56,5 +70,7 @@ bot.on('logout',  onLogout)
 bot.on('message', onMessage)
 
 bot.start()
-  .then(() => log.info('StarterBot', 'Starter Bot Started.'))
+  .then(() => {
+    log.info('StarterBot', 'Starter Bot Started.')
+  })
   .catch(e => log.error('StarterBot', e))
