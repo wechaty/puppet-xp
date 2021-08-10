@@ -9,13 +9,16 @@
  *         微信：3.2.1.121 提取码: cscn
  */
 
+//const { isNullishCoalesce } = require("typescript")
+
 //3.3.0.115
 const offset={
    node_offset:0x1DB9728,
    handle_offset:0xe4,
    send_txt_call_offset:0x3E3B80,
    hook_point:0x40D3B1,
-   chatroom_node_offset:0xb08
+   chatroom_node_offset:0xb08,
+   personal_offset:0x1DDF534
 }
 //3.3.0.115
 
@@ -41,25 +44,25 @@ const offset={
 // get myself info
 const getMyselfInfoFunction = (() => {
 
-  const sign = moduleBaseAddress.add(0x1DDF534+0x174).readU32()
+  const sign = moduleBaseAddress.add(offset.personal_offset+0x174).readU32()
   let   wx_code      = ''
   let   wx_id        = ''
   let   wx_name      = ''
 
   if(sign == 0){//old version
-    wx_id   = Memory.readAnsiString(moduleBaseAddress.add(0x1DDF534+0x41c))
-    wx_code = Memory.readAnsiString(moduleBaseAddress.add(0x1DDF534+0x41c))
+    wx_id   = Memory.readAnsiString(moduleBaseAddress.add(offset.personal_offset+0x41c))
+    wx_code = Memory.readAnsiString(moduleBaseAddress.add(offset.personal_offset+0x41c))
 
   }else{
-    wx_id   = Memory.readAnsiString(moduleBaseAddress.add(0x1DDF534+0x41c).readPointer())
-    wx_code = Memory.readAnsiString(moduleBaseAddress.add(0x1DDF534+0x164))
+    wx_id   = Memory.readAnsiString(moduleBaseAddress.add(offset.personal_offset+0x41c).readPointer())
+    wx_code = Memory.readAnsiString(moduleBaseAddress.add(offset.personal_offset+0x164))
   }
 
-  const nick_sign = moduleBaseAddress.add(0x1DDF534+0x14).readU32()
+  const nick_sign = moduleBaseAddress.add(offset.personal_offset+0x14).readU32()
   if(nick_sign == 0xF){
-    wx_name = Memory.readUtf8String(moduleBaseAddress.add(0x1DDF534))
+    wx_name = Memory.readUtf8String(moduleBaseAddress.add(offset.personal_offset))
   }else{
-    wx_name = Memory.readUtf8String(moduleBaseAddress.add(0x1DDF534).readPointer())
+    wx_name = Memory.readUtf8String(moduleBaseAddress.add(offset.personal_offset).readPointer())
   }
   
   const myself = {
@@ -231,6 +234,130 @@ const recvMsgNativeCallback = (() => {
   return nativeCallback
 })()
 
+let msgStruct=null
+let msgstrPtr=null
+const initmsgStruct = ( (str) => {
+    msgstrPtr = Memory.alloc(str.length*2 + 1)
+    msgstrPtr.writeUtf16String(str)
+
+    msgStruct  = Memory.alloc(0x14) // returns a NativePointer
+
+    msgStruct
+    .writePointer(msgstrPtr).add(0x04)
+    .writeU32(str.length * 2).add(0x04)
+    .writeU32(str.length * 2).add(0x04)
+    .writeU32(0).add(0x04)
+    .writeU32(0)
+
+    return msgStruct
+})
+
+
+let retidStruct=null
+let retidPtr   =null
+const initidStruct = ( (str) => {
+
+    retidPtr = Memory.alloc(str.length*2 + 1)
+    retidPtr.writeUtf16String(str)
+
+    retidStruct  = Memory.alloc(0x14) // returns a NativePointer
+
+    retidStruct
+    .writePointer(retidPtr).add(0x04)
+    .writeU32(str.length * 2).add(0x04)
+    .writeU32(str.length * 2).add(0x04)
+    .writeU32(0).add(0x04)
+    .writeU32(0)
+
+    return retidStruct
+})
+
+let retPtr=null
+let retStruct = null
+const initStruct = ( (str) => {
+
+    retPtr = Memory.alloc(str.length*2 + 1)
+    retPtr.writeUtf16String(str)
+
+    retStruct  = Memory.alloc(0x14) // returns a NativePointer
+
+    retStruct
+    .writePointer(retPtr).add(0x04)
+    .writeU32(str.length * 2).add(0x04)
+    .writeU32(str.length * 2).add(0x04)
+    .writeU32(0).add(0x04)
+    .writeU32(0)
+
+    return retStruct
+})
+
+/**
+ * at msg structure
+ */
+let atStruct=null
+const initAtMsgStruct = ( (wxidStruct) => {
+  
+    atStruct = Memory.alloc(0x10)
+
+    atStruct.writePointer(wxidStruct).add(0x04)
+    .writeU32(wxidStruct.toInt32()+0x14).add(0x04)//0x14 = sizeof(wxid structure)
+    .writeU32(wxidStruct.toInt32()+0x14).add(0x04)
+    .writeU32(0)
+    return atStruct
+})
+
+
+/**
+ * send at msg
+ */
+let asmAtMsg=null
+let roomid_,msg_,wxid_,atid_
+let ecxBuffer
+const sendAtMsgNativeFunction = ( (roomId,text,contactId) => {
+  asmAtMsg    = Memory.alloc(Process.pageSize)
+  ecxBuffer   = Memory.alloc(0x5f0)
+
+  
+  roomid_ = initStruct(roomId)
+  wxid_   = initidStruct(contactId)
+  msg_    = initmsgStruct(text)
+  atid_   = initAtMsgStruct(wxid_)
+
+  Memory.patchCode(asmAtMsg, Process.pageSize, code => {
+    var cw = new X86Writer(code, { pc: asmAtMsg })
+    //cw.putMovRegAddress('eax',roomid)
+    
+    cw.putPushfx();
+    cw.putPushax();
+
+    cw.putPushU32(1)  // push
+
+    cw.putMovRegAddress('edi',atid_)
+    cw.putMovRegAddress('ebx',msg_)//msg_
+
+    cw.putPushReg('edi')  
+    cw.putPushReg('ebx')
+
+    //cw.putMovRegRegOffsetPtr('edx', 'ebp', 0x10)//at wxid
+    cw.putMovRegAddress('edx',roomid_)//room_id
+
+    cw.putMovRegAddress('ecx', ecxBuffer)
+
+    cw.putCallAddress(moduleBaseAddress.add(
+      offset.send_txt_call_offset
+    ))
+    cw.putAddRegImm('esp', 0xc)
+
+    cw.putPopax()
+    cw.putPopfx()
+    cw.putRet()
+    cw.flush()
+  })
+
+  const atMsgNativeFunction = new NativeFunction(ptr(asmAtMsg), 'void', [])
+  atMsgNativeFunction()
+})
+
 /**
  * @Call: sendMsg -> agentSendMsg
  */
@@ -238,7 +365,6 @@ const sendMsgNativeFunction = (() => {
   //const asmBuffer   = Memory.alloc(/*0x5a8*/0x5f0) // magic number from wechat-bot (laozhang)
   const asmBuffer   = Memory.alloc(0x5f0)
   const asmSendMsg  = Memory.alloc(Process.pageSize)
-
   Memory.patchCode(asmSendMsg, Process.pageSize, code => {
     var cw = new X86Writer(code, { pc: asmSendMsg })
 
@@ -271,11 +397,11 @@ const sendMsgNativeFunction = (() => {
     cw.flush()
   })
 
-  let ins = Instruction.parse(asmSendMsg)
+  /*let ins = Instruction.parse(asmSendMsg)
   for (let i=0; i<20; i++) {
     console.log(ins.address, '\t', ins.mnemonic, '\t', ins.opStr)
     ins = Instruction.parse(ins.next)
-  }
+  }*/
   
   const asmNativeFunction = new NativeFunction(asmSendMsg, 'void', ['pointer', 'pointer'])
 
