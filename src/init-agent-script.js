@@ -18,7 +18,10 @@ const offset={
    send_txt_call_offset:0x3E3B80,
    hook_point:0x40D3B1,
    chatroom_node_offset:0xb08,
-   personal_offset:0x1DDF534
+   personal_offset:0x1DDF534,
+   send_picmsg_call_offset1:0x5CCB50,
+   send_picmsg_call_offset2:0x6F5C0,
+   send_picmsg_call_offset3:0x3E3490
 }
 //3.3.0.115
 
@@ -306,7 +309,77 @@ const initAtMsgStruct = ( (wxidStruct) => {
     return atStruct
 })
 
+let buffwxid      = null
+let imagefilepath = null
+let pathPtr       = null
+let picWxid       = null
+let picWxidPtr    = null
+let picAsm        = null
+let picbuff       = null
+const sendPicMsgNativeFunction = ( (contactId,path)=> {
 
+  picAsm        = Memory.alloc(Process.pageSize)
+  buffwxid      = Memory.alloc(0x20)
+  picbuff       = Memory.alloc(0x378)
+
+  pathPtr       = Memory.alloc(path.length * 2 + 1)
+  pathPtr.writeUtf16String(path)
+
+  imagefilepath = Memory.alloc(0x24)
+  imagefilepath.writePointer(pathPtr).add(0x04)
+  .writeU32(path.length * 2).add(0x04)
+  .writeU32(path.length * 2).add(0x04)
+
+  picWxidPtr    = Memory.alloc(contactId.length * 2 + 1)
+  picWxidPtr.writeUtf16String(contactId)
+
+  picWxid = Memory.alloc(0x0c)
+  picWxid.writePointer(ptr(picWxidPtr)).add(0x04)
+  .writeU32(contactId.length * 2).add(0x04)
+  .writeU32(contactId.length * 2).add(0x04)
+
+  Memory.patchCode(picAsm, Process.pageSize, code => {
+    var cw = new X86Writer(code, { pc: picAsm })
+    cw.putPushfx();
+    cw.putPushax();
+
+    cw.putSubRegImm('esp', 0x14)			
+    cw.putMovRegAddress('eax',buffwxid)
+
+    cw.putMovRegReg('ecx', 'esp')
+
+    cw.putPushReg('eax')
+    cw.putCallAddress(moduleBaseAddress.add(
+      offset.send_picmsg_call_offset1
+    ))
+    
+    cw.putMovRegAddress('ebx',imagefilepath)
+    cw.putPushReg('ebx')
+
+    cw.putMovRegAddress('eax',picWxid)
+    cw.putPushReg('eax')
+
+    cw.putMovRegAddress('eax',picbuff)
+    cw.putPushReg('eax')
+    cw.putCallAddress(moduleBaseAddress.add(
+      offset.send_picmsg_call_offset2
+    ))
+
+    cw.putMovRegReg('ecx', 'eax')
+    cw.putCallAddress(moduleBaseAddress.add(
+      offset.send_picmsg_call_offset3
+    ))
+    cw.putPopax()
+    cw.putPopfx()
+    cw.putRet()
+    cw.flush()
+
+  })
+
+  const nativeativeFunction = new NativeFunction(ptr(picAsm), 'void', [])
+  nativeativeFunction()
+
+})
 /**
  * send at msg
  */
