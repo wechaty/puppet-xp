@@ -25,7 +25,7 @@ import {
   Ret,
 
   agentTarget,
-}                 from 'frida-sidecar'
+}                 from 'sidecar'
 
 import fs from 'fs'
 

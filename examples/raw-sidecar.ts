@@ -19,7 +19,7 @@
 import {
   attach,
   detach,
-}                         from 'frida-sidecar'
+}                         from 'sidecar'
 
 import { WeChatSidecar }  from '../src/wechat-sidecar'
 
@@ -31,7 +31,10 @@ async function main () {
 
   console.info('WeChat Sidecar started.')
 
-  sidecar.on('recvMsg', async args => {
+  await sidecar.getTestInfo()
+  //await sidecar.sendAttatchMsg('23875395797@chatroom','C:\\temp\\wechat\\hook')
+
+  /*sidecar.on('recvMsg', async args => {
     console.info('recvMsg:', args)
 
     if (args instanceof Error) {
@@ -46,16 +49,14 @@ async function main () {
     console.info('recvMsg: talkerId =', talkerId)
     console.info('recvMsg: text =', text)
 
-    /**
-     * The world's famous ding-dong bot.
-     */
+
     if (talkerId && text === 'ding') {
       console.info('recvMsg: ding found, reply dong')
       await sidecar.sendMsg(toId, 'dong')
       // await sidecar.sendAtMsg(toId, 'dong',talkerId)
     }
 
-  })
+  })*/
 
   const clean = async () => {
     console.info('Sidecar detaching...')
