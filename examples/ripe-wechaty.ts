@@ -2,7 +2,7 @@
  * Wechaty - Conversational RPA SDK for Chatbot Makers.
  *  - https://github.com/wechaty/wechaty
  */
-import {
+ import {
   Contact,
   Message,
   ScanStatus,
@@ -11,6 +11,7 @@ import {
 }                  from 'wechaty'
 
 import { PuppetXp } from '../src/puppet-xp'
+import { FileBox }  from 'file-box'
 
 function onScan (qrcode: string, status: ScanStatus) {
   if (status === ScanStatus.Waiting || status === ScanStatus.Timeout) {
@@ -51,6 +52,21 @@ async function onMessage (msg: Message) {
     mentionIdList.push(talker)
     console.info(mentionIdList)
     await room.say('ding',...mentionIdList)
+  }
+  if (msg.text() === 'f' && room) {
+    const c = await bot.Contact.find({id: 'tyutluyc'})
+    if (c) {
+      await msg.forward(c)
+    }
+  }
+  if (msg.text() === 'p') {
+    const fileBox1 = FileBox.fromUrl('http://pic.linecg.com/uploads/file/contents/2019/095d7772e8a0b1b.jpg')
+    await msg.say(fileBox1)
+  }
+
+  if (msg.text() === 'c') {
+    const contactList = await bot.Contact.findAll()
+    console.debug(contactList)
   }
 }
 

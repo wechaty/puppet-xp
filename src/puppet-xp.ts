@@ -18,6 +18,7 @@
  */
 import cuid from 'cuid'
 import path  from 'path'
+import fs from 'fs'
 
 import {
   ContactPayload,
@@ -59,6 +60,7 @@ import {
 }           from 'sidecar'
 
 import { WeChatSidecar } from './wechat-sidecar'
+import { FileBoxType } from 'file-box'
 
 export type PuppetXpOptions = PuppetOptions
 
@@ -192,11 +194,11 @@ class PuppetXp extends Puppet {
   }
 
   /**
-   *
-   * ContactSelf
-   *
-   *
-   */
+  *
+  * ContactSelf
+  *
+  *
+  */
   override async contactSelfQRCode (): Promise<string> {
     log.verbose('PuppetXp', 'contactSelfQRCode()')
     return CHATIE_OFFICIAL_ACCOUNT_QRCODE
@@ -211,10 +213,10 @@ class PuppetXp extends Puppet {
   }
 
   /**
-   *
-   * Contact
-   *
-   */
+  *
+  * Contact
+  *
+  */
   override contactAlias (contactId: string)                      : Promise<string>
   override contactAlias (contactId: string, alias: string | null): Promise<void>
 
@@ -265,15 +267,15 @@ class PuppetXp extends Puppet {
     log.verbose('PuppetXp', 'contactAvatar(%s)', contactId)
 
     /**
-     * 1. set
-     */
+    * 1. set
+    */
     if (file) {
       return
     }
 
     /**
-     * 2. get
-     */
+    * 2. get
+    */
     const WECHATY_ICON_PNG = path.resolve('../../docs/images/wechaty-icon.png')
     return FileBox.fromFile(WECHATY_ICON_PNG)
   }
@@ -306,19 +308,19 @@ class PuppetXp extends Puppet {
   }
 
   /**
-   *
-   * Conversation
-   *
-   */
+  *
+  * Conversation
+  *
+  */
   override async conversationReadMark (conversationId: string, hasRead?: boolean) : Promise<void> {
     log.verbose('PuppetService', 'conversationRead(%s, %s)', conversationId, hasRead)
   }
 
   /**
-   *
-   * Message
-   *
-   */
+  *
+  * Message
+  *
+  */
   override async messageContact (
     messageId: string,
   ): Promise<string> {
@@ -418,7 +420,21 @@ class PuppetXp extends Puppet {
     conversationId: string,
     file     : FileBox,
   ): Promise<void> {
-    throwUnsupportedError(conversationId, file)
+    // throwUnsupportedError(conversationId, file)
+    // console.debug(__dirname)
+    const filePath = path.join(path.dirname(__filename), file.name)
+    await file.toFile(filePath, true)
+    if (file.type() === FileBoxType.Url) {
+      try {
+        await this.sidecar.sendPicMsg(conversationId, filePath)
+        fs.unlinkSync(filePath)
+      } catch {
+        fs.unlinkSync(filePath)
+      }
+
+    } else {
+      throwUnsupportedError(conversationId, file)
+    }
   }
 
   override async messageSendContact (
@@ -458,13 +474,19 @@ class PuppetXp extends Puppet {
       conversationId,
       messageId,
     )
+    const curMessage = this.messageStore[messageId]
+    if (curMessage?.type === MessageType.Text) {
+      await this.messageSendText(conversationId, curMessage.text || '')
+    } else {
+      throwUnsupportedError(conversationId, messageId)
+    }
   }
 
   /**
-   *
-   * Room
-   *
-   */
+  *
+  * Room
+  *
+  */
   override async roomRawPayloadParser (payload: RoomPayload) { return payload }
   override async roomRawPayload (id: string): Promise<RoomPayload> {
     // log.verbose('PuppetXp', 'roomRawPayload(%s)', id)
@@ -597,10 +619,10 @@ class PuppetXp extends Puppet {
   }
 
   /**
-   *
-   * Room Invitation
-   *
-   */
+  *
+  * Room Invitation
+  *
+  */
   override async roomInvitationAccept (roomInvitationId: string): Promise<void> {
     log.verbose('PuppetXp', 'roomInvitationAccept(%s)', roomInvitationId)
   }
@@ -615,10 +637,10 @@ class PuppetXp extends Puppet {
   }
 
   /**
-   *
-   * Friendship
-   *
-   */
+  *
+  * Friendship
+  *
+  */
   override async friendshipRawPayload (id: string): Promise<any> {
     return { id } as any
   }
@@ -655,10 +677,10 @@ class PuppetXp extends Puppet {
   }
 
   /**
-   *
-   * Tag
-   *
-   */
+  *
+  * Tag
+  *
+  */
   override async tagContactAdd (
     tagId: string,
     contactId: string,
