@@ -47,15 +47,20 @@ npm install
 
 ### main
 
+### v0.4.7 (Aug 15, 2021)
+
+1. Support send files.
+2. Support forward text message.
+
 ### v0.4.2 (Aug 10, 2021)
 
-support room.say(text, ...mentionList), you can at RoomMember.
+Support room.say(text, ...mentionList), you can at RoomMember.
 
 ### v0.4 (Aug 9, 2021)
 
 1. Added some support for classes Contact and Room
-1. support bot.Contact.findAll()/bot.Contact.find(query)
-1. support bot.Room.findAll()/bot.Room.find(query)
+1. Support bot.Contact.findAll()/bot.Contact.find(query)
+1. Support bot.Room.findAll()/bot.Room.find(query)
 
 ### v0.2 (July 23, 2021)
 
