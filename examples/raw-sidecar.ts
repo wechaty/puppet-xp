@@ -46,9 +46,7 @@ async function main () {
     console.info('recvMsg: talkerId =', talkerId)
     console.info('recvMsg: text =', text)
 
-    /**
-     * The world's famous ding-dong bot.
-     */
+
     if (talkerId && text === 'ding') {
       console.info('recvMsg: ding found, reply dong')
       await sidecar.sendMsg(toId, 'dong')

@@ -56,7 +56,7 @@ import {
 import {
   attach,
   detach,
-}           from 'frida-sidecar'
+}           from 'sidecar'
 
 import { WeChatSidecar } from './wechat-sidecar'
 
