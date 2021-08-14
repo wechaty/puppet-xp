@@ -19,7 +19,7 @@
 import {
   attach,
   detach,
-}                         from 'frida-sidecar'
+}                         from 'sidecar'
 
 import { WeChatSidecar }  from '../src/wechat-sidecar'
 
