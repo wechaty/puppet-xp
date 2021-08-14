@@ -21,7 +21,14 @@ const offset={
    personal_offset:0x1DDF534,
    send_picmsg_call_offset1:0x5CCB50,
    send_picmsg_call_offset2:0x6F5C0,
-   send_picmsg_call_offset3:0x3E3490
+   send_picmsg_call_offset3:0x3E3490,
+   send_attatch_call_offset1:0x5CCB50,
+   send_attatch_call_offset2:0x5CCB10,
+   send_attatch_call_offset3:0x5CCB50,
+   send_attatch_call_offset4:0x5CCB50,
+   send_attatch_call_offset5:0x074C90,
+   send_attatch_call_offset6:0x2E2720,
+   send_attatch_call_para:0x19A7350
 }
 //3.3.0.115
 
@@ -43,7 +50,6 @@ const offset={
  let chatroomMemberList=[]//for chatroom
 
 /*------------------global-------------------------------------------*/
-
 // get myself info
 const getMyselfInfoFunction = (() => {
 
@@ -309,6 +315,101 @@ const initAtMsgStruct = ( (wxidStruct) => {
     return atStruct
 })
 
+/**
+ * send attatch
+ */
+let attatchWxid    = null
+let attatchPath    = null
+let attatchPathPtr = null
+let attatchAsm     = null
+let attatchBuf     = null
+let attatchEbp     = null
+let attatchEaxbuf  = null
+const sendAttatchMsgNativeFunction = ( (contactId,path) => {
+
+  attatchAsm        = Memory.alloc(Process.pageSize)
+  attatchBuf        = Memory.alloc(0x378)
+  attatchEbp        = Memory.alloc(0x04)
+  attatchEaxbuf     = Memory.alloc(0x14)
+
+  attatchWxid = initidStruct(contactId)
+
+  
+  attatchPathPtr       = Memory.alloc(path.length * 2 + 1)
+  attatchPathPtr.writeUtf16String(path)
+  
+  attatchPath = Memory.alloc(0x28)
+  attatchPath.writePointer(attatchPathPtr).add(0x04)
+  .writeU32(path.length * 2).add(0x04)
+  .writeU32(path.length * 2).add(0x04)
+
+  Memory.patchCode(attatchAsm, Process.pageSize, code => {
+    var cw = new X86Writer(code, { pc: attatchAsm })
+    cw.putPushfx();
+    cw.putPushax();
+
+    cw.putSubRegImm('esp', 0x14)		
+    //mov byte ptr ss : [ebp - 0x6C] , 0x0
+    //cw.putMovNearPtrReg(attatchEbp, 'ebp')
+    //cw.putMovRegOffsetPtrU32('ebp', -0x6c, 0x0)
+    //cw.putMovRegRegOffsetPtr('edx', 'ebp', -0x6c)
+
+    //putShlRegU8(reg, immValue)
+
+    cw.putMovRegAddress('ebx',attatchPath)
+    cw.putMovRegAddress('eax',attatchEaxbuf)
+    cw.putMovRegReg('ecx','esp')
+    cw.putPushReg('eax')
+    cw.putCallAddress(moduleBaseAddress.add(
+      offset.send_attatch_call_offset1
+    ))
+    
+
+    cw.putPushU32(0)
+    cw.putSubRegImm('esp', 0x14)
+    cw.putMovRegReg('ecx','esp')
+    cw.putPushU32(-1)
+    cw.putPushU32((moduleBaseAddress.add(offset.send_attatch_call_para)).toInt32())
+    cw.putCallAddress(moduleBaseAddress.add(
+      offset.send_attatch_call_offset2
+    ))
+
+    cw.putSubRegImm('esp', 0x14)
+    cw.putMovRegReg('ecx','esp')
+    cw.putPushU32(attatchPath.toInt32())
+    cw.putCallAddress(moduleBaseAddress.add(
+      offset.send_attatch_call_offset3
+    ))
+
+    cw.putSubRegImm('esp', 0x14)
+    cw.putMovRegReg('ecx','esp')
+    cw.putPushU32(attatchWxid.toInt32())
+    cw.putCallAddress(moduleBaseAddress.add(
+      offset.send_attatch_call_offset4
+    ))
+
+    cw.putMovRegAddress('eax',attatchBuf)
+    cw.putPushReg('eax')
+    cw.putCallAddress(moduleBaseAddress.add(
+      offset.send_attatch_call_offset5
+    ))
+
+    cw.putMovRegReg('ecx','eax')
+    cw.putCallAddress(moduleBaseAddress.add(
+      offset.send_attatch_call_offset6
+    ))
+
+      cw.putPopax()
+      cw.putPopfx()
+      cw.putRet()
+      cw.flush()
+
+  })
+
+  const nativeativeFunction = new NativeFunction(ptr(attatchAsm), 'void', [])
+  nativeativeFunction()
+})
+/*------------------send pic --------------------------*/
 let buffwxid      = null
 let imagefilepath = null
 let pathPtr       = null
