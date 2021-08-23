@@ -70,6 +70,10 @@ class PuppetXp extends Puppet {
 
   private messageStore: { [k: string]: MessagePayload }
 
+  private roomStore: { [k: string]: RoomPayload }
+
+  private contactStore: { [k: string]: ContactPayload }
+
   protected sidecar: WeChatSidecar
 
   constructor (
@@ -80,6 +84,8 @@ class PuppetXp extends Puppet {
 
     // FIXME: use LRU cache for message store so that we can reduce memory usage
     this.messageStore = {}
+    this.roomStore = {}
+    this.contactStore = {}
     this.sidecar = new WeChatSidecar()
   }
 
@@ -95,6 +101,58 @@ class PuppetXp extends Puppet {
     this.state.on('pending')
 
     await attach(this.sidecar)
+
+    const contactList = JSON.parse(await this.sidecar.getContact())
+
+    for (const contactKey in contactList) {
+      const contactInfo = contactList[contactKey]
+      const contact =  {
+        alias : '',
+        avatar : '',
+        gender : ContactGender.Unknown,
+        id : contactInfo.id,
+        name  : contactInfo.name,
+        phone : [],
+        type  : ContactType.Unknown,
+      }
+      this.contactStore[contactInfo.id] = contact
+    }
+
+    const roomList = JSON.parse(await this.sidecar.getChatroomMemberInfo())
+    for (const roomKey in roomList) {
+      const roomInfo = roomList[roomKey]
+      const roomId = roomInfo.roomid
+      const roomMember = roomInfo.roomMember
+      const topic = this.contactStore[roomId]?.name || ''
+      const room = {
+        adminIdList  : [],
+        avatar     : '',
+        external    : false,
+        id :roomId,
+        memberIdList : roomMember,
+        ownerId     : '',
+        topic        : topic,
+      }
+      this.roomStore[roomId] = room
+
+      for (const memberKey in roomMember) {
+        const memberId = roomMember[memberKey]
+        const memberNickName = await this.sidecar.getChatroomMemberNickInfo(memberId, roomId)
+        const contact =  {
+          alias : '',
+          avatar : '',
+          gender : ContactGender.Unknown,
+          id : memberId,
+          name  : memberNickName,
+          phone : [],
+          type  : ContactType.Unknown,
+        }
+        this.contactStore[memberId] = contact
+      }
+    }
+
+    // console.debug(this.roomStore)
+    // console.debug(this.contactStore)
 
     this.sidecar.on('recvMsg', args => {
       if (args instanceof Error) {
@@ -249,14 +307,7 @@ class PuppetXp extends Puppet {
 
   override async contactList (): Promise<string[]> {
     log.verbose('PuppetXp', 'contactList()')
-    const contactList = JSON.parse(await this.sidecar.getContact())
-    // console.info(contactList)
-    const idList = []
-    for (const item in contactList) {
-      const contact = contactList[item]
-      const id = contact.id
-      idList.push(id)
-    }
+    const idList = Object.keys(this.contactStore)
     return idList
   }
 
@@ -287,24 +338,7 @@ class PuppetXp extends Puppet {
 
   override async contactRawPayload (id: string): Promise<ContactPayload> {
     // log.verbose('PuppetXp', 'contactRawPayload(%s)', id)
-    const contactList = JSON.parse(await this.sidecar.getContact())
-    const contact = contactList.filter(function (item:any) {
-      return item.id === id
-    })
-
-    if (contact.length) {
-      return {
-        alias : '',
-        avatar : '',
-        gender : ContactGender.Unknown,
-        id,
-        name  : contact[0].name,
-        phone : [],
-        type  : ContactType.Unknown,
-      }
-    } else {
-      return {} as any
-    }
+    return this.contactStore[id] || {} as any
   }
 
   /**
@@ -490,37 +524,12 @@ class PuppetXp extends Puppet {
   override async roomRawPayloadParser (payload: RoomPayload) { return payload }
   override async roomRawPayload (id: string): Promise<RoomPayload> {
     // log.verbose('PuppetXp', 'roomRawPayload(%s)', id)
-    const roomList = JSON.parse(await this.sidecar.getChatroomMemberInfo())
-    const room = roomList.filter(function (item:any) {
-      return item.roomid === id
-    })
-    const contactList = JSON.parse(await this.sidecar.getContact())
-    const contact = contactList.filter(function (item:any) {
-      return item.id === id
-    })
-
-    if (room.length) {
-      return {
-        adminIdList  : [],
-        avatar     : '',
-        external    : false,
-        id : room[0].roomid,
-        memberIdList : room[0].roomMember,
-        ownerId     : '',
-        topic        : contact[0].name,
-      } as any
-    } else {
-      return {} as any
-    }
+    return this.roomStore[id] || {} as any
   }
 
   override async roomList (): Promise<string[]> {
     log.verbose('PuppetXp', 'roomList()')
-    const roomList = JSON.parse(await this.sidecar.getChatroomMemberInfo())
-    const idList = []
-    for (const item in roomList) {
-      idList.push(roomList[item].roomid)
-    }
+    const idList = Object.keys(this.roomStore)
     return idList
   }
 
@@ -591,20 +600,20 @@ class PuppetXp extends Puppet {
 
   override async roomMemberRawPayload (roomId: string, contactId: string): Promise<RoomMemberPayload>  {
     log.verbose('PuppetXp', 'roomMemberRawPayload(%s, %s)', roomId, contactId)
-    const contact = await this.contactPayload(contactId)
+    const contact = this.contactStore[contactId]
     const MemberRawPayload =  {
       avatar    : '',
-      id        : roomId + '-' + contactId,
+      id        : contactId,
       inviterId : contactId,   // "wxid_7708837087612",
-      name      : contact.name || '-',
-      roomAlias : contact.name || '-@',
+      name      : contact?.name || '',
+      roomAlias : contact?.name || '',
     }
     // console.info(MemberRawPayload)
     return MemberRawPayload
   }
 
   override async roomMemberRawPayloadParser (rawPayload: RoomMemberPayload): Promise<RoomMemberPayload>  {
-    log.verbose('PuppetXp', 'roomMemberRawPayloadParser(%s)', rawPayload)
+    log.verbose('PuppetXp---------------------', 'roomMemberRawPayloadParser(%s)', rawPayload)
     return rawPayload
   }
 

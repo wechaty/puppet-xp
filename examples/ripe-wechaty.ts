@@ -47,18 +47,24 @@ async function onMessage (msg: Message) {
   if (msg.text() === 'ding') {
     await msg.say('dong')
   }
-  if (msg.text() === 'dong' && room) {
+  if (msg.text() === 'at' && room) {
     const mentionIdList = []
     mentionIdList.push(talker)
-    console.info(mentionIdList)
-    await room.say('ding',...mentionIdList)
+    console.debug(mentionIdList)
+    await room.say('hi',...mentionIdList)
   }
-  if (msg.text() === 'f' && room) {
-    const c = await bot.Contact.find({id: 'tyutluyc'})
-    if (c) {
-      await msg.forward(c)
+  if (room) {
+    const member =await room.memberAll(name)
+    console.debug('member-------------------------------',member)
+    if (msg.text() === 'f') {
+      const c = await bot.Contact.find({id: 'tyutluyc'})
+      if (c) {
+        await msg.forward(c)
+      }
     }
   }
+
+
   if (msg.text() === 'p') {
     const fileBox1 = FileBox.fromUrl('http://pic.linecg.com/uploads/file/contents/2019/095d7772e8a0b1b.jpg')
     await msg.say(fileBox1)
@@ -67,6 +73,11 @@ async function onMessage (msg: Message) {
   if (msg.text() === 'c') {
     const contactList = await bot.Contact.findAll()
     console.debug(contactList)
+  }
+
+  if (msg.text() === 'r') {
+    const roomList = await bot.Room.findAll()
+    console.debug(roomList)
   }
 }
 
