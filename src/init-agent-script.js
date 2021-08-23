@@ -28,7 +28,11 @@ const offset={
    send_attatch_call_offset4:0x5CCB50,
    send_attatch_call_offset5:0x074C90,
    send_attatch_call_offset6:0x2E2720,
-   send_attatch_call_para:0x19A7350
+   send_attatch_call_para:0x19A7350,
+   chatroom_member_nick_call_offset1:0x558CB0,
+   chatroom_member_nick_call_offset2:0x3B0FE0,
+   chatroom_member_nick_call_offset3:0x55F6E0,
+   chatroom_member_nick_call_offset4:0x34CB10
 }
 //3.3.0.115
 
@@ -50,7 +54,15 @@ const offset={
  let chatroomMemberList=[]//for chatroom
 
 /*------------------global-------------------------------------------*/
+
+const getTestInfoFunction = ( () => {
+  const nativeativeFunction = new NativeFunction(ptr(0x4f230000), 'void', [])
+  nativeativeFunction()
+
+})
 // get myself info
+
+
 const getMyselfInfoFunction = (() => {
 
   const sign = moduleBaseAddress.add(offset.personal_offset+0x174).readU32()
@@ -313,6 +325,71 @@ const initAtMsgStruct = ( (wxidStruct) => {
     .writeU32(wxidStruct.toInt32()+0x14).add(0x04)
     .writeU32(0)
     return atStruct
+})
+
+//get nick from chatroom
+let nickRoomId        = null
+let nickMemberId      = null
+let nickStructPtr     = null
+let nickBuff          = null
+let memberNickBuffAsm = null
+let nickRetAddr        = null
+const getChatroomMemberNickInfoFunction = ( (memberId,roomId) =>{
+  
+  nickBuff        = Memory.alloc(0x7e4)
+  nickRetAddr     = Memory.alloc(0x04)
+  memberNickBuffAsm  = Memory.alloc(Process.pageSize)
+  nickRoomId    = initidStruct(roomId)
+  nickMemberId  = initStruct(memberId)
+  nickStructPtr = initmsgStruct('')
+  
+  Memory.patchCode(memberNickBuffAsm, Process.pageSize, code => {
+    var cw = new X86Writer(code, { pc: memberNickBuffAsm })
+    cw.putPushfx();
+    cw.putPushax();
+
+    cw.putMovRegAddress('ebx',nickStructPtr)
+    cw.putMovRegAddress('esi',nickMemberId)
+    cw.putMovRegAddress('edi',nickRoomId)
+
+    cw.putMovRegAddress('ecx',nickBuff)
+    cw.putCallAddress(moduleBaseAddress.add(
+      offset.chatroom_member_nick_call_offset1
+    ))
+
+    cw.putMovRegAddress('eax',nickBuff)
+    cw.putPushReg('eax')
+    cw.putPushReg('esi')
+    cw.putCallAddress(moduleBaseAddress.add(
+      offset.chatroom_member_nick_call_offset2
+    ))
+
+    cw.putMovRegReg('ecx','eax')
+    cw.putCallAddress(moduleBaseAddress.add(
+      offset.chatroom_member_nick_call_offset3
+    ))
+
+    cw.putPushU32(1)
+    cw.putPushReg('ebx')
+    cw.putMovRegReg('edx','edi')
+    cw.putMovRegAddress('ecx',nickBuff)
+    cw.putCallAddress(moduleBaseAddress.add(
+      offset.chatroom_member_nick_call_offset4
+    ))
+    cw.putAddRegImm('esp', 0x08)
+    cw.putMovNearPtrReg(nickRetAddr, 'ebx')
+    cw.putPopax()
+    cw.putPopfx()
+    cw.putRet()
+    cw.flush()
+
+  })
+
+  const nativeativeFunction = new NativeFunction(ptr(memberNickBuffAsm), 'void', [])
+  nativeativeFunction()
+
+  return nickRetAddr.readPointer().readPointer().readUtf16String()
+  
 })
 
 /**
