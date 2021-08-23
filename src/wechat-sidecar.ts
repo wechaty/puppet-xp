@@ -43,7 +43,7 @@ class WeChatSidecar extends SidecarBody {
   getChatroomMemberNickInfo (
     memberId: string,
     roomId: string,
-  ):Promise<string> { return Ret(memberId,roomId) }
+  ): Promise<string> { return Ret(memberId,roomId) }
 
   @Call(agentTarget('getMyselfInfoFunction'))
   getMyselfInfo ():Promise<string> { return Ret() }
