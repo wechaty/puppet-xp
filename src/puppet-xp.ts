@@ -160,7 +160,7 @@ class PuppetXp extends Puppet {
       if (args instanceof Error) {
         throw args
       }
-      console.info(args)
+      // console.info(args)
       let type
       let roomId = ''
       let toId    = ''
@@ -191,7 +191,7 @@ class PuppetXp extends Puppet {
         toId,
         type,
       }
-      console.info(payload)
+      // console.info(payload)
       this.messageStore[payload.id] = payload
       this.emit('message', { messageId: payload.id })
     })
