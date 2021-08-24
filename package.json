@@ -1,6 +1,6 @@
 {
   "name": "wechaty-puppet-xp",
-  "version": "0.4.12",
+  "version": "0.4.13",
   "description": "Puppet XP for Wechaty",
   "directories": {
     "test": "tests"
