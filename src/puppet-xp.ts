@@ -137,45 +137,49 @@ class PuppetXp extends Puppet {
 
       for (const memberKey in roomMember) {
         const memberId = roomMember[memberKey]
-        const memberNickName = await this.sidecar.getChatroomMemberNickInfo(memberId, roomId)
-        const contact =  {
-          alias : '',
-          avatar : '',
-          gender : ContactGender.Unknown,
-          id : memberId,
-          name  : memberNickName,
-          phone : [],
-          type  : ContactType.Unknown,
+        if (!this.contactStore[memberId]) {
+          const memberNickName = await this.sidecar.getChatroomMemberNickInfo(memberId, roomId)
+          const contact =  {
+            alias : '',
+            avatar : '',
+            gender : ContactGender.Unknown,
+            id : memberId,
+            name  : memberNickName,
+            phone : [],
+            type  : ContactType.Unknown,
+          }
+          this.contactStore[memberId] = contact
         }
-        this.contactStore[memberId] = contact
       }
     }
 
     // console.debug(this.roomStore)
     // console.debug(this.contactStore)
 
-    this.sidecar.on('recvMsg', args => {
+    this.sidecar.on('recvMsg', async args => {
       if (args instanceof Error) {
         throw args
       }
-      // console.info(args)
-      const fromId  = String(args[3])
+      console.info(args)
+      let type
       let roomId = ''
-      const text    = String(args[2])
       let toId    = ''
-      let type = MessageType.Unknown
+      let fromId = ''
+      const text = String(args[2])
       if (args[0] === 1) {
         type = MessageType.Text
-      }
-      if (args[0] === 3) {
+      } else if (args[0] === 3) {
         type = MessageType.Image
-      }
-      const arr = String(args[1]).split('@')
-
-      if (arr.length === 2) {
-        roomId = String(args[1])
       } else {
-        toId = String(args[1])
+        type = MessageType.Unknown
+      }
+
+      if (args[3] === null) {
+        fromId  = String(args[1])
+        toId = JSON.parse(await this.sidecar.getMyselfInfo()).id
+      } else {
+        fromId  = String(args[3])
+        roomId = String(args[1])
       }
 
       const payload: MessagePayload = {
@@ -187,7 +191,7 @@ class PuppetXp extends Puppet {
         toId,
         type,
       }
-      // console.info(payload)
+      console.info(payload)
       this.messageStore[payload.id] = payload
       this.emit('message', { messageId: payload.id })
     })
@@ -337,7 +341,7 @@ class PuppetXp extends Puppet {
   }
 
   override async contactRawPayload (id: string): Promise<ContactPayload> {
-    // log.verbose('PuppetXp', 'contactRawPayload(%s)', id)
+    log.verbose('PuppetXp----------------------', 'contactRawPayload(%s)', id)
     return this.contactStore[id] || {} as any
   }
 
@@ -363,7 +367,7 @@ class PuppetXp extends Puppet {
     // if (attachment instanceof ContactMock) {
     //   return attachment.id
     // }
-    return ''
+    return this.messageStore[messageId]?.fromId || ''
   }
 
   override async messageImage (

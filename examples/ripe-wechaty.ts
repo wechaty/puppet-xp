@@ -37,7 +37,7 @@ function onLogout (user: Contact) {
 async function onMessage (msg: Message) {
   log.info('StarterBot', msg.toString())
   const talker = msg.talker()
-  console.debug(talker)
+  // console.debug(talker)
   // const alias = await talker.alias()
   // console.info(alias)
   const name = talker.name()
@@ -54,8 +54,8 @@ async function onMessage (msg: Message) {
     await room.say('hi',...mentionIdList)
   }
   if (room) {
-    const member =await room.memberAll(name)
-    console.debug('member-------------------------------',member)
+    // const member =await room.memberAll(name)
+    // console.debug('member-------------------------------',member)
     if (msg.text() === 'f') {
       const c = await bot.Contact.find({id: 'tyutluyc'})
       if (c) {
