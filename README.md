@@ -45,7 +45,9 @@ npm install
 
 ## HISTORY
 
-### main
+### main v0.5
+
+1. ES Module support
 
 ### v0.4.7 (Aug 15, 2021)
 

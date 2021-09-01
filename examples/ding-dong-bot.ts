@@ -16,7 +16,7 @@
  *   limitations under the License.
  *
  */
-import {
+import type {
   EventLogoutPayload,
   EventLoginPayload,
   EventScanPayload,
@@ -26,7 +26,7 @@ import {
 
 import {
   PuppetXp,
-}               from '../src/mod'
+}               from '../src/mod.js'
 
 /**
  *

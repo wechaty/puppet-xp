@@ -1,9 +1,9 @@
-#!/usr/bin/env ts-node
+#!/usr/bin/env node --no-warnings --loader ts-node/esm
 
-import test  from 'blue-tape'
+import { test } from 'tstest'
 
-import { PuppetXp } from './puppet-xp'
-import { WeChatSidecar } from './wechat-sidecar'
+import { PuppetXp } from './puppet-xp.js'
+import type { WeChatSidecar } from './wechat-sidecar.js'
 
 class PuppetXpTest extends PuppetXp {
 
@@ -29,6 +29,6 @@ test.skip('PuppetXp perfect restart testing', async (t) => {
 
     t.pass('PuppetXp() perfect restart pass.')
   } catch (e) {
-    t.fail(e)
+    t.fail(e as any)
   }
 })

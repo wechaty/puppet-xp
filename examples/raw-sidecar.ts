@@ -21,7 +21,7 @@ import {
   detach,
 }                         from 'sidecar'
 
-import { WeChatSidecar }  from '../src/wechat-sidecar'
+import { WeChatSidecar }  from '../src/wechat-sidecar.js'
 
 async function main () {
   console.info('WeChat Sidecar starting...')
@@ -41,7 +41,7 @@ async function main () {
 
     const toId  = String(args[1])
     const text      = String(args[2])
-    const talkerId = String(args[3]) 
+    const talkerId = String(args[3])
 
     console.info('recvMsg: talkerId =', talkerId)
     console.info('recvMsg: text =', text)

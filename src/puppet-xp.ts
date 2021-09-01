@@ -47,19 +47,18 @@ import {
   ContactType,
   throwUnsupportedError,
 }                           from 'wechaty-puppet'
-
-import {
-  CHATIE_OFFICIAL_ACCOUNT_QRCODE,
-  qrCodeForChatie,
-  VERSION,
-}                                   from './config'
-
 import {
   attach,
   detach,
 }           from 'sidecar'
 
-import { WeChatSidecar } from './wechat-sidecar'
+import {
+  CHATIE_OFFICIAL_ACCOUNT_QRCODE,
+  qrCodeForChatie,
+  VERSION,
+}                                   from './config.js'
+
+import { WeChatSidecar } from './wechat-sidecar.js'
 import { FileBoxType } from 'file-box'
 
 export type PuppetXpOptions = PuppetOptions
