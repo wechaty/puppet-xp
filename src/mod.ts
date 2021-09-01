@@ -1,5 +1,5 @@
-import { VERSION }    from './version'
-import { PuppetXp } from './puppet-xp'
+import { VERSION }    from './config.js'
+import { PuppetXp }   from './puppet-xp.js'
 
 export {
   VERSION,

@@ -2,16 +2,16 @@
  * Wechaty - Conversational RPA SDK for Chatbot Makers.
  *  - https://github.com/wechaty/wechaty
  */
- import {
+import {
   Contact,
   Message,
   ScanStatus,
   Wechaty,
   log,
+  FileBox,
 }                  from 'wechaty'
 
-import { PuppetXp } from '../src/puppet-xp'
-import { FileBox }  from 'file-box'
+import { PuppetXp } from '../src/puppet-xp.js'
 
 function onScan (qrcode: string, status: ScanStatus) {
   if (status === ScanStatus.Waiting || status === ScanStatus.Timeout) {
@@ -50,7 +50,7 @@ async function onMessage (msg: Message) {
   if (msg.text() === 'at' && room) {
     const mentionIdList = []
     mentionIdList.push(talker)
-    console.debug(mentionIdList)
+    console.info(mentionIdList)
     await room.say('hi',...mentionIdList)
   }
   if (room) {
@@ -64,7 +64,6 @@ async function onMessage (msg: Message) {
     }
   }
 
-
   if (msg.text() === 'p') {
     const fileBox1 = FileBox.fromUrl('http://pic.linecg.com/uploads/file/contents/2019/095d7772e8a0b1b.jpg')
     await msg.say(fileBox1)
@@ -72,12 +71,12 @@ async function onMessage (msg: Message) {
 
   if (msg.text() === 'c') {
     const contactList = await bot.Contact.findAll()
-    console.debug(contactList)
+    console.info(contactList)
   }
 
   if (msg.text() === 'r') {
     const roomList = await bot.Room.findAll()
-    console.debug(roomList)
+    console.info(roomList)
   }
 }
 
@@ -97,6 +96,6 @@ bot.on('message', onMessage)
 
 bot.start()
   .then(() => {
-    log.info('StarterBot', 'Starter Bot Started.')
+    return log.info('StarterBot', 'Starter Bot Started.')
   })
   .catch(e => log.error('StarterBot', e))

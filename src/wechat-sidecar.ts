@@ -16,6 +16,9 @@
  *   limitations under the License.
  *
  */
+import fs from 'fs'
+import path from 'path'
+
 import {
   Sidecar,
   SidecarBody,
@@ -27,11 +30,13 @@ import {
   agentTarget,
 }                 from 'sidecar'
 
-import fs from 'fs'
+import { codeRoot } from './cjs.js'
 
-const initAgentScript = fs.readFileSync(require.resolve(
-  './init-agent-script.js'
-)).toString()
+const initAgentScript = fs.readFileSync(path.join(
+  codeRoot,
+  'src',
+  'init-agent-script.js'
+), 'utf-8')
 
 @Sidecar('WeChat.exe', initAgentScript)
 class WeChatSidecar extends SidecarBody {
