@@ -15,10 +15,10 @@
     "wechaty-puppet": ">=0.43"
   },
   "scripts": {
-    "clean": "shx rm -fr dist/* generated/*",
+    "clean": "shx rm -fr dist/*",
     "dist": "npm-run-all clean build dist:copy dist:commonjs",
     "build": "tsc && tsc -p tsconfig.cjs.json",
-    "dist:commonjs": "shx echo '{\"type\": \"commonjs\"}' > dist/cjs/package.json",
+    "dist:commonjs": "jq -n \"{ type: \\\"commonjs\\\" }\" > dist/cjs/package.json",
     "dist:copy": "npm-run-all copy:esm copy:cjs",
     "copy:esm": "shx cp -R commonjs/ dist/esm/ && shx cp src/init-agent-script.js dist/esm/src",
     "copy:cjs": "shx cp -R commonjs/ dist/cjs/ && shx cp src/init-agent-script.js dist/cjs/src",
