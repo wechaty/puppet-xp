@@ -15,7 +15,7 @@
     "wechaty-puppet": ">=0.43"
   },
   "scripts": {
-    "clean": "shx rm -fr dist/* generated/*",
+    "clean": "shx rm -fr dist/*",
     "dist": "npm-run-all clean build dist:copy dist:commonjs",
     "build": "tsc && tsc -p tsconfig.cjs.json",
     "dist:commonjs": "shx echo '{\"type\": \"commonjs\"}' > dist/cjs/package.json",
