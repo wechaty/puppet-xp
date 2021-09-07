@@ -48,6 +48,7 @@ npm install
 ### main v0.5
 
 1. ES Module support
+2. [WeChatSetup-v3.3.0.115.exe](https://github.com/wechaty/wechaty-puppet-xp/releases/download/v0.5/WeChatSetup-v3.3.0.115.exe)
 
 ### v0.4.7 (Aug 15, 2021)
 
