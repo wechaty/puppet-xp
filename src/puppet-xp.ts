@@ -46,6 +46,7 @@ import {
   ContactGender,
   ContactType,
   throwUnsupportedError,
+  FileBoxType,
 }                           from 'wechaty-puppet'
 import {
   attach,
@@ -59,7 +60,6 @@ import {
 }                                   from './config.js'
 
 import { WeChatSidecar } from './wechat-sidecar.js'
-import { FileBoxType } from 'file-box'
 
 export type PuppetXpOptions = PuppetOptions
 
@@ -115,8 +115,12 @@ class PuppetXp extends Puppet {
     log.verbose('PuppetXp', '#tryStart()')
 
     if (this.#sidecar) {
+      // Huan(2021-09-13): need to call `detach` to make sure the sidecar will be closed?
+      await detach(this.#sidecar)
+      this.#sidecar = undefined
       log.warn('PuppetXp', '#tryStart() this.#sidecar exists? will be replaced by a new one.')
     }
+
     this.#sidecar = new WeChatSidecar()
 
     await attach(this.sidecar)
