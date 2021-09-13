@@ -31,7 +31,11 @@ async function main () {
 
   console.info('WeChat Sidecar started.')
 
-  sidecar.on('recvMsg', async args => {
+  sidecar.on('hook', async ({ method, args }) => {
+    if (method !== 'recvMsg') {
+      return
+    }
+
     console.info('recvMsg:', args)
 
     if (args instanceof Error) {
@@ -45,7 +49,6 @@ async function main () {
 
     console.info('recvMsg: talkerId =', talkerId)
     console.info('recvMsg: text =', text)
-
 
     if (talkerId && text === 'ding') {
       console.info('recvMsg: ding found, reply dong')

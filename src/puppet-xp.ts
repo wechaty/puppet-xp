@@ -73,7 +73,10 @@ class PuppetXp extends Puppet {
 
   private contactStore: { [k: string]: ContactPayload }
 
-  protected sidecar: WeChatSidecar
+  #sidecar?: WeChatSidecar
+  protected get sidecar (): WeChatSidecar {
+    return this.#sidecar!
+  }
 
   constructor (
     public override options: PuppetXpOptions = {},
@@ -85,7 +88,6 @@ class PuppetXp extends Puppet {
     this.messageStore = {}
     this.roomStore = {}
     this.contactStore = {}
-    this.sidecar = new WeChatSidecar()
   }
 
   override async start (): Promise<void> {
@@ -98,6 +100,24 @@ class PuppetXp extends Puppet {
     }
 
     this.state.on('pending')
+
+    try {
+      await this.#tryStart()
+      await super.start()
+      this.state.on(true)
+    } catch (e) {
+      this.state.off(true)
+    }
+
+  }
+
+  async #tryStart () {
+    log.verbose('PuppetXp', '#tryStart()')
+
+    if (this.#sidecar) {
+      log.warn('PuppetXp', '#tryStart() this.#sidecar exists? will be replaced by a new one.')
+    }
+    this.#sidecar = new WeChatSidecar()
 
     await attach(this.sidecar)
 
@@ -155,10 +175,11 @@ class PuppetXp extends Puppet {
     // console.debug(this.roomStore)
     // console.debug(this.contactStore)
 
-    this.sidecar.on('recvMsg', async args => {
-      if (args instanceof Error) {
-        throw args
+    this.sidecar.on('hook', async ({ method, args }) => {
+      if (method !== 'recvMsg') {
+        return
       }
+
       // console.info(args)
       let type
       let roomId = ''
@@ -195,12 +216,14 @@ class PuppetXp extends Puppet {
       this.emit('message', { messageId: payload.id })
     })
 
+    this.sidecar.on('error', e => this.emit('error', {
+      message : e.message,
+      name    : e.name,
+      stack   : e.stack,
+    }))
+
     // FIXME: use the real login contact id
     await this.login('filehelper')
-
-    // Do some async initializing tasks
-
-    this.state.on(true)
   }
 
   override async stop (): Promise<void> {
@@ -214,6 +237,19 @@ class PuppetXp extends Puppet {
 
     this.state.off('pending')
 
+    try {
+      await super.stop()
+      await this.#tryStop()
+    } catch (e) {
+      log.error('PuppetXp', 'stop() rejection: %s', (e as Error).message)
+    } finally {
+      this.state.off(true)
+    }
+  }
+
+  async #tryStop () {
+    log.verbose('PuppetXp', 'tryStop()')
+
     this.sidecar.removeAllListeners()
 
     if (this.logonoff()) {
@@ -221,9 +257,7 @@ class PuppetXp extends Puppet {
     }
 
     await detach(this.sidecar)
-
-    // await some tasks...
-    this.state.off(true)
+    this.#sidecar = undefined
   }
 
   override login (contactId: string): Promise<void> {
