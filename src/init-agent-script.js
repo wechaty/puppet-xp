@@ -239,16 +239,44 @@ const recvMsgNativeCallback = (() => {
     moduleBaseAddress.add(offset.hook_point),
     {
       onEnter() {
-        const addr = this.context.ebp.sub(0xc28)//0xc30-0x08
-        const msgType = addr.add(0x30).readU32()
+        const addr = this.context.ebp.sub(0xc30)//0xc30-0x08
+        const msgType = addr.add(0x38).readU32()
 
-        if (msgType>0){
-        const talkerIdPtr = addr.add(0x40).readPointer()
-        const contentPtr  = addr.add(0x68).readPointer()
-        const groupMsgSenderIdPtr= addr.add(0x168).readPointer()
-        const xmlContentPtr=addr.add(0x1d0).readPointer()
+        if(msgType>0){  
 
-        setImmediate(() => nativeativeFunction(msgType,talkerIdPtr, contentPtr,groupMsgSenderIdPtr,xmlContentPtr))
+         const talkerIdPtr = addr.add(0x48).readPointer()
+         const talkerIdLen = talkerIdPtr.readUtf16String().length * 2 +1
+         const myTalkerIdPtr = Memory.alloc(talkerIdLen) 
+         Memory.copy(myTalkerIdPtr, talkerIdPtr, talkerIdLen)
+
+
+         const contentPtr  = addr.add(0x70).readPointer()
+         const contentLen = contentPtr.readUtf16String().length * 2 +1
+         const myContentPtr = Memory.alloc(contentLen) 
+         Memory.copy(myContentPtr, contentPtr, contentLen)
+  
+         const groupMsgAddr = addr.add(0x170).readU32()
+         let myGroupMsgSenderIdPtr=null
+         if(groupMsgAddr == 0){//weChatPublic is zero，type is 49
+
+            myGroupMsgSenderIdPtr       = Memory.alloc(0x10)
+            myGroupMsgSenderIdPtr.writeUtf16String("null")
+
+         }else{
+
+            const groupMsgSenderIdPtr= addr.add(0x170).readPointer()
+            const groupMsgSenderIdLen = groupMsgSenderIdPtr.readUtf16String().length * 2 +1
+            myGroupMsgSenderIdPtr = Memory.alloc(groupMsgSenderIdLen) 
+            Memory.copy(myGroupMsgSenderIdPtr, groupMsgSenderIdPtr, groupMsgSenderIdLen)
+
+        }
+         
+         const xmlContentPtr=addr.add(0x1d8).readPointer()
+         const xmlContentLen = xmlContentPtr.readUtf16String().length * 2 +1
+         const myXmlContentPtr = Memory.alloc(xmlContentLen) 
+         Memory.copy(myXmlContentPtr, xmlContentPtr, xmlContentLen)
+         
+        setImmediate(() => nativeativeFunction(msgType,myTalkerIdPtr, myContentPtr,myGroupMsgSenderIdPtr,myXmlContentPtr))
       }
     }
   })

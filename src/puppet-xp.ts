@@ -17,8 +17,9 @@
  *
  */
 import cuid from 'cuid'
-import path  from 'path'
+import path from 'path'
 import fs from 'fs'
+// import xml2js from 'xml2js'
 
 import {
   ContactPayload,
@@ -51,15 +52,15 @@ import {
 import {
   attach,
   detach,
-}           from 'sidecar'
+}                           from 'sidecar'
 
 import {
   CHATIE_OFFICIAL_ACCOUNT_QRCODE,
   qrCodeForChatie,
   VERSION,
-}                                   from './config.js'
+}                                     from './config.js'
 
-import { WeChatSidecar } from './wechat-sidecar.js'
+import { WeChatSidecar }              from './wechat-sidecar.js'
 
 export type PuppetXpOptions = PuppetOptions
 
@@ -129,14 +130,14 @@ class PuppetXp extends Puppet {
 
     for (const contactKey in contactList) {
       const contactInfo = contactList[contactKey]
-      const contact =  {
-        alias : '',
-        avatar : '',
-        gender : ContactGender.Unknown,
-        id : contactInfo.id,
-        name  : contactInfo.name,
-        phone : [],
-        type  : ContactType.Unknown,
+      const contact = {
+        alias: '',
+        avatar: '',
+        gender: ContactGender.Unknown,
+        id: contactInfo.id,
+        name: contactInfo.name,
+        phone: [],
+        type: ContactType.Unknown,
       }
       this.contactStore[contactInfo.id] = contact
     }
@@ -148,13 +149,13 @@ class PuppetXp extends Puppet {
       const roomMember = roomInfo.roomMember
       const topic = this.contactStore[roomId]?.name || ''
       const room = {
-        adminIdList  : [],
-        avatar     : '',
-        external    : false,
-        id :roomId,
-        memberIdList : roomMember,
-        ownerId     : '',
-        topic        : topic,
+        adminIdList: [],
+        avatar: '',
+        external: false,
+        id: roomId,
+        memberIdList: roomMember,
+        ownerId: '',
+        topic: topic,
       }
       this.roomStore[roomId] = room
 
@@ -162,14 +163,14 @@ class PuppetXp extends Puppet {
         const memberId = roomMember[memberKey]
         if (!this.contactStore[memberId]) {
           const memberNickName = await this.sidecar.getChatroomMemberNickInfo(memberId, roomId)
-          const contact =  {
-            alias : '',
-            avatar : '',
-            gender : ContactGender.Unknown,
-            id : memberId,
-            name  : memberNickName,
-            phone : [],
-            type  : ContactType.Unknown,
+          const contact = {
+            alias: '',
+            avatar: '',
+            gender: ContactGender.Unknown,
+            id: memberId,
+            name: memberNickName,
+            phone: [],
+            type: ContactType.Unknown,
           }
           this.contactStore[memberId] = contact
         }
@@ -187,22 +188,35 @@ class PuppetXp extends Puppet {
       // console.info(args)
       let type
       let roomId = ''
-      let toId    = ''
+      let toId = ''
       let fromId = ''
       const text = String(args[2])
-      if (args[0] === 1) {
-        type = MessageType.Text
+      if (args[0] === 34) {
+        type = MessageType.Audio
+      } else if (args[0] === 42) {
+        type = MessageType.Contact
+      } else if (args[0] === 47) {
+        type = MessageType.Emoticon
       } else if (args[0] === 3) {
         type = MessageType.Image
+      } else if (args[0] === 1) {
+        type = MessageType.Text
+      } else if (args[0] === 43) {
+        type = MessageType.Video
       } else {
         type = MessageType.Unknown
       }
 
-      if (args[3] === null) {
-        fromId  = String(args[1])
+      // xml2js.parseString(String(args[4]), { explicitArray: false, ignoreAttrs: true }, function (err: any, json: object) {
+      //   console.info(err)
+      //   console.info(JSON.stringify(json))
+      // });
+
+      if (args[3] === 'null') {
+        fromId = String(args[1])
         toId = JSON.parse(await this.sidecar.getMyselfInfo()).id
       } else {
-        fromId  = String(args[3])
+        fromId = String(args[3])
         roomId = String(args[1])
       }
 
@@ -316,7 +330,7 @@ class PuppetXp extends Puppet {
   * Contact
   *
   */
-  override contactAlias (contactId: string)                      : Promise<string>
+  override contactAlias (contactId: string): Promise<string>
   override contactAlias (contactId: string, alias: string | null): Promise<void>
 
   override async contactAlias (contactId: string, alias?: string | null): Promise<void | string> {
@@ -328,8 +342,8 @@ class PuppetXp extends Puppet {
     return contact.alias
   }
 
-  override async contactPhone (contactId: string): Promise<string[]>
-  override async contactPhone (contactId: string, phoneList: string[]): Promise<void>
+  override async contactPhone(contactId: string): Promise<string[]>
+  override async contactPhone(contactId: string, phoneList: string[]): Promise<void>
 
   override async contactPhone (contactId: string, phoneList?: string[]): Promise<string[] | void> {
     log.verbose('PuppetXp', 'contactPhone(%s, %s)', contactId, phoneList)
@@ -352,8 +366,8 @@ class PuppetXp extends Puppet {
     return idList
   }
 
-  override async contactAvatar (contactId: string)                : Promise<FileBox>
-  override async contactAvatar (contactId: string, file: FileBox) : Promise<void>
+  override async contactAvatar (contactId: string): Promise<FileBox>
+  override async contactAvatar (contactId: string, file: FileBox): Promise<void>
 
   override async contactAvatar (contactId: string, file?: FileBox): Promise<void | FileBox> {
     log.verbose('PuppetXp', 'contactAvatar(%s)', contactId)
@@ -387,7 +401,7 @@ class PuppetXp extends Puppet {
   * Conversation
   *
   */
-  override async conversationReadMark (conversationId: string, hasRead?: boolean) : Promise<void> {
+  override async conversationReadMark (conversationId: string, hasRead?: boolean): Promise<void> {
     log.verbose('PuppetService', 'conversationRead(%s, %s)', conversationId, hasRead)
   }
 
@@ -410,7 +424,7 @@ class PuppetXp extends Puppet {
   override async messageImage (
     messageId: string,
     imageType: ImageType,
-  ) : Promise<FileBox> {
+  ): Promise<FileBox> {
     log.verbose('PuppetXp', 'messageImage(%s, %s[%s])',
       messageId,
       imageType,
@@ -441,15 +455,15 @@ class PuppetXp extends Puppet {
     )
   }
 
-  override async messageUrl (messageId: string)  : Promise<UrlLinkPayload> {
+  override async messageUrl (messageId: string): Promise<UrlLinkPayload> {
     log.verbose('PuppetXp', 'messageUrl(%s)', messageId)
     // const attachment = this.mocker.MockMessage.loadAttachment(messageId)
     // if (attachment instanceof UrlLink) {
     //   return attachment.payload
     // }
     return {
-      title : 'mock title for ' + messageId,
-      url   : 'https://mock.url',
+      title: 'mock title for ' + messageId,
+      url: 'https://mock.url',
     }
   }
 
@@ -460,7 +474,7 @@ class PuppetXp extends Puppet {
     //   return attachment.payload
     // }
     return {
-      title : 'mock title for ' + messageId,
+      title: 'mock title for ' + messageId,
     }
   }
 
@@ -476,12 +490,12 @@ class PuppetXp extends Puppet {
     if (!payload) {
       throw new Error('no payload')
     }
-    return  payload
+    return payload
   }
 
   override async messageSendText (
     conversationId: string,
-    text     : string,
+    text: string,
     mentionIdList?: string[]
   ): Promise<void> {
     if (conversationId.split('@').length === 2 && mentionIdList && mentionIdList[0]) {
@@ -493,7 +507,7 @@ class PuppetXp extends Puppet {
 
   override async messageSendFile (
     conversationId: string,
-    file     : FileBox,
+    file: FileBox,
   ): Promise<void> {
     // throwUnsupportedError(conversationId, file)
     // console.debug(__dirname)
@@ -514,7 +528,7 @@ class PuppetXp extends Puppet {
 
   override async messageSendContact (
     conversationId: string,
-    contactId : string,
+    contactId: string,
   ): Promise<void> {
     log.verbose('PuppetXp', 'messageSendUrl(%s, %s)', conversationId, contactId)
 
@@ -525,7 +539,7 @@ class PuppetXp extends Puppet {
   override async messageSendUrl (
     conversationId: string,
     urlLinkPayload: UrlLinkPayload,
-  ) : Promise<void> {
+  ): Promise<void> {
     log.verbose('PuppetXp', 'messageSendUrl(%s, %s)', conversationId, JSON.stringify(urlLinkPayload))
 
     // const url = new UrlLink(urlLinkPayload)
@@ -543,7 +557,7 @@ class PuppetXp extends Puppet {
 
   override async messageForward (
     conversationId: string,
-    messageId : string,
+    messageId: string,
   ): Promise<void> {
     log.verbose('PuppetXp', 'messageForward(%s, %s)',
       conversationId,
@@ -575,8 +589,8 @@ class PuppetXp extends Puppet {
   }
 
   override async roomDel (
-    roomId    : string,
-    contactId : string,
+    roomId: string,
+    contactId: string,
   ): Promise<void> {
     log.verbose('PuppetXp', 'roomDel(%s, %s)', roomId, contactId)
   }
@@ -594,14 +608,14 @@ class PuppetXp extends Puppet {
   }
 
   override async roomAdd (
-    roomId    : string,
-    contactId : string,
+    roomId: string,
+    contactId: string,
   ): Promise<void> {
     log.verbose('PuppetXp', 'roomAdd(%s, %s)', roomId, contactId)
   }
 
-  override async roomTopic (roomId: string)                : Promise<string>
-  override async roomTopic (roomId: string, topic: string) : Promise<void>
+  override async roomTopic(roomId: string): Promise<string>
+  override async roomTopic(roomId: string, topic: string): Promise<void>
 
   override async roomTopic (
     roomId: string,
@@ -617,8 +631,8 @@ class PuppetXp extends Puppet {
   }
 
   override async roomCreate (
-    contactIdList : string[],
-    topic         : string,
+    contactIdList: string[],
+    topic: string,
   ): Promise<string> {
     log.verbose('PuppetXp', 'roomCreate(%s, %s)', contactIdList, topic)
 
@@ -634,34 +648,34 @@ class PuppetXp extends Puppet {
     return roomId + ' mock qrcode'
   }
 
-  override async roomMemberList (roomId: string) : Promise<string[]> {
+  override async roomMemberList (roomId: string): Promise<string[]> {
     log.verbose('PuppetXp', 'roomMemberList(%s)', roomId)
     return (await this.roomRawPayload(roomId)).memberIdList
   }
 
-  override async roomMemberRawPayload (roomId: string, contactId: string): Promise<RoomMemberPayload>  {
+  override async roomMemberRawPayload (roomId: string, contactId: string): Promise<RoomMemberPayload> {
     log.verbose('PuppetXp', 'roomMemberRawPayload(%s, %s)', roomId, contactId)
     const contact = this.contactStore[contactId]
-    const MemberRawPayload =  {
-      avatar    : '',
-      id        : contactId,
-      inviterId : contactId,   // "wxid_7708837087612",
-      name      : contact?.name || '',
-      roomAlias : contact?.name || '',
+    const MemberRawPayload = {
+      avatar: '',
+      id: contactId,
+      inviterId: contactId,   // "wxid_7708837087612",
+      name: contact?.name || '',
+      roomAlias: contact?.name || '',
     }
     // console.info(MemberRawPayload)
     return MemberRawPayload
   }
 
-  override async roomMemberRawPayloadParser (rawPayload: RoomMemberPayload): Promise<RoomMemberPayload>  {
+  override async roomMemberRawPayloadParser (rawPayload: RoomMemberPayload): Promise<RoomMemberPayload> {
     log.verbose('PuppetXp---------------------', 'roomMemberRawPayloadParser(%s)', rawPayload)
     return rawPayload
   }
 
-  override async roomAnnounce (roomId: string)                : Promise<string>
-  override async roomAnnounce (roomId: string, text: string)  : Promise<void>
+  override async roomAnnounce (roomId: string): Promise<string>
+  override async roomAnnounce (roomId: string, text: string): Promise<void>
 
-  override async roomAnnounce (roomId: string, text?: string) : Promise<void | string> {
+  override async roomAnnounce (roomId: string, text?: string): Promise<void | string> {
     if (text) {
       return
     }
@@ -714,14 +728,14 @@ class PuppetXp extends Puppet {
   }
 
   override async friendshipAdd (
-    contactId : string,
-    hello     : string,
+    contactId: string,
+    hello: string,
   ): Promise<void> {
     log.verbose('PuppetXp', 'friendshipAdd(%s, %s)', contactId, hello)
   }
 
   override async friendshipAccept (
-    friendshipId : string,
+    friendshipId: string,
   ): Promise<void> {
     log.verbose('PuppetXp', 'friendshipAccept(%s)', friendshipId)
   }

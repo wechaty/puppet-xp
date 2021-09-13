@@ -1,6 +1,6 @@
 {
   "name": "wechaty-puppet-xp",
-  "version": "0.5.10",
+  "version": "0.5.17",
   "description": "Puppet XP for Wechaty",
   "type": "module",
   "exports": {
@@ -68,7 +68,6 @@
     "typescript": "^4.4.3",
     "wechaty": "^0.69.45"
   },
-  "peerDependencies": {},
   "dependencies": {
     "cuid": "^2.1.8",
     "sidecar": "^0.17.8",
