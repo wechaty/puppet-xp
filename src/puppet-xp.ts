@@ -165,10 +165,18 @@ class PuppetXp extends Puppet {
       let toId    = ''
       let fromId = ''
       const text = String(args[2])
-      if (args[0] === 1) {
-        type = MessageType.Text
+      if (args[0] === 34) {
+        type = MessageType.Audio
+      } else if (args[0] === 42) {
+        type = MessageType.Contact
+      } else if (args[0] === 47) {
+        type = MessageType.Emoticon
       } else if (args[0] === 3) {
         type = MessageType.Image
+      } else if (args[0] === 1) {
+        type = MessageType.Text
+      } else if (args[0] === 43) {
+        type = MessageType.Video
       } else {
         type = MessageType.Unknown
       }
