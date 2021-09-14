@@ -19,7 +19,7 @@
 import cuid from 'cuid'
 import path from 'path'
 import fs from 'fs'
-// import xml2js from 'xml2js'
+import xml2js from 'xml2js'
 
 import {
   ContactPayload,
@@ -160,12 +160,13 @@ class PuppetXp extends Puppet {
       if (args instanceof Error) {
         throw args
       }
-      // console.info(args)
-      let type
+      console.info(args)
+      let type = MessageType.Unknown
       let roomId = ''
       let toId = ''
       let fromId = ''
       const text = String(args[2])
+
       if (args[0] === 34) {
         type = MessageType.Audio
       } else if (args[0] === 42) {
@@ -179,15 +180,22 @@ class PuppetXp extends Puppet {
       } else if (args[0] === 43) {
         type = MessageType.Video
       } else {
-        type = MessageType.Unknown
+        xml2js.parseString(text, { explicitArray: false, ignoreAttrs: true }, function (err: any, json: {msg: {appmsg:{type:Number}}}) {
+          console.info(err)
+          console.info(JSON.stringify(json))
+          if (json.msg.appmsg.type === 5) {
+            type = MessageType.Url
+          } else if (json.msg.appmsg.type === 33) {
+            type = MessageType.MiniProgram
+          } else if (json.msg.appmsg.type === 6) {
+            type = MessageType.Attachment
+          } else {
+            type = MessageType.Unknown
+          }
+        })
       }
 
-      // xml2js.parseString(String(args[4]), { explicitArray: false, ignoreAttrs: true }, function (err: any, json: object) {
-      //   console.info(err)
-      //   console.info(JSON.stringify(json))
-      // });
-
-      if (args[3] === 'null') {
+      if (String(args[1]).split('@').length !== 2) {
         fromId = String(args[1])
         toId = JSON.parse(await this.sidecar.getMyselfInfo()).id
       } else {
@@ -204,7 +212,7 @@ class PuppetXp extends Puppet {
         toId,
         type,
       }
-      // console.info(payload)
+      console.info(payload)
       this.messageStore[payload.id] = payload
       this.emit('message', { messageId: payload.id })
     })
