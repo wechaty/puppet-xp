@@ -241,21 +241,22 @@ const recvMsgNativeCallback = (() => {
       onEnter() {
         const addr = this.context.ebp.sub(0xc30)//0xc30-0x08
         const msgType = addr.add(0x38).readU32()
-
+        
         if(msgType>0){  
 
          const talkerIdPtr = addr.add(0x48).readPointer()
-         const talkerIdLen = talkerIdPtr.readUtf16String().length * 2 +1
+         const talkerIdLen = addr.add(0x48+0x04).readU32() * 2 + 2
+
          const myTalkerIdPtr = Memory.alloc(talkerIdLen) 
          Memory.copy(myTalkerIdPtr, talkerIdPtr, talkerIdLen)
 
 
          const contentPtr  = addr.add(0x70).readPointer()
-         const contentLen = contentPtr.readUtf16String().length * 2 +1
+         const contentLen  = addr.add(0x70+0x04).readU32() * 2 + 2
          const myContentPtr = Memory.alloc(contentLen) 
          Memory.copy(myContentPtr, contentPtr, contentLen)
   
-         const groupMsgAddr = addr.add(0x170).readU32()
+         const groupMsgAddr = addr.add(0x170).readU32() //* 2 + 2
          let myGroupMsgSenderIdPtr=null
          if(groupMsgAddr == 0){//weChatPublic is zero，type is 49
 
@@ -265,16 +266,27 @@ const recvMsgNativeCallback = (() => {
          }else{
 
             const groupMsgSenderIdPtr= addr.add(0x170).readPointer()
-            const groupMsgSenderIdLen = groupMsgSenderIdPtr.readUtf16String().length * 2 +1
+            const groupMsgSenderIdLen = addr.add(0x170+0x04).readU32() * 2 + 2
             myGroupMsgSenderIdPtr = Memory.alloc(groupMsgSenderIdLen) 
             Memory.copy(myGroupMsgSenderIdPtr, groupMsgSenderIdPtr, groupMsgSenderIdLen)
 
         }
          
-         const xmlContentPtr=addr.add(0x1d8).readPointer()
-         const xmlContentLen = xmlContentPtr.readUtf16String().length * 2 +1
-         const myXmlContentPtr = Memory.alloc(xmlContentLen) 
-         Memory.copy(myXmlContentPtr, xmlContentPtr, xmlContentLen)
+         const xmlNullPtr = addr.add(0x1d8).readU32()
+         let   myXmlContentPtr=null
+         if(xmlNullPtr == 0){
+
+          myXmlContentPtr       = Memory.alloc(0x10)
+          myXmlContentPtr.writeUtf16String("null")
+            
+         }else{
+            const xmlContentPtr=addr.add(0x1d8).readPointer()
+
+            const xmlContentLen=addr.add(0x1d8+0x04).readU32() * 2 + 2
+            myXmlContentPtr = Memory.alloc(xmlContentLen) 
+            Memory.copy(myXmlContentPtr, xmlContentPtr, xmlContentLen)
+         }
+
          
         setImmediate(() => nativeativeFunction(msgType,myTalkerIdPtr, myContentPtr,myGroupMsgSenderIdPtr,myXmlContentPtr))
       }
