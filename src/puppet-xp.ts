@@ -172,6 +172,7 @@ class PuppetXp extends Puppet {
           const contact = {
             alias: '',
             avatar: '',
+            friend: false,
             gender: ContactGender.Unknown,
             id: memberId,
             name: memberNickName,
@@ -527,8 +528,7 @@ class PuppetXp extends Puppet {
     file: FileBox,
   ): Promise<void> {
     // throwUnsupportedError(conversationId, file)
-    // console.debug(__dirname)
-    const filePath = path.join(path.dirname(__filename), file.name)
+    const filePath = path.resolve(file.name)
     await file.toFile(filePath, true)
     if (file.type() === FileBoxType.Url) {
       try {

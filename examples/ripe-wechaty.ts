@@ -8,12 +8,12 @@ import {
   ScanStatus,
   Wechaty,
   log,
-  FileBox,
-}                  from 'wechaty'
+  // FileBox,
+} from 'wechaty'
 
 import { PuppetXp } from '../src/puppet-xp.js'
 
-function onScan (qrcode: string, status: ScanStatus) {
+function onScan(qrcode: string, status: ScanStatus) {
   if (status === ScanStatus.Waiting || status === ScanStatus.Timeout) {
     const qrcodeImageUrl = [
       'https://wechaty.js.org/qrcode/',
@@ -26,57 +26,21 @@ function onScan (qrcode: string, status: ScanStatus) {
   }
 }
 
-function onLogin (user: Contact) {
+async function onLogin(user: Contact) {
   log.info('StarterBot', '%s login', user)
+  console.debug('ready======================================================')
+  const roomList = await bot.Room.findAll()
+  console.info(roomList.length)
 }
 
-function onLogout (user: Contact) {
+function onLogout(user: Contact) {
   log.info('StarterBot', '%s logout', user)
 }
 
-async function onMessage (msg: Message) {
+async function onMessage(msg: Message) {
   log.info('StarterBot', msg.toString())
-  const talker = msg.talker()
-  // console.debug(talker)
-  // const alias = await talker.alias()
-  // console.info(alias)
-  const name = talker.name()
-  console.info(name)
-  const room = msg.room()
-  // console.debug(room)
   if (msg.text() === 'ding') {
     await msg.say('dong')
-  }
-  if (msg.text() === 'at' && room) {
-    const mentionIdList = []
-    mentionIdList.push(talker)
-    console.info(mentionIdList)
-    await room.say('hi',...mentionIdList)
-  }
-  if (room) {
-    // const member =await room.memberAll(name)
-    // console.debug('member-------------------------------',member)
-    if (msg.text() === 'f') {
-      const c = await bot.Contact.find({id: 'tyutluyc'})
-      if (c) {
-        await msg.forward(c)
-      }
-    }
-  }
-
-  if (msg.text() === 'p') {
-    const fileBox1 = FileBox.fromUrl('http://pic.linecg.com/uploads/file/contents/2019/095d7772e8a0b1b.jpg')
-    await msg.say(fileBox1)
-  }
-
-  if (msg.text() === 'c') {
-    const contactList = await bot.Contact.findAll()
-    console.info(contactList)
-  }
-
-  if (msg.text() === 'r') {
-    const roomList = await bot.Room.findAll()
-    console.info(roomList)
   }
 }
 
@@ -89,13 +53,13 @@ const bot = new Wechaty({
   // }
 })
 
-bot.on('scan',    onScan)
-bot.on('login',   onLogin)
-bot.on('logout',  onLogout)
+bot.on('scan', onScan)
+bot.on('login', onLogin)
+bot.on('logout', onLogout)
 bot.on('message', onMessage)
 
 bot.start()
-  .then(() => {
+  .then( () => {
     return log.info('StarterBot', 'Starter Bot Started.')
   })
   .catch(e => log.error('StarterBot', e))
