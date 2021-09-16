@@ -138,6 +138,7 @@ class PuppetXp extends Puppet {
       const contact = {
         alias: '',
         avatar: '',
+        friend: true,
         gender: ContactGender.Unknown,
         id: contactInfo.id,
         name: contactInfo.name,
