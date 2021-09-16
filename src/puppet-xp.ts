@@ -74,6 +74,8 @@ class PuppetXp extends Puppet {
 
   private contactStore: { [k: string]: ContactPayload }
 
+  private selfInfo: any
+
   #sidecar?: WeChatSidecar
   protected get sidecar (): WeChatSidecar {
     return this.#sidecar!
@@ -89,6 +91,7 @@ class PuppetXp extends Puppet {
     this.messageStore = {}
     this.roomStore = {}
     this.contactStore = {}
+    this.selfInfo = {}
   }
 
   override async start (): Promise<void> {
@@ -125,6 +128,8 @@ class PuppetXp extends Puppet {
     this.#sidecar = new WeChatSidecar()
 
     await attach(this.sidecar)
+
+    this.selfInfo = JSON.parse(await this.sidecar.getMyselfInfo())
 
     const contactList = JSON.parse(await this.sidecar.getContact())
 
@@ -222,7 +227,7 @@ class PuppetXp extends Puppet {
 
       if (String(args[1]).split('@').length !== 2) {
         fromId = String(args[1])
-        toId = JSON.parse(await this.sidecar.getMyselfInfo()).id
+        toId = this.selfInfo.id
       } else {
         fromId = String(args[3])
         roomId = String(args[1])
@@ -237,7 +242,7 @@ class PuppetXp extends Puppet {
         toId,
         type,
       }
-      console.info(payload)
+      // console.info(payload)
       this.messageStore[payload.id] = payload
       this.emit('message', { messageId: payload.id })
     })
@@ -249,7 +254,7 @@ class PuppetXp extends Puppet {
     }))
 
     // FIXME: use the real login contact id
-    await this.login('filehelper')
+    await this.login(this.selfInfo.id)
   }
 
   override async stop (): Promise<void> {
@@ -327,6 +332,9 @@ class PuppetXp extends Puppet {
 
   override async contactSelfName (name: string): Promise<void> {
     log.verbose('PuppetXp', 'contactSelfName(%s)', name)
+    if (!name) {
+      return this.selfInfo.name
+    }
   }
 
   override async contactSelfSignature (signature: string): Promise<void> {
