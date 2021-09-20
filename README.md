@@ -14,6 +14,8 @@
 
 <img src="https://camo.githubusercontent.com/6c7c7e10053c8e1936c084d17ea74c3437759fd1c4d3e02acca9256e2bfe9bb3/68747470733a2f2f692e6c6f6c692e6e65742f323032302f30352f30392f4858436c49663541324570554734752e706e67" alt="chatie puppet xp" width="300" height="300" align="bottom" />
 
+Official website: <https://wechaty.js.org/docs/puppet-providers/xp>
+
 ## WECHATY PUPPET YOUTH STAR
 
 wechaty-puppet-xp is a local puppet for Wecaty:
@@ -78,7 +80,13 @@ Support room.say(text, ...mentionList), you can at RoomMember.
 
 ### v0.0.1 (July 19, 2021)
 
-Initial version.
+Initial version: <https://wechaty.js.org/docs/puppet-providers/xp>
+
+Blogs:
+
+- [喜讯：使用Windows微信桌面版协议登录，wechaty免费版协议即将登场, @atorber, Jul 05, 2021](https://wechaty.js.org/2021/07/05/puppet-laozhang-wechat-bot/)
+- [全新的Windows puppet项目wechaty-puppet-xp启动, @atorber, Jul 13, 2021](https://wechaty.js.org/2021/07/13/wechaty-puppet-xp-start-up/)
+- [code如诗，bot如歌，由Wechaty引发的一个小白冒险之旅, @老张学技术, Jul 05, 2021](https://wechaty.js.org/2021/07/05/code-like-poetry-bot-like-song/)
 
 ## Author
 
