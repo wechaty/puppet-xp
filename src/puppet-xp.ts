@@ -41,6 +41,7 @@ import {
 
   UrlLinkPayload,
   MiniProgramPayload,
+  LocationPayload,
 
   log,
   MessageType,
@@ -496,6 +497,17 @@ class PuppetXp extends Puppet {
     }
   }
 
+  override async messageLocation (messageId: string): Promise<LocationPayload> {
+    log.verbose('PuppetXp', 'messageLocation(%s)', messageId)
+    return {
+      accuracy  : 15, // in meters
+      address   : '北京市北京市海淀区45 Chengfu Rd',
+      latitude  : 39.995120999999997,
+      longitude : 116.334154,
+      name      : '东升乡政府',
+    }
+  }
+
   override async messageRawPayloadParser (payload: MessagePayload) {
     // console.info(payload)
     return payload
@@ -570,6 +582,13 @@ class PuppetXp extends Puppet {
     log.verbose('PuppetXp', 'messageSendMiniProgram(%s, %s)', conversationId, JSON.stringify(miniProgramPayload))
     // const miniProgram = new MiniProgram(miniProgramPayload)
     // return this.messageSend(conversationId, miniProgram)
+  }
+
+  override async messageSendLocation (
+    conversationId: string,
+    locationPayload: LocationPayload,
+  ): Promise<void | string> {
+    log.verbose('PuppetXp', 'messageSendLocation(%s, %s)', conversationId, JSON.stringify(locationPayload))
   }
 
   override async messageForward (
