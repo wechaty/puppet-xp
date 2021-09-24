@@ -95,6 +95,10 @@ class PuppetXp extends Puppet {
     this.selfInfo = {}
   }
 
+  override version () {
+    return VERSION
+  }
+
   override async start (): Promise<void> {
     log.verbose('PuppetXp', 'start()')
 
