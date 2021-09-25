@@ -157,7 +157,7 @@ class PuppetXp extends Puppet {
     for (const roomKey in roomList) {
       const roomInfo = roomList[roomKey]
       const roomId = roomInfo.roomid
-      const roomMember = roomInfo.roomMember
+      const roomMember = roomInfo.roomMember || []
       const topic = this.contactStore[roomId]?.name || ''
       const room = {
         adminIdList: [],
