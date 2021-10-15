@@ -245,17 +245,33 @@ const recvMsgNativeCallback = (() => {
         if(msgType>0){  
 
          const talkerIdPtr = addr.add(0x48).readPointer()
+         //console.log('txt msg',talkerIdPtr.readUtf16String())
          const talkerIdLen = addr.add(0x48+0x04).readU32() * 2 + 2
 
          const myTalkerIdPtr = Memory.alloc(talkerIdLen) 
          Memory.copy(myTalkerIdPtr, talkerIdPtr, talkerIdLen)
 
 
-         const contentPtr  = addr.add(0x70).readPointer()
-         const contentLen  = addr.add(0x70+0x04).readU32() * 2 + 2
-         const myContentPtr = Memory.alloc(contentLen) 
-         Memory.copy(myContentPtr, contentPtr, contentLen)
+         let contentPtr = null
+         let contentLen = 0
+         let myContentPtr = null
+         if (msgType == 3){// pic path
+          contentPtr  = addr.add(0x198).readPointer()
+          contentLen  = addr.add(0x198+0x04).readU32() * 2 + 2
+          myContentPtr = Memory.alloc(contentLen) 
+          Memory.copy(myContentPtr, contentPtr, contentLen)
+
+         }else{
+          contentPtr  = addr.add(0x70).readPointer()
+          contentLen  = addr.add(0x70+0x04).readU32() * 2 + 2
+          myContentPtr = Memory.alloc(contentLen) 
+          Memory.copy(myContentPtr, contentPtr, contentLen)
+        }
   
+        console.log('----------------------------------------')
+        console.log(msgType)
+        console.log(contentPtr.readUtf16String())
+        console.log('----------------------------------------')
          const groupMsgAddr = addr.add(0x170).readU32() //* 2 + 2
          let myGroupMsgSenderIdPtr=null
          if(groupMsgAddr == 0){//weChatPublic is zero，type is 49
