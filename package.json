@@ -1,6 +1,6 @@
 {
   "name": "wechaty-puppet-xp",
-  "version": "0.7.19",
+  "version": "0.7.20",
   "description": "Puppet XP for Wechaty",
   "type": "module",
   "exports": {
@@ -29,6 +29,7 @@
     "lint:md": "markdownlint README.md",
     "lint:ts": "tsc --isolatedModules --noEmit",
     "lint:es": "eslint \"src/**/*.ts\" \"tests/**/*.spec.ts\" --ignore-pattern tests/fixtures/",
+    "lint-fix": "eslint --fix \"src/**/*.ts\" \"tests/**/*.spec.ts\"",
     "test": "npm run lint && npm run test:unit",
     "test:pack": "bash -x scripts/npm-pack-testing.sh",
     "test:unit": "cross-env NODE_OPTIONS=\"--no-warnings --loader=ts-node/esm\" tap \"src/**/*.spec.ts\" \"tests/**/*.spec.ts\""
