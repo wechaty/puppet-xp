@@ -13,7 +13,7 @@ import {
 
 import { PuppetXp } from '../src/puppet-xp.js'
 
-function onScan(qrcode: string, status: ScanStatus) {
+function onScan (qrcode: string, status: ScanStatus) {
   if (status === ScanStatus.Waiting || status === ScanStatus.Timeout) {
     const qrcodeImageUrl = [
       'https://wechaty.js.org/qrcode/',
