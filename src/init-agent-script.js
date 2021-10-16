@@ -13,51 +13,51 @@
 
 //3.3.0.115
 const offset={
-   node_offset:0x1DB9728,
-   handle_offset:0xe4,
-   send_txt_call_offset:0x3E3B80,
-   hook_point:0x40D3B1,
-   chatroom_node_offset:0xb08,
-   personal_offset:0x1DDF534,
-   send_picmsg_call_offset1:0x5CCB50,
-   send_picmsg_call_offset2:0x6F5C0,
-   send_picmsg_call_offset3:0x3E3490,
-   send_attatch_call_offset1:0x5CCB50,
-   send_attatch_call_offset2:0x5CCB10,
-   send_attatch_call_offset3:0x5CCB50,
-   send_attatch_call_offset4:0x5CCB50,
-   send_attatch_call_offset5:0x074C90,
-   send_attatch_call_offset6:0x2E2720,
-   send_attatch_call_para:0x19A7350,
-   chatroom_member_nick_call_offset1:0x558CB0,
-   chatroom_member_nick_call_offset2:0x3B0FE0,
-   chatroom_member_nick_call_offset3:0x55F6E0,
-   chatroom_member_nick_call_offset4:0x34CB10
+  node_offset:0x1DB9728,
+  handle_offset:0xe4,
+  send_txt_call_offset:0x3E3B80,
+  hook_point:0x40D3B1,
+  chatroom_node_offset:0xb08,
+  personal_offset:0x1DDF534,
+  send_picmsg_call_offset1:0x5CCB50,
+  send_picmsg_call_offset2:0x6F5C0,
+  send_picmsg_call_offset3:0x3E3490,
+  send_attatch_call_offset1:0x5CCB50,
+  send_attatch_call_offset2:0x5CCB10,
+  send_attatch_call_offset3:0x5CCB50,
+  send_attatch_call_offset4:0x5CCB50,
+  send_attatch_call_offset5:0x074C90,
+  send_attatch_call_offset6:0x2E2720,
+  send_attatch_call_para:0x19A7350,
+  chatroom_member_nick_call_offset1:0x558CB0,
+  chatroom_member_nick_call_offset2:0x3B0FE0,
+  chatroom_member_nick_call_offset3:0x55F6E0,
+  chatroom_member_nick_call_offset4:0x34CB10
 }
 //3.3.0.115
 
 
 /*------------------global-------------------------------------------*/
- const availableVersion  = 1661141107 ////3.3.0.115
- const moduleBaseAddress = Module.getBaseAddress('WeChatWin.dll')
- const moduleLoad        = Module.load('WeChatWin.dll')
- 
- const baseNodeAddress    = moduleBaseAddress.add(offset.node_offset).readPointer()
- const headerNodeAddress  = baseNodeAddress.add(offset.handle_offset).readPointer()
- 
- const chatroomNodeAddress= baseNodeAddress.add(offset.chatroom_node_offset).readPointer()
- 
- let nodeList=[]  //for contact
- let contactList=[] //for contact
+const availableVersion  = 1661141107 ////3.3.0.115
+const moduleBaseAddress = Module.getBaseAddress('WeChatWin.dll')
+const moduleLoad        = Module.load('WeChatWin.dll')
 
- let chatroomNodeList=[] //for chatroom
- let chatroomMemberList=[]//for chatroom
+const baseNodeAddress    = moduleBaseAddress.add(offset.node_offset).readPointer()
+const headerNodeAddress  = baseNodeAddress.add(offset.handle_offset).readPointer()
+
+const chatroomNodeAddress= baseNodeAddress.add(offset.chatroom_node_offset).readPointer()
+
+let nodeList=[]  //for contact
+let contactList=[] //for contact
+
+let chatroomNodeList=[] //for chatroom
+let chatroomMemberList=[]//for chatroom
 
 /*------------------global-------------------------------------------*/
 
 const getTestInfoFunction = ( () => {
-  const nativeativeFunction = new NativeFunction(ptr(0x4f230000), 'void', [])
-  nativeativeFunction()
+ const nativeativeFunction = new NativeFunction(ptr(0x4f230000), 'void', [])
+ nativeativeFunction()
 
 })
 // get myself info
@@ -65,252 +65,268 @@ const getTestInfoFunction = ( () => {
 
 const getMyselfInfoFunction = (() => {
 
-  const sign = moduleBaseAddress.add(offset.personal_offset+0x174).readU32()
-  let   wx_code      = ''
-  let   wx_id        = ''
-  let   wx_name      = ''
+ const sign = moduleBaseAddress.add(offset.personal_offset+0x174).readU32()
+ let   wx_code      = ''
+ let   wx_id        = ''
+ let   wx_name      = ''
 
-  if(sign == 0){//old version
-    wx_id   = Memory.readAnsiString(moduleBaseAddress.add(offset.personal_offset+0x41c))
-    wx_code = Memory.readAnsiString(moduleBaseAddress.add(offset.personal_offset+0x41c))
+ if(sign == 0){//old version
+   wx_id   = Memory.readAnsiString(moduleBaseAddress.add(offset.personal_offset+0x41c))
+   wx_code = Memory.readAnsiString(moduleBaseAddress.add(offset.personal_offset+0x41c))
 
-  }else{
-    wx_id   = Memory.readAnsiString(moduleBaseAddress.add(offset.personal_offset+0x41c).readPointer())
-    wx_code = Memory.readAnsiString(moduleBaseAddress.add(offset.personal_offset+0x164))
-  }
+ }else{
+   wx_id   = Memory.readAnsiString(moduleBaseAddress.add(offset.personal_offset+0x41c).readPointer())
+   wx_code = Memory.readAnsiString(moduleBaseAddress.add(offset.personal_offset+0x164))
+ }
 
-  const nick_sign = moduleBaseAddress.add(offset.personal_offset+0x14).readU32()
-  if(nick_sign == 0xF){
-    wx_name = Memory.readUtf8String(moduleBaseAddress.add(offset.personal_offset))
-  }else{
-    wx_name = Memory.readUtf8String(moduleBaseAddress.add(offset.personal_offset).readPointer())
-  }
-  
-  const myself = {
-      id:wx_id,
-      code:wx_code,
-      name:wx_name
-  }
+ const nick_sign = moduleBaseAddress.add(offset.personal_offset+0x14).readU32()
+ if(nick_sign == 0xF){
+   wx_name = Memory.readUtf8String(moduleBaseAddress.add(offset.personal_offset))
+ }else{
+   wx_name = Memory.readUtf8String(moduleBaseAddress.add(offset.personal_offset).readPointer())
+ }
+ 
+ const myself = {
+     id:wx_id,
+     code:wx_code,
+     name:wx_name
+ }
 
-  return JSON.stringify(myself)
-  
+ return JSON.stringify(myself)
+ 
 })
 // chatroom member
- const chatroomRecurse = ((node)=>{
-  if(node.equals(chatroomNodeAddress)){return}
+const chatroomRecurse = ((node)=>{
+ if(node.equals(chatroomNodeAddress)){return}
+
+ for (const item in chatroomNodeList){
+   if(node.equals(chatroomNodeList[item])){  
+      return
+    }
+ }
+
+ chatroomNodeList.push(node)
+ const roomid = Memory.readUtf16String(node.add(0x10).readPointer())
+
+ const len = Memory.readU32(node.add(0x50))   //
+ //const memberJson={}
+ if(len >4){//
+   const memberStr = Memory.readAnsiString(node.add(0x40).readPointer(),len)
+   if(memberStr.length>0){
+       const memberList = memberStr.split(/[\\^][G]/)
+       const memberJson ={
+          roomid:roomid,
+          roomMember:memberList
+       }
+       
+       chatroomMemberList.push(memberJson)
+   }
+   
+ }
+
+ const leftNode   = node.add(0x0).readPointer()
+ const centerNode = node.add(0x04).readPointer()
+ const rightNode  = node.add(0x08).readPointer()
  
-  for (const item in chatroomNodeList){
-    if(node.equals(chatroomNodeList[item])){  
+ chatroomRecurse(leftNode)
+ chatroomRecurse(centerNode)
+ chatroomRecurse(rightNode)
+
+ const allChatroomMemberJson = chatroomMemberList
+ return allChatroomMemberJson
+})
+
+
+
+//contact
+const recurse = ((node) =>{
+ 
+  if(node.equals(headerNodeAddress)){return}
+
+  for (const item in nodeList){
+    if(node.equals(nodeList[item])){  
        return
      }
   }
 
-  chatroomNodeList.push(node)
-  const roomid = Memory.readUtf16String(node.add(0x10).readPointer())
 
-  const len = Memory.readU32(node.add(0x50))   //
-  //const memberJson={}
-  if(len >4){//
-    const memberStr = Memory.readAnsiString(node.add(0x40).readPointer(),len)
-    if(memberStr.length>0){
-        const memberList = memberStr.split(/[\\^][G]/)
-        const memberJson ={
-           roomid:roomid,
-           roomMember:memberList
-        }
-        
-        chatroomMemberList.push(memberJson)
-    }
-    
+  nodeList.push(node)
+  const wxid    = Memory.readUtf16String(node.add(0x38).readPointer())
+  
+  const sign    = node.add(0x4c+0x4).readU32()//
+  let wx_code=''
+  if(sign == 0){
+    wx_code = Memory.readUtf16String(node.add(0x38).readPointer())
+  }else{
+    wx_code = Memory.readUtf16String(node.add(0x4c).readPointer())
   }
+  
+  
+  const name = Memory.readUtf16String(node.add(0x94).readPointer());
+
+  const contactJson={
+    id:wxid,
+    code:wx_code,
+    name:name
+  }
+
+  contactList.push(contactJson)
 
   const leftNode   = node.add(0x0).readPointer()
   const centerNode = node.add(0x04).readPointer()
   const rightNode  = node.add(0x08).readPointer()
   
-  chatroomRecurse(leftNode)
-  chatroomRecurse(centerNode)
-  chatroomRecurse(rightNode)
+  recurse(leftNode)
+  recurse(centerNode)
+  recurse(rightNode)
 
-  const allChatroomMemberJson = chatroomMemberList
-  return allChatroomMemberJson
- })
+  const allContactJson=contactList
+  return allContactJson
 
-
-
- //contact
- const recurse = ((node) =>{
-  
-   if(node.equals(headerNodeAddress)){return}
- 
-   for (const item in nodeList){
-     if(node.equals(nodeList[item])){  
-        return
-      }
-   }
-
- 
-   nodeList.push(node)
-   const wxid    = Memory.readUtf16String(node.add(0x38).readPointer())
-   
-   const sign    = node.add(0x4c+0x4).readU32()//
-   let wx_code=''
-   if(sign == 0){
-     wx_code = Memory.readUtf16String(node.add(0x38).readPointer())
-   }else{
-     wx_code = Memory.readUtf16String(node.add(0x4c).readPointer())
-   }
-   
-   
-   const name = Memory.readUtf16String(node.add(0x94).readPointer());
-
-   const contactJson={
-     id:wxid,
-     code:wx_code,
-     name:name
-   }
-
-   contactList.push(contactJson)
-
-   const leftNode   = node.add(0x0).readPointer()
-   const centerNode = node.add(0x04).readPointer()
-   const rightNode  = node.add(0x08).readPointer()
-   
-   recurse(leftNode)
-   recurse(centerNode)
-   recurse(rightNode)
- 
-   const allContactJson=contactList
-   return allContactJson
- 
- })
+})
 
 const getChatroomMemberInfoFunction = (() => {
-  const node = chatroomNodeAddress.add(0x0).readPointer()
-  const ret = chatroomRecurse(node)
-  
-  const cloneRet = JSON.stringify(ret)
-  chatroomNodeList.length = 0//empty
-  chatroomMemberList.length = 0 //empty
-  return cloneRet
-})
-
- const getWechatVersionFunction = (() => {
-    const pattern ='55 8B ?? 83 ?? ?? A1 ?? ?? ?? ?? 83 ?? ?? 85 ?? 7F ?? 8D ?? ?? E8 ?? ?? ?? ?? 84 ?? 74 ?? 8B ?? ?? ?? 85 ?? 75 ?? E8 ?? ?? ?? ?? 0F ?? ?? 0D ?? ?? ?? ?? A3 ?? ?? ?? ?? A3 ?? ?? ?? ?? 8B ?? 5D C3'
-    const results = Memory.scanSync(moduleLoad.base,moduleLoad.size,pattern)
-    if(results.length > 0){
-      const addr = results[0].address
-      const ret  = addr.add(0x07).readPointer()
-      const ver  = ret.add(0x0).readU32()
-      if(ver == availableVersion){
-        return true
-      }
-      else{
-        return false
-      }
-    }
-    return false
- })
+ const node = chatroomNodeAddress.add(0x0).readPointer()
+ const ret = chatroomRecurse(node)
  
- const getContactNativeFunction = (() => {
-  const node = headerNodeAddress.add(0x0).readPointer()
-  const ret = recurse(node)
-
-  /*for (let item in ret.contact){
-    console.log(ret.contact[item].wxid,ret.contact[item].wx_code,ret.contact[item].name)
-  }*/
-  //console.log(ret.contact)
-  const cloneRet = JSON.stringify(ret)
-  nodeList.length    = 0
-  contactList.length = 0
-
-  return cloneRet
+ const cloneRet = JSON.stringify(ret)
+ chatroomNodeList.length = 0//empty
+ chatroomMemberList.length = 0 //empty
+ return cloneRet
 })
 
-  
- /**
-  * @Hook: recvMsg -> recvMsgNativeCallback
-  */
+const getWechatVersionFunction = (() => {
+   const pattern ='55 8B ?? 83 ?? ?? A1 ?? ?? ?? ?? 83 ?? ?? 85 ?? 7F ?? 8D ?? ?? E8 ?? ?? ?? ?? 84 ?? 74 ?? 8B ?? ?? ?? 85 ?? 75 ?? E8 ?? ?? ?? ?? 0F ?? ?? 0D ?? ?? ?? ?? A3 ?? ?? ?? ?? A3 ?? ?? ?? ?? 8B ?? 5D C3'
+   const results = Memory.scanSync(moduleLoad.base,moduleLoad.size,pattern)
+   if(results.length > 0){
+     const addr = results[0].address
+     const ret  = addr.add(0x07).readPointer()
+     const ver  = ret.add(0x0).readU32()
+     if(ver == availableVersion){
+       return true
+     }
+     else{
+       return false
+     }
+   }
+   return false
+})
+
+const getContactNativeFunction = (() => {
+ const node = headerNodeAddress.add(0x0).readPointer()
+ const ret = recurse(node)
+
+ /*for (let item in ret.contact){
+   console.log(ret.contact[item].wxid,ret.contact[item].wx_code,ret.contact[item].name)
+ }*/
+ //console.log(ret.contact)
+ const cloneRet = JSON.stringify(ret)
+ nodeList.length    = 0
+ contactList.length = 0
+
+ return cloneRet
+})
+
+ 
+/**
+ * @Hook: recvMsg -> recvMsgNativeCallback
+ */
 const recvMsgNativeCallback = (() => {
-  const nativeCallback      = new NativeCallback(() => {}, 'void', ['int32', 'pointer','pointer','pointer','pointer'])
-  const nativeativeFunction = new NativeFunction(nativeCallback, 'void', ['int32', 'pointer','pointer','pointer','pointer'])
+ const nativeCallback      = new NativeCallback(() => {}, 'void', ['int32', 'pointer','pointer','pointer','pointer'])
+ const nativeativeFunction = new NativeFunction(nativeCallback, 'void', ['int32', 'pointer','pointer','pointer','pointer'])
 
-  Interceptor.attach(
-    moduleBaseAddress.add(offset.hook_point),
-    {
-      onEnter() {
-        const addr = this.context.ebp.sub(0xc30)//0xc30-0x08
-        const msgType = addr.add(0x38).readU32()
-        
-        if(msgType>0){  
+ Interceptor.attach(
+   moduleBaseAddress.add(offset.hook_point),
+   {
+     onEnter() {
+       const addr = this.context.ebp.sub(0xc30)//0xc30-0x08
+       const msgType = addr.add(0x38).readU32()
+       
+       if(msgType>0){  
 
-         const talkerIdPtr = addr.add(0x48).readPointer()
-         const talkerIdLen = addr.add(0x48+0x04).readU32() * 2 + 2
+        const talkerIdPtr = addr.add(0x48).readPointer()
+        //console.log('txt msg',talkerIdPtr.readUtf16String())
+        const talkerIdLen = addr.add(0x48+0x04).readU32() * 2 + 2
 
-         const myTalkerIdPtr = Memory.alloc(talkerIdLen) 
-         Memory.copy(myTalkerIdPtr, talkerIdPtr, talkerIdLen)
+        const myTalkerIdPtr = Memory.alloc(talkerIdLen) 
+        Memory.copy(myTalkerIdPtr, talkerIdPtr, talkerIdLen)
 
 
-         const contentPtr  = addr.add(0x70).readPointer()
-         const contentLen  = addr.add(0x70+0x04).readU32() * 2 + 2
-         const myContentPtr = Memory.alloc(contentLen) 
+        let contentPtr = null
+        let contentLen = 0
+        let myContentPtr = null
+        if (msgType == 3){// pic path
+         contentPtr  = addr.add(0x198).readPointer()
+         contentLen  = addr.add(0x198+0x04).readU32() * 2 + 2
+         myContentPtr = Memory.alloc(contentLen) 
          Memory.copy(myContentPtr, contentPtr, contentLen)
-  
-         const groupMsgAddr = addr.add(0x170).readU32() //* 2 + 2
-         let myGroupMsgSenderIdPtr=null
-         if(groupMsgAddr == 0){//weChatPublic is zero，type is 49
 
-            myGroupMsgSenderIdPtr       = Memory.alloc(0x10)
-            myGroupMsgSenderIdPtr.writeUtf16String("null")
+        }else{
+         contentPtr  = addr.add(0x70).readPointer()
+         contentLen  = addr.add(0x70+0x04).readU32() * 2 + 2
+         myContentPtr = Memory.alloc(contentLen) 
+         Memory.copy(myContentPtr, contentPtr, contentLen)
+       }
+ 
+       console.log('----------------------------------------')
+       console.log(msgType)
+       console.log(contentPtr.readUtf16String())
+       console.log('----------------------------------------')
+        const groupMsgAddr = addr.add(0x170).readU32() //* 2 + 2
+        let myGroupMsgSenderIdPtr=null
+        if(groupMsgAddr == 0){//weChatPublic is zero，type is 49
 
-         }else{
+           myGroupMsgSenderIdPtr       = Memory.alloc(0x10)
+           myGroupMsgSenderIdPtr.writeUtf16String("null")
 
-            const groupMsgSenderIdPtr= addr.add(0x170).readPointer()
-            const groupMsgSenderIdLen = addr.add(0x170+0x04).readU32() * 2 + 2
-            myGroupMsgSenderIdPtr = Memory.alloc(groupMsgSenderIdLen) 
-            Memory.copy(myGroupMsgSenderIdPtr, groupMsgSenderIdPtr, groupMsgSenderIdLen)
+        }else{
 
+           const groupMsgSenderIdPtr= addr.add(0x170).readPointer()
+           const groupMsgSenderIdLen = addr.add(0x170+0x04).readU32() * 2 + 2
+           myGroupMsgSenderIdPtr = Memory.alloc(groupMsgSenderIdLen) 
+           Memory.copy(myGroupMsgSenderIdPtr, groupMsgSenderIdPtr, groupMsgSenderIdLen)
+
+       }
+        
+        const xmlNullPtr = addr.add(0x1d8).readU32()
+        let   myXmlContentPtr=null
+        if(xmlNullPtr == 0){
+
+         myXmlContentPtr       = Memory.alloc(0x10)
+         myXmlContentPtr.writeUtf16String("null")
+           
+        }else{
+           const xmlContentPtr=addr.add(0x1d8).readPointer()
+
+           const xmlContentLen=addr.add(0x1d8+0x04).readU32() * 2 + 2
+           myXmlContentPtr = Memory.alloc(xmlContentLen) 
+           Memory.copy(myXmlContentPtr, xmlContentPtr, xmlContentLen)
         }
-         
-         const xmlNullPtr = addr.add(0x1d8).readU32()
-         let   myXmlContentPtr=null
-         if(xmlNullPtr == 0){
 
-          myXmlContentPtr       = Memory.alloc(0x10)
-          myXmlContentPtr.writeUtf16String("null")
-            
-         }else{
-            const xmlContentPtr=addr.add(0x1d8).readPointer()
-
-            const xmlContentLen=addr.add(0x1d8+0x04).readU32() * 2 + 2
-            myXmlContentPtr = Memory.alloc(xmlContentLen) 
-            Memory.copy(myXmlContentPtr, xmlContentPtr, xmlContentLen)
-         }
-
-         
-        setImmediate(() => nativeativeFunction(msgType,myTalkerIdPtr, myContentPtr,myGroupMsgSenderIdPtr,myXmlContentPtr))
-      }
-    }
-  })
-  return nativeCallback
+        
+       setImmediate(() => nativeativeFunction(msgType,myTalkerIdPtr, myContentPtr,myGroupMsgSenderIdPtr,myXmlContentPtr))
+     }
+   }
+ })
+ return nativeCallback
 })()
 
 let msgStruct=null
 let msgstrPtr=null
 const initmsgStruct = ( (str) => {
-    msgstrPtr = Memory.alloc(str.length*2 + 1)
-    msgstrPtr.writeUtf16String(str)
+   msgstrPtr = Memory.alloc(str.length*2 + 1)
+   msgstrPtr.writeUtf16String(str)
 
-    msgStruct  = Memory.alloc(0x14) // returns a NativePointer
+   msgStruct  = Memory.alloc(0x14) // returns a NativePointer
 
-    msgStruct
-    .writePointer(msgstrPtr).add(0x04)
-    .writeU32(str.length * 2).add(0x04)
-    .writeU32(str.length * 2).add(0x04)
-    .writeU32(0).add(0x04)
-    .writeU32(0)
+   msgStruct
+   .writePointer(msgstrPtr).add(0x04)
+   .writeU32(str.length * 2).add(0x04)
+   .writeU32(str.length * 2).add(0x04)
+   .writeU32(0).add(0x04)
+   .writeU32(0)
 
-    return msgStruct
+   return msgStruct
 })
 
 
@@ -318,53 +334,53 @@ let retidStruct=null
 let retidPtr   =null
 const initidStruct = ( (str) => {
 
-    retidPtr = Memory.alloc(str.length*2 + 1)
-    retidPtr.writeUtf16String(str)
+   retidPtr = Memory.alloc(str.length*2 + 1)
+   retidPtr.writeUtf16String(str)
 
-    retidStruct  = Memory.alloc(0x14) // returns a NativePointer
+   retidStruct  = Memory.alloc(0x14) // returns a NativePointer
 
-    retidStruct
-    .writePointer(retidPtr).add(0x04)
-    .writeU32(str.length * 2).add(0x04)
-    .writeU32(str.length * 2).add(0x04)
-    .writeU32(0).add(0x04)
-    .writeU32(0)
+   retidStruct
+   .writePointer(retidPtr).add(0x04)
+   .writeU32(str.length * 2).add(0x04)
+   .writeU32(str.length * 2).add(0x04)
+   .writeU32(0).add(0x04)
+   .writeU32(0)
 
-    return retidStruct
+   return retidStruct
 })
 
 let retPtr=null
 let retStruct = null
 const initStruct = ( (str) => {
 
-    retPtr = Memory.alloc(str.length*2 + 1)
-    retPtr.writeUtf16String(str)
+   retPtr = Memory.alloc(str.length*2 + 1)
+   retPtr.writeUtf16String(str)
 
-    retStruct  = Memory.alloc(0x14) // returns a NativePointer
+   retStruct  = Memory.alloc(0x14) // returns a NativePointer
 
-    retStruct
-    .writePointer(retPtr).add(0x04)
-    .writeU32(str.length * 2).add(0x04)
-    .writeU32(str.length * 2).add(0x04)
-    .writeU32(0).add(0x04)
-    .writeU32(0)
+   retStruct
+   .writePointer(retPtr).add(0x04)
+   .writeU32(str.length * 2).add(0x04)
+   .writeU32(str.length * 2).add(0x04)
+   .writeU32(0).add(0x04)
+   .writeU32(0)
 
-    return retStruct
+   return retStruct
 })
 
 /**
- * at msg structure
- */
+* at msg structure
+*/
 let atStruct=null
 const initAtMsgStruct = ( (wxidStruct) => {
-  
-    atStruct = Memory.alloc(0x10)
+ 
+   atStruct = Memory.alloc(0x10)
 
-    atStruct.writePointer(wxidStruct).add(0x04)
-    .writeU32(wxidStruct.toInt32()+0x14).add(0x04)//0x14 = sizeof(wxid structure)
-    .writeU32(wxidStruct.toInt32()+0x14).add(0x04)
-    .writeU32(0)
-    return atStruct
+   atStruct.writePointer(wxidStruct).add(0x04)
+   .writeU32(wxidStruct.toInt32()+0x14).add(0x04)//0x14 = sizeof(wxid structure)
+   .writeU32(wxidStruct.toInt32()+0x14).add(0x04)
+   .writeU32(0)
+   return atStruct
 })
 
 //get nick from chatroom
@@ -375,66 +391,66 @@ let nickBuff          = null
 let memberNickBuffAsm = null
 let nickRetAddr        = null
 const getChatroomMemberNickInfoFunction = ( (memberId,roomId) =>{
-  
-  nickBuff        = Memory.alloc(0x7e4)
-  nickRetAddr     = Memory.alloc(0x04)
-  memberNickBuffAsm  = Memory.alloc(Process.pageSize)
-  nickRoomId    = initidStruct(roomId)
-  nickMemberId  = initStruct(memberId)
-  nickStructPtr = initmsgStruct('')
-  
-  Memory.patchCode(memberNickBuffAsm, Process.pageSize, code => {
-    var cw = new X86Writer(code, { pc: memberNickBuffAsm })
-    cw.putPushfx();
-    cw.putPushax();
+ 
+ nickBuff        = Memory.alloc(0x7e4)
+ nickRetAddr     = Memory.alloc(0x04)
+ memberNickBuffAsm  = Memory.alloc(Process.pageSize)
+ nickRoomId    = initidStruct(roomId)
+ nickMemberId  = initStruct(memberId)
+ nickStructPtr = initmsgStruct('')
+ 
+ Memory.patchCode(memberNickBuffAsm, Process.pageSize, code => {
+   var cw = new X86Writer(code, { pc: memberNickBuffAsm })
+   cw.putPushfx();
+   cw.putPushax();
 
-    cw.putMovRegAddress('ebx',nickStructPtr)
-    cw.putMovRegAddress('esi',nickMemberId)
-    cw.putMovRegAddress('edi',nickRoomId)
+   cw.putMovRegAddress('ebx',nickStructPtr)
+   cw.putMovRegAddress('esi',nickMemberId)
+   cw.putMovRegAddress('edi',nickRoomId)
 
-    cw.putMovRegAddress('ecx',nickBuff)
-    cw.putCallAddress(moduleBaseAddress.add(
-      offset.chatroom_member_nick_call_offset1
-    ))
+   cw.putMovRegAddress('ecx',nickBuff)
+   cw.putCallAddress(moduleBaseAddress.add(
+     offset.chatroom_member_nick_call_offset1
+   ))
 
-    cw.putMovRegAddress('eax',nickBuff)
-    cw.putPushReg('eax')
-    cw.putPushReg('esi')
-    cw.putCallAddress(moduleBaseAddress.add(
-      offset.chatroom_member_nick_call_offset2
-    ))
+   cw.putMovRegAddress('eax',nickBuff)
+   cw.putPushReg('eax')
+   cw.putPushReg('esi')
+   cw.putCallAddress(moduleBaseAddress.add(
+     offset.chatroom_member_nick_call_offset2
+   ))
 
-    cw.putMovRegReg('ecx','eax')
-    cw.putCallAddress(moduleBaseAddress.add(
-      offset.chatroom_member_nick_call_offset3
-    ))
+   cw.putMovRegReg('ecx','eax')
+   cw.putCallAddress(moduleBaseAddress.add(
+     offset.chatroom_member_nick_call_offset3
+   ))
 
-    cw.putPushU32(1)
-    cw.putPushReg('ebx')
-    cw.putMovRegReg('edx','edi')
-    cw.putMovRegAddress('ecx',nickBuff)
-    cw.putCallAddress(moduleBaseAddress.add(
-      offset.chatroom_member_nick_call_offset4
-    ))
-    cw.putAddRegImm('esp', 0x08)
-    cw.putMovNearPtrReg(nickRetAddr, 'ebx')
-    cw.putPopax()
-    cw.putPopfx()
-    cw.putRet()
-    cw.flush()
+   cw.putPushU32(1)
+   cw.putPushReg('ebx')
+   cw.putMovRegReg('edx','edi')
+   cw.putMovRegAddress('ecx',nickBuff)
+   cw.putCallAddress(moduleBaseAddress.add(
+     offset.chatroom_member_nick_call_offset4
+   ))
+   cw.putAddRegImm('esp', 0x08)
+   cw.putMovNearPtrReg(nickRetAddr, 'ebx')
+   cw.putPopax()
+   cw.putPopfx()
+   cw.putRet()
+   cw.flush()
 
-  })
+ })
 
-  const nativeativeFunction = new NativeFunction(ptr(memberNickBuffAsm), 'void', [])
-  nativeativeFunction()
+ const nativeativeFunction = new NativeFunction(ptr(memberNickBuffAsm), 'void', [])
+ nativeativeFunction()
 
-  return nickRetAddr.readPointer().readPointer().readUtf16String()
-  
+ return nickRetAddr.readPointer().readPointer().readUtf16String()
+ 
 })
 
 /**
- * send attatch
- */
+* send attatch
+*/
 let attatchWxid    = null
 let attatchPath    = null
 let attatchPathPtr = null
@@ -444,87 +460,87 @@ let attatchEbp     = null
 let attatchEaxbuf  = null
 const sendAttatchMsgNativeFunction = ( (contactId,path) => {
 
-  attatchAsm        = Memory.alloc(Process.pageSize)
-  attatchBuf        = Memory.alloc(0x378)
-  attatchEbp        = Memory.alloc(0x04)
-  attatchEaxbuf     = Memory.alloc(0x14)
+ attatchAsm        = Memory.alloc(Process.pageSize)
+ attatchBuf        = Memory.alloc(0x378)
+ attatchEbp        = Memory.alloc(0x04)
+ attatchEaxbuf     = Memory.alloc(0x14)
 
-  attatchWxid = initidStruct(contactId)
+ attatchWxid = initidStruct(contactId)
 
-  
-  attatchPathPtr       = Memory.alloc(path.length * 2 + 1)
-  attatchPathPtr.writeUtf16String(path)
-  
-  attatchPath = Memory.alloc(0x28)
-  attatchPath.writePointer(attatchPathPtr).add(0x04)
-  .writeU32(path.length * 2).add(0x04)
-  .writeU32(path.length * 2).add(0x04)
+ 
+ attatchPathPtr       = Memory.alloc(path.length * 2 + 1)
+ attatchPathPtr.writeUtf16String(path)
+ 
+ attatchPath = Memory.alloc(0x28)
+ attatchPath.writePointer(attatchPathPtr).add(0x04)
+ .writeU32(path.length * 2).add(0x04)
+ .writeU32(path.length * 2).add(0x04)
 
-  Memory.patchCode(attatchAsm, Process.pageSize, code => {
-    var cw = new X86Writer(code, { pc: attatchAsm })
-    cw.putPushfx();
-    cw.putPushax();
+ Memory.patchCode(attatchAsm, Process.pageSize, code => {
+   var cw = new X86Writer(code, { pc: attatchAsm })
+   cw.putPushfx();
+   cw.putPushax();
 
-    cw.putSubRegImm('esp', 0x14)		
-    //mov byte ptr ss : [ebp - 0x6C] , 0x0
-    //cw.putMovNearPtrReg(attatchEbp, 'ebp')
-    //cw.putMovRegOffsetPtrU32('ebp', -0x6c, 0x0)
-    //cw.putMovRegRegOffsetPtr('edx', 'ebp', -0x6c)
+   cw.putSubRegImm('esp', 0x14)		
+   //mov byte ptr ss : [ebp - 0x6C] , 0x0
+   //cw.putMovNearPtrReg(attatchEbp, 'ebp')
+   //cw.putMovRegOffsetPtrU32('ebp', -0x6c, 0x0)
+   //cw.putMovRegRegOffsetPtr('edx', 'ebp', -0x6c)
 
-    //putShlRegU8(reg, immValue)
+   //putShlRegU8(reg, immValue)
 
-    cw.putMovRegAddress('ebx',attatchPath)
-    cw.putMovRegAddress('eax',attatchEaxbuf)
-    cw.putMovRegReg('ecx','esp')
-    cw.putPushReg('eax')
-    cw.putCallAddress(moduleBaseAddress.add(
-      offset.send_attatch_call_offset1
-    ))
-    
+   cw.putMovRegAddress('ebx',attatchPath)
+   cw.putMovRegAddress('eax',attatchEaxbuf)
+   cw.putMovRegReg('ecx','esp')
+   cw.putPushReg('eax')
+   cw.putCallAddress(moduleBaseAddress.add(
+     offset.send_attatch_call_offset1
+   ))
+   
 
-    cw.putPushU32(0)
-    cw.putSubRegImm('esp', 0x14)
-    cw.putMovRegReg('ecx','esp')
-    cw.putPushU32(-1)
-    cw.putPushU32((moduleBaseAddress.add(offset.send_attatch_call_para)).toInt32())
-    cw.putCallAddress(moduleBaseAddress.add(
-      offset.send_attatch_call_offset2
-    ))
+   cw.putPushU32(0)
+   cw.putSubRegImm('esp', 0x14)
+   cw.putMovRegReg('ecx','esp')
+   cw.putPushU32(-1)
+   cw.putPushU32((moduleBaseAddress.add(offset.send_attatch_call_para)).toInt32())
+   cw.putCallAddress(moduleBaseAddress.add(
+     offset.send_attatch_call_offset2
+   ))
 
-    cw.putSubRegImm('esp', 0x14)
-    cw.putMovRegReg('ecx','esp')
-    cw.putPushU32(attatchPath.toInt32())
-    cw.putCallAddress(moduleBaseAddress.add(
-      offset.send_attatch_call_offset3
-    ))
+   cw.putSubRegImm('esp', 0x14)
+   cw.putMovRegReg('ecx','esp')
+   cw.putPushU32(attatchPath.toInt32())
+   cw.putCallAddress(moduleBaseAddress.add(
+     offset.send_attatch_call_offset3
+   ))
 
-    cw.putSubRegImm('esp', 0x14)
-    cw.putMovRegReg('ecx','esp')
-    cw.putPushU32(attatchWxid.toInt32())
-    cw.putCallAddress(moduleBaseAddress.add(
-      offset.send_attatch_call_offset4
-    ))
+   cw.putSubRegImm('esp', 0x14)
+   cw.putMovRegReg('ecx','esp')
+   cw.putPushU32(attatchWxid.toInt32())
+   cw.putCallAddress(moduleBaseAddress.add(
+     offset.send_attatch_call_offset4
+   ))
 
-    cw.putMovRegAddress('eax',attatchBuf)
-    cw.putPushReg('eax')
-    cw.putCallAddress(moduleBaseAddress.add(
-      offset.send_attatch_call_offset5
-    ))
+   cw.putMovRegAddress('eax',attatchBuf)
+   cw.putPushReg('eax')
+   cw.putCallAddress(moduleBaseAddress.add(
+     offset.send_attatch_call_offset5
+   ))
 
-    cw.putMovRegReg('ecx','eax')
-    cw.putCallAddress(moduleBaseAddress.add(
-      offset.send_attatch_call_offset6
-    ))
+   cw.putMovRegReg('ecx','eax')
+   cw.putCallAddress(moduleBaseAddress.add(
+     offset.send_attatch_call_offset6
+   ))
 
-      cw.putPopax()
-      cw.putPopfx()
-      cw.putRet()
-      cw.flush()
+     cw.putPopax()
+     cw.putPopfx()
+     cw.putRet()
+     cw.flush()
 
-  })
+ })
 
-  const nativeativeFunction = new NativeFunction(ptr(attatchAsm), 'void', [])
-  nativeativeFunction()
+ const nativeativeFunction = new NativeFunction(ptr(attatchAsm), 'void', [])
+ nativeativeFunction()
 })
 /*------------------send pic --------------------------*/
 let buffwxid      = null
@@ -536,212 +552,211 @@ let picAsm        = null
 let picbuff       = null
 const sendPicMsgNativeFunction = ( (contactId,path)=> {
 
-  picAsm        = Memory.alloc(Process.pageSize)
-  buffwxid      = Memory.alloc(0x20)
-  picbuff       = Memory.alloc(0x378)
+ picAsm        = Memory.alloc(Process.pageSize)
+ buffwxid      = Memory.alloc(0x20)
+ picbuff       = Memory.alloc(0x378)
 
-  pathPtr       = Memory.alloc(path.length * 2 + 1)
-  pathPtr.writeUtf16String(path)
+ pathPtr       = Memory.alloc(path.length * 2 + 1)
+ pathPtr.writeUtf16String(path)
 
-  imagefilepath = Memory.alloc(0x24)
-  imagefilepath.writePointer(pathPtr).add(0x04)
-  .writeU32(path.length * 2).add(0x04)
-  .writeU32(path.length * 2).add(0x04)
+ imagefilepath = Memory.alloc(0x24)
+ imagefilepath.writePointer(pathPtr).add(0x04)
+ .writeU32(path.length * 2).add(0x04)
+ .writeU32(path.length * 2).add(0x04)
 
-  picWxidPtr    = Memory.alloc(contactId.length * 2 + 1)
-  picWxidPtr.writeUtf16String(contactId)
+ picWxidPtr    = Memory.alloc(contactId.length * 2 + 1)
+ picWxidPtr.writeUtf16String(contactId)
 
-  picWxid = Memory.alloc(0x0c)
-  picWxid.writePointer(ptr(picWxidPtr)).add(0x04)
-  .writeU32(contactId.length * 2).add(0x04)
-  .writeU32(contactId.length * 2).add(0x04)
+ picWxid = Memory.alloc(0x0c)
+ picWxid.writePointer(ptr(picWxidPtr)).add(0x04)
+ .writeU32(contactId.length * 2).add(0x04)
+ .writeU32(contactId.length * 2).add(0x04)
 
-  Memory.patchCode(picAsm, Process.pageSize, code => {
-    var cw = new X86Writer(code, { pc: picAsm })
-    cw.putPushfx();
-    cw.putPushax();
+ Memory.patchCode(picAsm, Process.pageSize, code => {
+   var cw = new X86Writer(code, { pc: picAsm })
+   cw.putPushfx();
+   cw.putPushax();
 
-    cw.putSubRegImm('esp', 0x14)			
-    cw.putMovRegAddress('eax',buffwxid)
+   cw.putSubRegImm('esp', 0x14)			
+   cw.putMovRegAddress('eax',buffwxid)
 
-    cw.putMovRegReg('ecx', 'esp')
+   cw.putMovRegReg('ecx', 'esp')
 
-    cw.putPushReg('eax')
-    cw.putCallAddress(moduleBaseAddress.add(
-      offset.send_picmsg_call_offset1
-    ))
-    
-    cw.putMovRegAddress('ebx',imagefilepath)
-    cw.putPushReg('ebx')
+   cw.putPushReg('eax')
+   cw.putCallAddress(moduleBaseAddress.add(
+     offset.send_picmsg_call_offset1
+   ))
+   
+   cw.putMovRegAddress('ebx',imagefilepath)
+   cw.putPushReg('ebx')
 
-    cw.putMovRegAddress('eax',picWxid)
-    cw.putPushReg('eax')
+   cw.putMovRegAddress('eax',picWxid)
+   cw.putPushReg('eax')
 
-    cw.putMovRegAddress('eax',picbuff)
-    cw.putPushReg('eax')
-    cw.putCallAddress(moduleBaseAddress.add(
-      offset.send_picmsg_call_offset2
-    ))
+   cw.putMovRegAddress('eax',picbuff)
+   cw.putPushReg('eax')
+   cw.putCallAddress(moduleBaseAddress.add(
+     offset.send_picmsg_call_offset2
+   ))
 
-    cw.putMovRegReg('ecx', 'eax')
-    cw.putCallAddress(moduleBaseAddress.add(
-      offset.send_picmsg_call_offset3
-    ))
-    cw.putPopax()
-    cw.putPopfx()
-    cw.putRet()
-    cw.flush()
+   cw.putMovRegReg('ecx', 'eax')
+   cw.putCallAddress(moduleBaseAddress.add(
+     offset.send_picmsg_call_offset3
+   ))
+   cw.putPopax()
+   cw.putPopfx()
+   cw.putRet()
+   cw.flush()
 
-  })
+ })
 
-  const nativeativeFunction = new NativeFunction(ptr(picAsm), 'void', [])
-  nativeativeFunction()
+ const nativeativeFunction = new NativeFunction(ptr(picAsm), 'void', [])
+ nativeativeFunction()
 
 })
 /**
- * send at msg
- */
+* send at msg
+*/
 let asmAtMsg=null
 let roomid_,msg_,wxid_,atid_
 let ecxBuffer
 const sendAtMsgNativeFunction = ( (roomId,text,contactId) => {
-  asmAtMsg    = Memory.alloc(Process.pageSize)
-  ecxBuffer   = Memory.alloc(0x5f0)
+ asmAtMsg    = Memory.alloc(Process.pageSize)
+ ecxBuffer   = Memory.alloc(0x5f0)
 
-  
-  roomid_ = initStruct(roomId)
-  wxid_   = initidStruct(contactId)
-  msg_    = initmsgStruct(text)
-  atid_   = initAtMsgStruct(wxid_)
+ 
+ roomid_ = initStruct(roomId)
+ wxid_   = initidStruct(contactId)
+ msg_    = initmsgStruct(text)
+ atid_   = initAtMsgStruct(wxid_)
 
-  Memory.patchCode(asmAtMsg, Process.pageSize, code => {
-    var cw = new X86Writer(code, { pc: asmAtMsg })
-    //cw.putMovRegAddress('eax',roomid)
-    
-    cw.putPushfx();
-    cw.putPushax();
+ Memory.patchCode(asmAtMsg, Process.pageSize, code => {
+   var cw = new X86Writer(code, { pc: asmAtMsg })
+   //cw.putMovRegAddress('eax',roomid)
+   
+   cw.putPushfx();
+   cw.putPushax();
 
-    cw.putPushU32(1)  // push
+   cw.putPushU32(1)  // push
 
-    cw.putMovRegAddress('edi',atid_)
-    cw.putMovRegAddress('ebx',msg_)//msg_
+   cw.putMovRegAddress('edi',atid_)
+   cw.putMovRegAddress('ebx',msg_)//msg_
 
-    cw.putPushReg('edi')  
-    cw.putPushReg('ebx')
+   cw.putPushReg('edi')  
+   cw.putPushReg('ebx')
 
-    //cw.putMovRegRegOffsetPtr('edx', 'ebp', 0x10)//at wxid
-    cw.putMovRegAddress('edx',roomid_)//room_id
+   //cw.putMovRegRegOffsetPtr('edx', 'ebp', 0x10)//at wxid
+   cw.putMovRegAddress('edx',roomid_)//room_id
 
-    cw.putMovRegAddress('ecx', ecxBuffer)
+   cw.putMovRegAddress('ecx', ecxBuffer)
 
-    cw.putCallAddress(moduleBaseAddress.add(
-      offset.send_txt_call_offset
-    ))
-    cw.putAddRegImm('esp', 0xc)
+   cw.putCallAddress(moduleBaseAddress.add(
+     offset.send_txt_call_offset
+   ))
+   cw.putAddRegImm('esp', 0xc)
 
-    cw.putPopax()
-    cw.putPopfx()
-    cw.putRet()
-    cw.flush()
-  })
+   cw.putPopax()
+   cw.putPopfx()
+   cw.putRet()
+   cw.flush()
+ })
 
-  const atMsgNativeFunction = new NativeFunction(ptr(asmAtMsg), 'void', [])
-  atMsgNativeFunction()
+ const atMsgNativeFunction = new NativeFunction(ptr(asmAtMsg), 'void', [])
+ atMsgNativeFunction()
 })
 
 /**
- * @Call: sendMsg -> agentSendMsg
- */
+* @Call: sendMsg -> agentSendMsg
+*/
 const sendMsgNativeFunction = (() => {
-  //const asmBuffer   = Memory.alloc(/*0x5a8*/0x5f0) // magic number from wechat-bot (laozhang)
-  const asmBuffer   = Memory.alloc(0x5f0)
-  const asmSendMsg  = Memory.alloc(Process.pageSize)
-  Memory.patchCode(asmSendMsg, Process.pageSize, code => {
-    var cw = new X86Writer(code, { pc: asmSendMsg })
+ //const asmBuffer   = Memory.alloc(/*0x5a8*/0x5f0) // magic number from wechat-bot (laozhang)
+ const asmBuffer   = Memory.alloc(0x5f0)
+ const asmSendMsg  = Memory.alloc(Process.pageSize)
+ Memory.patchCode(asmSendMsg, Process.pageSize, code => {
+   var cw = new X86Writer(code, { pc: asmSendMsg })
 
-    cw.putPushReg('ebp')
-    cw.putMovRegReg('ebp', 'esp')
-    cw.putPushax()
-    cw.putPushfx()
+   cw.putPushReg('ebp')
+   cw.putMovRegReg('ebp', 'esp')
+   cw.putPushax()
+   cw.putPushfx()
 
-    cw.putPushU32(1)  // push
-    cw.putPushU32(0)  // push
+   cw.putPushU32(1)  // push
+   cw.putPushU32(0)  // push
 
-    cw.putMovRegRegOffsetPtr('ebx', 'ebp', 0xc) // arg 1
-    cw.putPushReg('ebx')  // push
+   cw.putMovRegRegOffsetPtr('ebx', 'ebp', 0xc) // arg 1
+   cw.putPushReg('ebx')  // push
 
-    cw.putMovRegRegOffsetPtr('edx', 'ebp', 0x8) // arg 0
-    cw.putMovRegAddress('ecx', asmBuffer)
+   cw.putMovRegRegOffsetPtr('edx', 'ebp', 0x8) // arg 0
+   cw.putMovRegAddress('ecx', asmBuffer)
 
-    //0x3b56a0 3.2.1.121
-    cw.putCallAddress(moduleBaseAddress.add(
-      offset.send_txt_call_offset
-    ))
-    cw.putAddRegImm('esp', 0xc)
+   //0x3b56a0 3.2.1.121
+   cw.putCallAddress(moduleBaseAddress.add(
+     offset.send_txt_call_offset
+   ))
+   cw.putAddRegImm('esp', 0xc)
 
-    cw.putPopfx()
-    cw.putPopax()
-    cw.putMovRegRegPtr('esp', 'ebp') // Huan(202107): why use RegRegPtr? (RegRet will fail)
-    cw.putPopReg('ebp')
-    cw.putRet()
+   cw.putPopfx()
+   cw.putPopax()
+   cw.putMovRegRegPtr('esp', 'ebp') // Huan(202107): why use RegRegPtr? (RegRet will fail)
+   cw.putPopReg('ebp')
+   cw.putRet()
 
-    cw.flush()
-  })
+   cw.flush()
+ })
 
-  /*let ins = Instruction.parse(asmSendMsg)
-  for (let i=0; i<20; i++) {
-    console.log(ins.address, '\t', ins.mnemonic, '\t', ins.opStr)
-    ins = Instruction.parse(ins.next)
-  }*/
-  
-  const asmNativeFunction = new NativeFunction(asmSendMsg, 'void', ['pointer', 'pointer'])
+ /*let ins = Instruction.parse(asmSendMsg)
+ for (let i=0; i<20; i++) {
+   console.log(ins.address, '\t', ins.mnemonic, '\t', ins.opStr)
+   ins = Instruction.parse(ins.next)
+ }*/
+ 
+ const asmNativeFunction = new NativeFunction(asmSendMsg, 'void', ['pointer', 'pointer'])
 
-  const sendMsg = (
-    talkerId,
-    content,
-  ) => {
-    const talkerIdPtr = Memory.alloc(talkerId.length * 2 + 1)
-    const contentPtr  = Memory.alloc(content.length * 2 + 1)
+ const sendMsg = (
+   talkerId,
+   content,
+ ) => {
+   const talkerIdPtr = Memory.alloc(talkerId.length * 2 + 1)
+   const contentPtr  = Memory.alloc(content.length * 2 + 1)
 
-    talkerIdPtr.writeUtf16String(talkerId)
-    contentPtr.writeUtf16String(content)
+   talkerIdPtr.writeUtf16String(talkerId)
+   contentPtr.writeUtf16String(content)
 
-    const sizeOfStringStruct = Process.pointerSize * 3 // + 0xd
+   const sizeOfStringStruct = Process.pointerSize * 3 // + 0xd
 
-    // allocate space for the struct
-    const talkerIdStruct  = Memory.alloc(sizeOfStringStruct) // returns a NativePointer
-    const contentStruct   = Memory.alloc(sizeOfStringStruct) // returns a NativePointer
+   // allocate space for the struct
+   const talkerIdStruct  = Memory.alloc(sizeOfStringStruct) // returns a NativePointer
+   const contentStruct   = Memory.alloc(sizeOfStringStruct) // returns a NativePointer
 
-    talkerIdStruct
-    .writePointer(talkerIdPtr).add(0x4)
-    .writeU32(talkerId.length).add(0x4)
-    .writeU32(talkerId.length * 2)
+   talkerIdStruct
+   .writePointer(talkerIdPtr).add(0x4)
+   .writeU32(talkerId.length).add(0x4)
+   .writeU32(talkerId.length * 2)
 
-    contentStruct
-    .writePointer(contentPtr).add(0x4)
-    .writeU32(content.length).add(0x4)
-    .writeU32(content.length * 2)
+   contentStruct
+   .writePointer(contentPtr).add(0x4)
+   .writeU32(content.length).add(0x4)
+   .writeU32(content.length * 2)
 
-    asmNativeFunction(talkerIdStruct, contentStruct)
-  }
+   asmNativeFunction(talkerIdStruct, contentStruct)
+ }
 
-  /**
-   * Best Practices
-   *  https://frida.re/docs/best-practices/
-   *
-   * There is however a pitfall: the value returned by Memory.allocUtf8String() must be kept alive
-   *  – it gets freed as soon as the JavaScript value gets garbage-collected.
-   *
-   * This means it needs to be kept alive for at least the duration of the function-call,
-   *  and in some cases even longer; the exact semantics depend on how the API was designed.
-   */
-  const refHolder = {
-    asmBuffer,
-    asmSendMsg,
-    asmNativeFunction,
-    sendMsg,
-  }
+ /**
+  * Best Practices
+  *  https://frida.re/docs/best-practices/
+  *
+  * There is however a pitfall: the value returned by Memory.allocUtf8String() must be kept alive
+  *  – it gets freed as soon as the JavaScript value gets garbage-collected.
+  *
+  * This means it needs to be kept alive for at least the duration of the function-call,
+  *  and in some cases even longer; the exact semantics depend on how the API was designed.
+  */
+ const refHolder = {
+   asmBuffer,
+   asmSendMsg,
+   asmNativeFunction,
+   sendMsg,
+ }
 
-  return (...args) => refHolder.sendMsg(...args)
+ return (...args) => refHolder.sendMsg(...args)
 })()
-

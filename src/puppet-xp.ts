@@ -21,6 +21,9 @@ import path from 'path'
 import fs from 'fs'
 import xml2js from 'xml2js'
 
+import { ImageDecrypt } from '../commonjs/image-decrypt.js'
+import os from 'os'
+
 import {
   ContactPayload,
 
@@ -49,19 +52,21 @@ import {
   ContactType,
   throwUnsupportedError,
   FileBoxType,
-}                           from 'wechaty-puppet'
+} from 'wechaty-puppet'
 import {
   attach,
   detach,
-}                           from 'sidecar'
+} from 'sidecar'
 
 import {
   CHATIE_OFFICIAL_ACCOUNT_QRCODE,
   qrCodeForChatie,
   VERSION,
-}                                     from './config.js'
+} from './config.js'
 
-import { WeChatSidecar }              from './wechat-sidecar.js'
+import { WeChatSidecar } from './wechat-sidecar.js'
+const userInfo = os.userInfo()
+const rootPath = `${userInfo.homedir}\\Documents\\WeChat Files\\`
 
 export type PuppetXpOptions = PuppetOptions
 
@@ -222,7 +227,7 @@ class PuppetXp extends Puppet {
         type = MessageType.Video
       } else {
         try {
-          xml2js.parseString(text, { explicitArray: false, ignoreAttrs: true }, function (err: any, json: {msg: {appmsg:{type:Number}}}) {
+          xml2js.parseString(text, { explicitArray: false, ignoreAttrs: true }, function (err: any, json: { msg: { appmsg: { type: Number } } }) {
             console.info(err)
             console.info(JSON.stringify(json))
             if (json.msg.appmsg.type === 5) {
@@ -263,9 +268,9 @@ class PuppetXp extends Puppet {
     })
 
     this.sidecar.on('error', e => this.emit('error', {
-      message : e.message,
-      name    : e.name,
-      stack   : e.stack,
+      message: e.message,
+      name: e.name,
+      stack: e.stack,
     }))
 
     // FIXME: use the real login contact id
@@ -361,8 +366,8 @@ class PuppetXp extends Puppet {
  * Contact
  *
  */
-  override contactAlias (contactId: string): Promise<string>
-  override contactAlias (contactId: string, alias: string | null): Promise<void>
+  override contactAlias(contactId: string): Promise<string>
+  override contactAlias(contactId: string, alias: string | null): Promise<void>
 
   override async contactAlias (contactId: string, alias?: string | null): Promise<void | string> {
     log.verbose('PuppetXp', 'contactAlias(%s, %s)', contactId, alias)
@@ -397,8 +402,8 @@ class PuppetXp extends Puppet {
     return idList
   }
 
-  override async contactAvatar (contactId: string): Promise<FileBox>
-  override async contactAvatar (contactId: string, file: FileBox): Promise<void>
+  override async contactAvatar(contactId: string): Promise<FileBox>
+  override async contactAvatar(contactId: string, file: FileBox): Promise<void>
 
   override async contactAvatar (contactId: string, file?: FileBox): Promise<void | FileBox> {
     log.verbose('PuppetXp', 'contactAvatar(%s)', contactId)
@@ -480,9 +485,26 @@ class PuppetXp extends Puppet {
     // if (attachment instanceof FileBox) {
     //   return attachment
     // }
+    const message = this.messageStore[id]
+    let base64 = ''
+    let fileName = ''
+    try {
+      if (message?.text) {
+        const filePath = message.text
+        const dataPath = rootPath + filePath    // 要解密的文件路径
+        // console.info(dataPath)
+        const imageInfo = ImageDecrypt(dataPath, id)
+        // console.info(imageInfo)
+        base64 = imageInfo.base64
+        fileName = imageInfo.fileName
+      }
+    } catch (err) {
+      console.error(err)
+    }
+
     return FileBox.fromBase64(
-      'cRH9qeL3XyVnaXJkppBuH20tf5JlcG9uFX1lL2IvdHRRRS9kMMQxOPLKNYIzQQ==',
-      'mock-file' + id + '.txt',
+      base64,
+      fileName,
     )
   }
 
@@ -512,11 +534,11 @@ class PuppetXp extends Puppet {
   override async messageLocation (messageId: string): Promise<LocationPayload> {
     log.verbose('PuppetXp', 'messageLocation(%s)', messageId)
     return {
-      accuracy  : 15, // in meters
-      address   : '北京市北京市海淀区45 Chengfu Rd',
-      latitude  : 39.995120999999997,
-      longitude : 116.334154,
-      name      : '东升乡政府',
+      accuracy: 15, // in meters
+      address: '北京市北京市海淀区45 Chengfu Rd',
+      latitude: 39.995120999999997,
+      longitude: 116.334154,
+      name: '东升乡政府',
     }
   }
 
@@ -720,8 +742,8 @@ class PuppetXp extends Puppet {
     return rawPayload
   }
 
-  override async roomAnnounce (roomId: string): Promise<string>
-  override async roomAnnounce (roomId: string, text: string): Promise<void>
+  override async roomAnnounce(roomId: string): Promise<string>
+  override async roomAnnounce(roomId: string, text: string): Promise<void>
 
   override async roomAnnounce (roomId: string, text?: string): Promise<void | string> {
     if (text) {
