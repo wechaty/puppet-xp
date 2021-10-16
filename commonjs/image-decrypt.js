@@ -1,20 +1,8 @@
 var fs = require("fs");
-var os = require('os')
-var userInfo = os.userInfo()
-// console.log(userInfo.homedir)
-
-let rootPath = `${userInfo.homedir}\\Documents\\WeChat Files\\`
-let filePath = 'wxid_pnza7m7kf9tq12\\FileStorage\\Image\\Thumb\\2021-10\\583988ac48f03d3cf7c51bf363539355_t.dat'
-// let filePath = 'wxid_pnza7m7kf9tq12\\FileStorage\\Image\\2021-10\\ded44c97518cf091009cdae21000ae18.dat'
-
-var dataPath = rootPath + filePath;    //要解密的文件路径
 
 var xor = '88888888';   //异或值(十六进制)
 xor = hexToBin(xor);
 
-console.debug(filePath.split('\\').pop().split('.').shift())
-var resPath = rootPath + 'wxid_pnza7m7kf9tq12\\FileStorage\\Image\\Thumb\\2021-10\\' + filePath.split('\\').pop().split('.').shift() + '.'
-console.debug(resPath)
 var xorLen = 2;
 
 function ImageDecrypt(dataPath, messageId) {
