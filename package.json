@@ -11,8 +11,8 @@
   },
   "typings": "./dist/esm/src/mod.d.ts",
   "engines": {
-    "wechaty": ">=0.69",
-    "wechaty-puppet": ">=0.43"
+    "wechaty": ">=0.68",
+    "wechaty-puppet": ">=0.40"
   },
   "scripts": {
     "clean": "shx rm -fr dist/*",
@@ -31,7 +31,7 @@
     "lint:es": "eslint \"src/**/*.ts\" \"tests/**/*.spec.ts\" --ignore-pattern tests/fixtures/",
     "test": "npm run lint && npm run test:unit",
     "test:pack": "bash -x scripts/npm-pack-testing.sh",
-    "test:unit": "tap --node-arg=--loader=ts-node/esm --node-arg=--no-warnings \"src/**/*.spec.ts\" \"tests/**/*.spec.ts\""
+    "test:unit": "cross-env NODE_OPTIONS=\"--no-warnings --loader=ts-node/esm\" tap \"src/**/*.spec.ts\" \"tests/**/*.spec.ts\""
   },
   "repository": {
     "type": "git",
@@ -68,6 +68,9 @@
     "tstest": "^0.5.16",
     "typescript": "^4.4.3",
     "wechaty": "^0.69.45"
+  },
+  "peerDependencies": {
+    "wechaty-puppet": ">=0.40"
   },
   "dependencies": {
     "cuid": "^2.1.8",
