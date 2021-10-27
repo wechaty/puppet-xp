@@ -232,6 +232,7 @@ const getContactNativeFunction = (() => {
  * @Hook: recvMsg -> recvMsgNativeCallback
  */
 const recvMsgNativeCallback = (() => {
+
  const nativeCallback      = new NativeCallback(() => {}, 'void', ['int32', 'pointer','pointer','pointer','pointer'])
  const nativeativeFunction = new NativeFunction(nativeCallback, 'void', ['int32', 'pointer','pointer','pointer','pointer'])
 
