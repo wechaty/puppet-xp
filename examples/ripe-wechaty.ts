@@ -10,6 +10,7 @@ import {
   log,
   // FileBox,
 } from 'wechaty'
+import { MessageType } from 'wechaty-puppet'
 
 import { PuppetXp } from '../src/puppet-xp.js'
 
@@ -42,6 +43,12 @@ async function onMessage(msg: Message) {
   if (msg.text() === 'ding') {
     await msg.say('dong')
   }
+  if (msg.type() === MessageType.Image) {
+    setTimeout(async function () {
+      const imginfo = await msg.toFileBox()
+      console.debug(imginfo)
+    }, 500);
+  }
 }
 
 const puppet = new PuppetXp()
@@ -59,7 +66,7 @@ bot.on('logout', onLogout)
 bot.on('message', onMessage)
 
 bot.start()
-  .then( () => {
+  .then(() => {
     return log.info('StarterBot', 'Starter Bot Started.')
   })
   .catch(e => log.error('StarterBot', e))
