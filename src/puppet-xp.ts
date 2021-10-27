@@ -104,35 +104,14 @@ class PuppetXp extends Puppet {
     return VERSION
   }
 
-  override async start (): Promise<void> {
-    log.verbose('PuppetXp', 'start()')
-
-    if (this.state.on()) {
-      log.warn('PuppetXp', 'start() is called on a ON puppet. await ready(on) and return.')
-      await this.state.ready('on')
-      return
-    }
-
-    this.state.on('pending')
-
-    try {
-      await this.#tryStart()
-      await super.start()
-      this.state.on(true)
-    } catch (e) {
-      this.state.off(true)
-    }
-
-  }
-
-  async #tryStart () {
-    log.verbose('PuppetXp', '#tryStart()')
+  async onStart () {
+    log.verbose('PuppetXp', 'onStart()')
 
     if (this.#sidecar) {
       // Huan(2021-09-13): need to call `detach` to make sure the sidecar will be closed?
       await detach(this.#sidecar)
       this.#sidecar = undefined
-      log.warn('PuppetXp', '#tryStart() this.#sidecar exists? will be replaced by a new one.')
+      log.warn('PuppetXp', 'onStart() this.#sidecar exists? will be replaced by a new one.')
     }
 
     this.#sidecar = new WeChatSidecar()
@@ -201,7 +180,7 @@ class PuppetXp extends Puppet {
     // console.debug(this.roomStore)
     // console.debug(this.contactStore)
 
-    this.sidecar.on('hook', async ({ method, args }) => {
+    this.sidecar.on('hook', ({ method, args }) => {
       if (method !== 'recvMsg') {
         return
       }
@@ -267,39 +246,14 @@ class PuppetXp extends Puppet {
       this.emit('message', { messageId: payload.id })
     })
 
-    this.sidecar.on('error', e => this.emit('error', {
-      message: e.message,
-      name: e.name,
-      stack: e.stack,
-    }))
+    this.sidecar.on('error', e => this.emit('error', { data: JSON.stringify(e as any) }))
 
     // FIXME: use the real login contact id
     await this.login(this.selfInfo.id)
   }
 
-  override async stop (): Promise<void> {
-    log.verbose('PuppetXp', 'stop()')
-
-    if (this.state.off()) {
-      log.warn('PuppetXp', 'stop() is called on a OFF puppet. await ready(off) and return.')
-      await this.state.ready('off')
-      return
-    }
-
-    this.state.off('pending')
-
-    try {
-      await super.stop()
-      await this.#tryStop()
-    } catch (e) {
-      log.error('PuppetXp', 'stop() rejection: %s', (e as Error).message)
-    } finally {
-      this.state.off(true)
-    }
-  }
-
-  async #tryStop () {
-    log.verbose('PuppetXp', 'tryStop()')
+  async onStop () {
+    log.verbose('PuppetXp', 'onStop()')
 
     this.sidecar.removeAllListeners()
 
@@ -311,22 +265,9 @@ class PuppetXp extends Puppet {
     this.#sidecar = undefined
   }
 
-  override login (contactId: string): Promise<void> {
+  override login (contactId: string): void {
     log.verbose('PuppetXp', 'login()')
-    return super.login(contactId)
-  }
-
-  override async logout (): Promise<void> {
-    log.verbose('PuppetXp', 'logout()')
-
-    if (!this.id) {
-      throw new Error('logout before login?')
-    }
-
-    this.emit('logout', { contactId: this.id, data: 'test' }) // before we will throw above by logonoff() when this.user===undefined
-    this.id = undefined
-
-    // TODO: do the logout job
+    super.login(contactId)
   }
 
   override ding (data?: string): void {
@@ -334,17 +275,12 @@ class PuppetXp extends Puppet {
     setTimeout(() => this.emit('dong', { data: data || '' }), 1000)
   }
 
-  override unref (): void {
-    log.verbose('PuppetXp', 'unref()')
-    super.unref()
-  }
-
   /**
- *
- * ContactSelf
- *
- *
- */
+   *
+   * ContactSelf
+   *
+   *
+   */
   override async contactSelfQRCode (): Promise<string> {
     log.verbose('PuppetXp', 'contactSelfQRCode()')
     return CHATIE_OFFICIAL_ACCOUNT_QRCODE
@@ -560,7 +496,7 @@ class PuppetXp extends Puppet {
   override async messageSendText (
     conversationId: string,
     text: string,
-    mentionIdList?: string[]
+    mentionIdList?: string[],
   ): Promise<void> {
     if (conversationId.split('@').length === 2 && mentionIdList && mentionIdList[0]) {
       await this.sidecar.sendAtMsg(conversationId, text, mentionIdList[0])
@@ -576,7 +512,7 @@ class PuppetXp extends Puppet {
     // throwUnsupportedError(conversationId, file)
     const filePath = path.resolve(file.name)
     await file.toFile(filePath, true)
-    if (file.type() === FileBoxType.Url) {
+    if (file.type === FileBoxType.Url) {
       try {
         await this.sidecar.sendPicMsg(conversationId, filePath)
         fs.unlinkSync(filePath)
