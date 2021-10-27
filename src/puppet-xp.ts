@@ -21,7 +21,7 @@ import path from 'path'
 import fs from 'fs'
 import xml2js from 'xml2js'
 
-import { ImageDecrypt } from '../commonjs/image-decrypt.js'
+import { ImageDecrypt } from './pure-functions/image-decrypt.js'
 import os from 'os'
 
 import {

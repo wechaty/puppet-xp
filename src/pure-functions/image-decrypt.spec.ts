@@ -2,7 +2,7 @@
 
 import { test } from 'tstest'
 
-import { ImageDecrypt } from './image-decrypt'
+import { ImageDecrypt } from './image-decrypt.js'
 
 test('CJS: codeRoot()', async t => {
   t.ok(ImageDecrypt, 'should exist ImageDecrypt')
