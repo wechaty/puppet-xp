@@ -89,7 +89,7 @@
   },
   "publishConfig": {
     "access": "public",
-    "tag": "next"
+    "tag": "latest"
   },
   "git": {
     "scripts": {
