@@ -6,15 +6,14 @@ import {
   Contact,
   Message,
   ScanStatus,
-  Wechaty,
+  WechatyBuilder,
   log,
-  // FileBox,
+  type,
 } from 'wechaty'
-import { MessageType } from 'wechaty-puppet'
 
 import { PuppetXp } from '../src/puppet-xp.js'
 
-function onScan(qrcode: string, status: ScanStatus) {
+function onScan (qrcode: string, status: ScanStatus) {
   if (status === ScanStatus.Waiting || status === ScanStatus.Timeout) {
     const qrcodeImageUrl = [
       'https://wechaty.js.org/qrcode/',
@@ -27,37 +26,35 @@ function onScan(qrcode: string, status: ScanStatus) {
   }
 }
 
-async function onLogin(user: Contact) {
+async function onLogin (user: Contact) {
   log.info('StarterBot', '%s login', user)
-  console.debug('ready======================================================')
   const roomList = await bot.Room.findAll()
   console.info(roomList.length)
 }
 
-function onLogout(user: Contact) {
+function onLogout (user: Contact) {
   log.info('StarterBot', '%s logout', user)
 }
 
-async function onMessage(msg: Message) {
+async function onMessage (msg: Message) {
   log.info('StarterBot', msg.toString())
   if (msg.text() === 'ding') {
     await msg.say('dong')
   }
-  if (msg.type() === MessageType.Image) {
-    setTimeout(async function () {
-      const imginfo = await msg.toFileBox()
-      console.debug(imginfo)
-    }, 500);
+  if (msg.type() === type.Message.Image) {
+    setTimeout(msg.wechaty.wrapAsync(
+      async function () {
+        const imginfo = await msg.toFileBox()
+        console.info(imginfo)
+      },
+    ), 500)
   }
 }
 
 const puppet = new PuppetXp()
-const bot = new Wechaty({
+const bot = WechatyBuilder.build({
   name: 'ding-dong-bot',
   puppet,
-  // puppetOptions: {
-  //   token: 'xxx',
-  // }
 })
 
 bot.on('scan', onScan)
@@ -69,4 +66,4 @@ bot.start()
   .then(() => {
     return log.info('StarterBot', 'Starter Bot Started.')
   })
-  .catch(e => log.error('StarterBot', e))
+  .catch(console.error)
