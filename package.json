@@ -11,7 +11,7 @@
   },
   "typings": "./dist/esm/src/mod.d.ts",
   "engines": {
-    "wechaty": ">=0.68",
+    "wechaty": ">=0.78",
     "wechaty-puppet": ">=0.40"
   },
   "scripts": {
