@@ -2,7 +2,7 @@
 
 import { test }  from 'tstest'
 
-import { Wechaty } from 'wechaty'
+import { WechatyBuilder } from 'wechaty'
 
 import {
   PuppetXp,
@@ -10,7 +10,7 @@ import {
 
 test('integration testing', async t => {
   const puppet = new PuppetXp()
-  const wechaty = new Wechaty({ puppet })
+  const wechaty = WechatyBuilder.build({ puppet })
 
   t.ok(wechaty, 'should instantiate wechaty with puppet mocker')
 })
