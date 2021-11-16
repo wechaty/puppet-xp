@@ -1,6 +1,6 @@
 {
   "name": "wechaty-puppet-xp",
-  "version": "0.10.1",
+  "version": "1.7.1",
   "description": "Puppet XP for Wechaty",
   "type": "module",
   "exports": {
@@ -11,8 +11,7 @@
   },
   "typings": "./dist/esm/src/mod.d.ts",
   "engines": {
-    "wechaty": ">=0.78",
-    "wechaty-puppet": ">=0.52"
+    "wechaty-puppet": ">=1.7"
   },
   "scripts": {
     "clean": "shx rm -fr dist/*",
@@ -55,28 +54,23 @@
   },
   "homepage": "https://github.com/wechaty/wechaty-puppet-mock#readme",
   "devDependencies": {
-    "@chatie/eslint-config": "^1.0.2",
+    "@chatie/eslint-config": "^1.0.4",
     "@chatie/git-scripts": "^0.6.2",
     "@chatie/semver": "^0.4.7",
-    "@chatie/tsconfig": "^1.0.2",
+    "@chatie/tsconfig": "^1.0.3",
     "@types/cuid": "^2.0.1",
     "@types/faker": "^5.5.9",
     "@types/xml2js": "^0.4.9",
-    "cross-env": "^7.0.3",
-    "npm-run-all": "^4.1.5",
-    "pkg-jq": "^0.2.11",
-    "shx": "^0.3.3",
     "tstest": "^1.0.1",
-    "typescript": "^4.4.4",
-    "wechaty": "^0.78.8"
+    "typed-emitter": "^1.4.0",
+    "wechaty": "^1.7.21"
   },
   "peerDependencies": {
-    "wechaty-puppet": ">=0.52"
+    "wechaty-puppet": "^1.7.17"
   },
   "dependencies": {
     "cuid": "^2.1.8",
     "sidecar": "^0.17.8",
-    "typed-emitter": "^1.4.0",
     "xml2js": "^0.4.23"
   },
   "files": [
