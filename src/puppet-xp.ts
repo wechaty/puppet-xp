@@ -55,11 +55,11 @@ class PuppetXp extends PUPPET.Puppet {
 
   static override readonly VERSION = VERSION
 
-  private messageStore: { [k: string]: PUPPET.payload.Message }
+  private messageStore: { [k: string]: PUPPET.payloads.Message }
 
-  private roomStore: { [k: string]: PUPPET.payload.Room }
+  private roomStore: { [k: string]: PUPPET.payloads.Room }
 
-  private contactStore: { [k: string]: PUPPET.payload.Contact }
+  private contactStore: { [k: string]: PUPPET.payloads.Contact }
 
   private selfInfo: any
 
@@ -109,11 +109,11 @@ class PuppetXp extends PUPPET.Puppet {
         alias: '',
         avatar: '',
         friend: true,
-        gender: PUPPET.type.ContactGender.Unknown,
+        gender: PUPPET.types.ContactGender.Unknown,
         id: contactInfo.id,
         name: contactInfo.name,
         phone: [],
-        type: PUPPET.type.Contact.Unknown,
+        type: PUPPET.types.Contact.Unknown,
       }
       this.contactStore[contactInfo.id] = contact
     }
@@ -144,11 +144,11 @@ class PuppetXp extends PUPPET.Puppet {
               alias: '',
               avatar: '',
               friend: false,
-              gender: PUPPET.type.ContactGender.Unknown,
+              gender: PUPPET.types.ContactGender.Unknown,
               id: memberId,
               name: memberNickName,
               phone: [],
-              type: PUPPET.type.Contact.Unknown,
+              type: PUPPET.types.Contact.Unknown,
             }
             this.contactStore[memberId] = contact
           } catch (err) {
@@ -167,37 +167,37 @@ class PuppetXp extends PUPPET.Puppet {
       }
 
       // console.info(args)
-      let type = PUPPET.type.Message.Unknown
+      let type = PUPPET.types.Message.Unknown
       let roomId = ''
       let toId = ''
       let fromId = ''
       const text = String(args[2])
 
       if (args[0] === 34) {
-        type = PUPPET.type.Message.Audio
+        type = PUPPET.types.Message.Audio
       } else if (args[0] === 42) {
-        type = PUPPET.type.Message.Contact
+        type = PUPPET.types.Message.Contact
       } else if (args[0] === 47) {
-        type = PUPPET.type.Message.Emoticon
+        type = PUPPET.types.Message.Emoticon
       } else if (args[0] === 3) {
-        type = PUPPET.type.Message.Image
+        type = PUPPET.types.Message.Image
       } else if (args[0] === 1) {
-        type = PUPPET.type.Message.Text
+        type = PUPPET.types.Message.Text
       } else if (args[0] === 43) {
-        type = PUPPET.type.Message.Video
+        type = PUPPET.types.Message.Video
       } else {
         try {
           xml2js.parseString(text, { explicitArray: false, ignoreAttrs: true }, function (err: any, json: { msg: { appmsg: { type: Number } } }) {
             console.info(err)
             console.info(JSON.stringify(json))
             if (json.msg.appmsg.type === 5) {
-              type = PUPPET.type.Message.Url
+              type = PUPPET.types.Message.Url
             } else if (json.msg.appmsg.type === 33) {
-              type = PUPPET.type.Message.MiniProgram
+              type = PUPPET.types.Message.MiniProgram
             } else if (json.msg.appmsg.type === 6) {
-              type = PUPPET.type.Message.Attachment
+              type = PUPPET.types.Message.Attachment
             } else {
-              type = PUPPET.type.Message.Unknown
+              type = PUPPET.types.Message.Unknown
             }
           })
         } catch (err) {
@@ -213,7 +213,7 @@ class PuppetXp extends PUPPET.Puppet {
         roomId = String(args[1])
       }
 
-      const payload: PUPPET.payload.Message = {
+      const payload: PUPPET.payloads.Message = {
         fromId,
         id: cuid(),
         roomId,
@@ -339,12 +339,12 @@ class PuppetXp extends PUPPET.Puppet {
     return FileBox.fromFile(WECHATY_ICON_PNG)
   }
 
-  override async contactRawPayloadParser (payload: PUPPET.payload.Contact) {
+  override async contactRawPayloadParser (payload: PUPPET.payloads.Contact) {
     // log.verbose('PuppetXp', 'contactRawPayloadParser(%s)', JSON.stringify(payload))
     return payload
   }
 
-  override async contactRawPayload (id: string): Promise<PUPPET.payload.Contact> {
+  override async contactRawPayload (id: string): Promise<PUPPET.payloads.Contact> {
     log.verbose('PuppetXp----------------------', 'contactRawPayload(%s)', id)
     return this.contactStore[id] || {} as any
   }
@@ -376,12 +376,12 @@ class PuppetXp extends PUPPET.Puppet {
 
   override async messageImage (
     messageId: string,
-    imageType: PUPPET.type.Image,
+    imageType: PUPPET.types.Image,
   ): Promise<FileBoxInterface> {
     log.verbose('PuppetXp', 'messageImage(%s, %s[%s])',
       messageId,
       imageType,
-      PUPPET.type.Image[imageType],
+      PUPPET.types.Image[imageType],
     )
     // const attachment = this.mocker.MockMessage.loadAttachment(messageId)
     // if (attachment instanceof FileBoxInterface) {
@@ -425,7 +425,7 @@ class PuppetXp extends PUPPET.Puppet {
     )
   }
 
-  override async messageUrl (messageId: string): Promise<PUPPET.payload.UrlLink> {
+  override async messageUrl (messageId: string): Promise<PUPPET.payloads.UrlLink> {
     log.verbose('PuppetXp', 'messageUrl(%s)', messageId)
     // const attachment = this.mocker.MockMessage.loadAttachment(messageId)
     // if (attachment instanceof UrlLink) {
@@ -437,7 +437,7 @@ class PuppetXp extends PUPPET.Puppet {
     }
   }
 
-  override async messageMiniProgram (messageId: string): Promise<PUPPET.payload.MiniProgram> {
+  override async messageMiniProgram (messageId: string): Promise<PUPPET.payloads.MiniProgram> {
     log.verbose('PuppetXp', 'messageMiniProgram(%s)', messageId)
     // const attachment = this.mocker.MockMessage.loadAttachment(messageId)
     // if (attachment instanceof MiniProgram) {
@@ -448,7 +448,7 @@ class PuppetXp extends PUPPET.Puppet {
     }
   }
 
-  override async messageLocation (messageId: string): Promise<PUPPET.payload.Location> {
+  override async messageLocation (messageId: string): Promise<PUPPET.payloads.Location> {
     log.verbose('PuppetXp', 'messageLocation(%s)', messageId)
     return {
       accuracy: 15, // in meters
@@ -459,12 +459,12 @@ class PuppetXp extends PUPPET.Puppet {
     }
   }
 
-  override async messageRawPayloadParser (payload: PUPPET.payload.Message) {
+  override async messageRawPayloadParser (payload: PUPPET.payloads.Message) {
     // console.info(payload)
     return payload
   }
 
-  override async messageRawPayload (id: string): Promise<PUPPET.payload.Message> {
+  override async messageRawPayload (id: string): Promise<PUPPET.payloads.Message> {
     log.verbose('PuppetXp', 'messageRawPayload(%s)', id)
 
     const payload = this.messageStore[id]
@@ -518,7 +518,7 @@ class PuppetXp extends PUPPET.Puppet {
 
   override async messageSendUrl (
     conversationId: string,
-    urlLinkPayload: PUPPET.payload.UrlLink,
+    urlLinkPayload: PUPPET.payloads.UrlLink,
   ): Promise<void> {
     log.verbose('PuppetXp', 'messageSendUrl(%s, %s)', conversationId, JSON.stringify(urlLinkPayload))
 
@@ -528,7 +528,7 @@ class PuppetXp extends PUPPET.Puppet {
 
   override async messageSendMiniProgram (
     conversationId: string,
-    miniProgramPayload: PUPPET.payload.MiniProgram,
+    miniProgramPayload: PUPPET.payloads.MiniProgram,
   ): Promise<void> {
     log.verbose('PuppetXp', 'messageSendMiniProgram(%s, %s)', conversationId, JSON.stringify(miniProgramPayload))
     // const miniProgram = new MiniProgram(miniProgramPayload)
@@ -537,7 +537,7 @@ class PuppetXp extends PUPPET.Puppet {
 
   override async messageSendLocation (
     conversationId: string,
-    locationPayload: PUPPET.payload.Location,
+    locationPayload: PUPPET.payloads.Location,
   ): Promise<void | string> {
     log.verbose('PuppetXp', 'messageSendLocation(%s, %s)', conversationId, JSON.stringify(locationPayload))
   }
@@ -551,7 +551,7 @@ class PuppetXp extends PUPPET.Puppet {
       messageId,
     )
     const curMessage = this.messageStore[messageId]
-    if (curMessage?.type === PUPPET.type.Message.Text) {
+    if (curMessage?.type === PUPPET.types.Message.Text) {
       await this.messageSendText(conversationId, curMessage.text || '')
     } else {
       PUPPET.throwUnsupportedError(conversationId, messageId)
@@ -563,8 +563,8 @@ class PuppetXp extends PUPPET.Puppet {
  * Room
  *
  */
-  override async roomRawPayloadParser (payload: PUPPET.payload.Room) { return payload }
-  override async roomRawPayload (id: string): Promise<PUPPET.payload.Room> {
+  override async roomRawPayloadParser (payload: PUPPET.payloads.Room) { return payload }
+  override async roomRawPayload (id: string): Promise<PUPPET.payloads.Room> {
     // log.verbose('PuppetXp', 'roomRawPayload(%s)', id)
     return this.roomStore[id] || {} as any
   }
@@ -640,7 +640,7 @@ class PuppetXp extends PUPPET.Puppet {
     return (await this.roomRawPayload(roomId)).memberIdList
   }
 
-  override async roomMemberRawPayload (roomId: string, contactId: string): Promise<PUPPET.payload.RoomMember> {
+  override async roomMemberRawPayload (roomId: string, contactId: string): Promise<PUPPET.payloads.RoomMember> {
     log.verbose('PuppetXp', 'roomMemberRawPayload(%s, %s)', roomId, contactId)
     const contact = this.contactStore[contactId]
     const MemberRawPayload = {
@@ -654,7 +654,7 @@ class PuppetXp extends PUPPET.Puppet {
     return MemberRawPayload
   }
 
-  override async roomMemberRawPayloadParser (rawPayload: PUPPET.payload.RoomMember): Promise<PUPPET.payload.RoomMember> {
+  override async roomMemberRawPayloadParser (rawPayload: PUPPET.payloads.RoomMember): Promise<PUPPET.payloads.RoomMember> {
     log.verbose('PuppetXp---------------------', 'roomMemberRawPayloadParser(%s)', rawPayload)
     return rawPayload
   }
@@ -682,7 +682,7 @@ class PuppetXp extends PUPPET.Puppet {
     log.verbose('PuppetXp', 'roomInvitationRawPayload(%s)', roomInvitationId)
   }
 
-  override async roomInvitationRawPayloadParser (rawPayload: any): Promise<PUPPET.payload.RoomInvitation> {
+  override async roomInvitationRawPayloadParser (rawPayload: any): Promise<PUPPET.payloads.RoomInvitation> {
     log.verbose('PuppetXp', 'roomInvitationRawPayloadParser(%s)', JSON.stringify(rawPayload))
     return rawPayload
   }
@@ -696,7 +696,7 @@ class PuppetXp extends PUPPET.Puppet {
     return { id } as any
   }
 
-  override async friendshipRawPayloadParser (rawPayload: any): Promise<PUPPET.payload.Friendship> {
+  override async friendshipRawPayloadParser (rawPayload: any): Promise<PUPPET.payloads.Friendship> {
     return rawPayload
   }
 

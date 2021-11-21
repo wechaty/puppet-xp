@@ -1,6 +1,6 @@
 {
   "name": "wechaty-puppet-xp",
-  "version": "1.7.1",
+  "version": "1.10.1",
   "description": "Puppet XP for Wechaty",
   "type": "module",
   "exports": {
@@ -11,7 +11,8 @@
   },
   "typings": "./dist/esm/src/mod.d.ts",
   "engines": {
-    "wechaty-puppet": ">=1.7"
+    "node": ">=16",
+    "npm": ">=7"
   },
   "scripts": {
     "clean": "shx rm -fr dist/*",
@@ -57,7 +58,7 @@
     "@chatie/eslint-config": "^1.0.4",
     "@chatie/git-scripts": "^0.6.2",
     "@chatie/semver": "^0.4.7",
-    "@chatie/tsconfig": "^1.0.3",
+    "@chatie/tsconfig": "^4.5.3",
     "@types/cuid": "^2.0.1",
     "@types/faker": "^5.5.9",
     "@types/xml2js": "^0.4.9",
@@ -66,7 +67,7 @@
     "wechaty": "^1.7.21"
   },
   "peerDependencies": {
-    "wechaty-puppet": "^1.7.17"
+    "wechaty-puppet": "^1.10.2"
   },
   "dependencies": {
     "cuid": "^2.1.8",
