@@ -12,28 +12,30 @@
 //const { isNullishCoalesce } = require("typescript")
 
 //3.3.0.115
-const offset={
-  node_offset:0x1DB9728,
-  handle_offset:0xe4,
-  send_txt_call_offset:0x3E3B80,
-  hook_point:0x40D3B1,
-  chatroom_node_offset:0xb08,
-  personal_offset:0x1DDF534,
-  send_picmsg_call_offset1:0x5CCB50,
-  send_picmsg_call_offset2:0x6F5C0,
-  send_picmsg_call_offset3:0x3E3490,
-  send_attatch_call_offset1:0x5CCB50,
-  send_attatch_call_offset2:0x5CCB10,
-  send_attatch_call_offset3:0x5CCB50,
-  send_attatch_call_offset4:0x5CCB50,
-  send_attatch_call_offset5:0x074C90,
-  send_attatch_call_offset6:0x2E2720,
-  send_attatch_call_para:0x19A7350,
-  chatroom_member_nick_call_offset1:0x558CB0,
-  chatroom_member_nick_call_offset2:0x3B0FE0,
-  chatroom_member_nick_call_offset3:0x55F6E0,
-  chatroom_member_nick_call_offset4:0x34CB10
-}
+const offset = {
+  node_offset: 0x1db9728,
+  handle_offset: 0xe4,
+  send_txt_call_offset: 0x3e3b80,
+  hook_point: 0x40d3b1,
+  chatroom_node_offset: 0xb08,
+  nickname_offset: 0x1ddf534,
+  wxid_offset: 0x1ddf4bc,
+  head_img_url_offset: 0x1ddf7fc,
+  send_picmsg_call_offset1: 0x5ccb50,
+  send_picmsg_call_offset2: 0x6f5c0,
+  send_picmsg_call_offset3: 0x3e3490,
+  send_attatch_call_offset1: 0x5ccb50,
+  send_attatch_call_offset2: 0x5ccb10,
+  send_attatch_call_offset3: 0x5ccb50,
+  send_attatch_call_offset4: 0x5ccb50,
+  send_attatch_call_offset5: 0x074c90,
+  send_attatch_call_offset6: 0x2e2720,
+  send_attatch_call_para: 0x19a7350,
+  chatroom_member_nick_call_offset1: 0x558cb0,
+  chatroom_member_nick_call_offset2: 0x3b0fe0,
+  chatroom_member_nick_call_offset3: 0x55f6e0,
+  chatroom_member_nick_call_offset4: 0x34cb10,
+};
 //3.3.0.115
 
 
@@ -65,32 +67,28 @@ const getTestInfoFunction = ( () => {
 
 const getMyselfInfoFunction = (() => {
 
- const sign = moduleBaseAddress.add(offset.personal_offset+0x174).readU32()
+ let   ptr          = 0
  let   wx_code      = ''
  let   wx_id        = ''
  let   wx_name      = ''
+ let   head_img_url = ''
 
- if(sign == 0){//old version
-   wx_id   = Memory.readAnsiString(moduleBaseAddress.add(offset.personal_offset+0x41c))
-   wx_code = Memory.readAnsiString(moduleBaseAddress.add(offset.personal_offset+0x41c))
+ ptr = readStringPtr(moduleBaseAddress.add(offset.wxid_offset))
+ wx_id   = Memory.readUtf8String(ptr)
+ wx_code = Memory.readUtf8String(ptr)
 
- }else{
-   wx_id   = Memory.readAnsiString(moduleBaseAddress.add(offset.personal_offset+0x41c).readPointer())
-   wx_code = Memory.readAnsiString(moduleBaseAddress.add(offset.personal_offset+0x164))
- }
+ ptr = readStringPtr(moduleBaseAddress.add(offset.nickname_offset));
+ wx_name = Memory.readUtf8String(ptr)
 
- const nick_sign = moduleBaseAddress.add(offset.personal_offset+0x14).readU32()
- if(nick_sign == 0xF){
-   wx_name = Memory.readUtf8String(moduleBaseAddress.add(offset.personal_offset))
- }else{
-   wx_name = Memory.readUtf8String(moduleBaseAddress.add(offset.personal_offset).readPointer())
- }
+ ptr = readStringPtr(moduleBaseAddress.add(offset.head_img_url_offset));
+ head_img_url = Memory.readUtf8String(ptr);
 
  const myself = {
-     id:wx_id,
-     code:wx_code,
-     name:wx_name
- }
+   id: wx_id,
+   code: wx_code,
+   name: wx_name,
+   head_img_url: head_img_url,
+ };
 
  return JSON.stringify(myself)
 
@@ -136,7 +134,16 @@ const chatroomRecurse = ((node)=>{
  return allChatroomMemberJson
 })
 
-
+// std::string
+const readStringPtr = (address) => {
+  const pStr = ptr(address)
+  const size = pStr.add(16).readU32()
+  const capacity = pStr.add(20).readU32()
+  if (size<16) {
+    return pStr;
+  }
+  return pStr.add(0).readPointer()
+}
 
 //contact
 const recurse = ((node) =>{
