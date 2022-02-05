@@ -84,15 +84,15 @@ const getHeaderNodeAddress =(()=>{
   if (baseAddress.isNull()) {
     return baseAddress
   }
-  return baseNodeAddress.add(offset.handle_offset).readPointer()
+  return baseAddress.add(offset.handle_offset).readPointer()
 })
 
 const getChatroomNodeAddress =(()=>{
-  const baseAddress = baseNodeAddress()
+  const baseAddress = getBaseNodeAddress()
   if (baseAddress.isNull()) {
     return baseAddress
   }
-  return baseNodeAddress.add(offset.chatroom_node_offset).readPointer()
+  return baseAddress.add(offset.chatroom_node_offset).readPointer()
 })
 
 
@@ -187,7 +187,7 @@ const readStringPtr = (address) => {
 //contact
 const recurse = ((node) =>{
   const headerNodeAddress = getHeaderNodeAddress()
-  if (heaaderNodeAddress.isNull()) {return}
+  if (headerNodeAddress.isNull()) {return}
 
   if(node.equals(headerNodeAddress)){return}
 
@@ -265,7 +265,7 @@ const getWechatVersionFunction = (() => {
 
 const getContactNativeFunction = (() => {
   const headerNodeAddress = getHeaderNodeAddress()
-  if (heaaderNodeAddress.isNull()) {return '[]'}
+  if (headerNodeAddress.isNull()) {return '[]'}
 
  const node = headerNodeAddress.add(0x0).readPointer()
  const ret = recurse(node)
