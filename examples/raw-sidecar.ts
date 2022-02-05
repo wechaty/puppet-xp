@@ -76,7 +76,7 @@ async function main () {
     const avatarUrl: string = args[3]
     const nickname: string = args[4]
     const phoneType: string = args[5]
-    const phoneClientVer: string = args[6]
+    const phoneClientVer: number = args[6]
     const pairWaitTip: string = args[7]
 
     const json = {

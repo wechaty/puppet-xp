@@ -201,9 +201,11 @@ class PuppetXp extends PUPPET.Puppet {
     const avatarUrl: string = args[3]
     const nickname: string = args[4]
     const phoneType: string = args[5]
-    const phoneClientVer: string = args[6]
+    const phoneClientVer: number = args[6]
     const pairWaitTip: string = args[7]
-    log.info('PuppetXp', 'onHookScan(%d, %d, %s, %s, %s, %s, %s, %s)', status, qrcodeUrl, wxid, avatarUrl, nickname, phoneType, phoneClientVer, pairWaitTip)
+
+    // TODO:
+    log.info('PuppetXp', 'onScan(%d, %s, %s, %s, %s, %s, %s, %s)', status, qrcodeUrl, wxid, avatarUrl, nickname, phoneType, phoneClientVer.toString(16), pairWaitTip)
     // this.emit('scan', {
     //   data: {
     //     status,
