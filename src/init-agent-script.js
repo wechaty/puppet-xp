@@ -157,10 +157,11 @@ const readStringPtr = (address) => {
   const pStr = ptr(address)
   const size = pStr.add(16).readU32()
   const capacity = pStr.add(20).readU32()
-  if (size<16) {
-    return pStr;
+  let addr = pStr
+  if ((size == 0 || size>=16) && !addr.readPointer().isNull()) {
+    addr = addr.readPointer()
   }
-  return pStr.add(0).readPointer()
+  return addr
 }
 
 //contact
