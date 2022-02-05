@@ -44,11 +44,6 @@ const availableVersion  = 1661141107 ////3.3.0.115
 const moduleBaseAddress = Module.getBaseAddress('WeChatWin.dll')
 const moduleLoad        = Module.load('WeChatWin.dll')
 
-const baseNodeAddress    = moduleBaseAddress.add(offset.node_offset).readPointer()
-const headerNodeAddress  = baseNodeAddress.add(offset.handle_offset).readPointer()
-
-const chatroomNodeAddress= baseNodeAddress.add(offset.chatroom_node_offset).readPointer()
-
 let nodeList=[]  //for contact
 let contactList=[] //for contact
 
@@ -63,6 +58,26 @@ const getTestInfoFunction = ( () => {
 
 })
 // get myself info
+
+const getBaseNodeAddress =(()=>{
+  return moduleBaseAddress.add(offset.node_offset).readPointer()
+})
+
+const getHeaderNodeAddress =(()=>{
+  const baseAddress = getBaseNodeAddress()
+  if (baseAddress.isNull()) {
+    return baseAddress
+  }
+  return baseNodeAddress.add(offset.handle_offset).readPointer()
+})
+
+const getChatroomNodeAddress =(()=>{
+  const baseAddress = baseNodeAddress()
+  if (baseAddress.isNull()) {
+    return baseAddress
+  }
+  return baseNodeAddress.add(offset.chatroom_node_offset).readPointer()
+})
 
 
 const getMyselfInfoFunction = (() => {
@@ -95,6 +110,9 @@ const getMyselfInfoFunction = (() => {
 })
 // chatroom member
 const chatroomRecurse = ((node)=>{
+  const chatroomNodeAddress = getChatroomNodeAddress()
+  if (chatroomNodeAddress.isNull()) {return}
+
  if(node.equals(chatroomNodeAddress)){return}
 
  for (const item in chatroomNodeList){
@@ -147,6 +165,8 @@ const readStringPtr = (address) => {
 
 //contact
 const recurse = ((node) =>{
+  const headerNodeAddress = getHeaderNodeAddress()
+  if (heaaderNodeAddress.isNull()) {return}
 
   if(node.equals(headerNodeAddress)){return}
 
@@ -193,6 +213,9 @@ const recurse = ((node) =>{
 })
 
 const getChatroomMemberInfoFunction = (() => {
+  const chatroomNodeAddress = getChatroomNodeAddress()
+  if (chatroomNodeAddress.isNull()) {return '[]'}
+
  const node = chatroomNodeAddress.add(0x0).readPointer()
  const ret = chatroomRecurse(node)
 
@@ -220,6 +243,9 @@ const getWechatVersionFunction = (() => {
 })
 
 const getContactNativeFunction = (() => {
+  const headerNodeAddress = getHeaderNodeAddress()
+  if (heaaderNodeAddress.isNull()) {return '[]'}
+
  const node = headerNodeAddress.add(0x0).readPointer()
  const ret = recurse(node)
 
