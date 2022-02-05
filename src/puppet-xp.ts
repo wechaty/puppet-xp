@@ -99,6 +99,8 @@ class PuppetXp extends PUPPET.Puppet {
 
     await attach(this.sidecar)
 
+    // TODO: move to `onLogin`
+
     this.selfInfo = JSON.parse(await this.sidecar.getMyselfInfo())
 
     const contactList = JSON.parse(await this.sidecar.getContact())
@@ -162,81 +164,126 @@ class PuppetXp extends PUPPET.Puppet {
     // console.debug(this.contactStore)
 
     this.sidecar.on('hook', ({ method, args }) => {
-      if (method !== 'recvMsg') {
-        return
-      }
+      log.info('PuppetXp', 'onHook(%s, %s)', method, JSON.stringify(args))
 
-      // console.info(args)
-      let type = PUPPET.types.Message.Unknown
-      let roomId = ''
-      let toId = ''
-      let fromId = ''
-      const text = String(args[2])
+      switch (method) {
+        case 'recvMsg':
+          this.onHookRecvMsg(args)
+          break;
+        case 'checkQRLogin':
+          this.onScan(args)
+          break;
+        case 'loginEvent':
+          // TODO:
+          // onLogin()
+          break
+        case 'logoutEvent':
+          // TODO:
+          // onLogout(args[0] as number)
+          break
 
-      if (args[0] === 34) {
-        type = PUPPET.types.Message.Audio
-      } else if (args[0] === 42) {
-        type = PUPPET.types.Message.Contact
-      } else if (args[0] === 47) {
-        type = PUPPET.types.Message.Emoticon
-      } else if (args[0] === 3) {
-        type = PUPPET.types.Message.Image
-      } else if (args[0] === 1) {
-        type = PUPPET.types.Message.Text
-      } else if (args[0] === 43) {
-        type = PUPPET.types.Message.Video
-      } else {
-        try {
-          xml2js.parseString(text, { explicitArray: false, ignoreAttrs: true }, function (err: any, json: { msg: { appmsg: { type: Number } } }) {
-            console.info(err)
-            console.info(JSON.stringify(json))
-            if (json.msg.appmsg.type === 5) {
-              type = PUPPET.types.Message.Url
-            } else if (json.msg.appmsg.type === 33) {
-              type = PUPPET.types.Message.MiniProgram
-            } else if (json.msg.appmsg.type === 6) {
-              type = PUPPET.types.Message.Attachment
-            } else {
-              type = PUPPET.types.Message.Unknown
-            }
-          })
-        } catch (err) {
-          console.error(err)
-        }
+        default:
+          break;
       }
-
-      if (String(args[1]).split('@').length !== 2) {
-        fromId = String(args[1])
-        toId = this.selfInfo.id
-      } else {
-        fromId = String(args[3])
-        roomId = String(args[1])
-      }
-
-      // revert fromId and toId according to isMyMsg
-      if (args[5] === 1) {
-        toId = fromId
-        fromId = this.selfInfo.id
-      }
-
-      const payload: PUPPET.payloads.Message = {
-        fromId,
-        id: cuid(),
-        roomId,
-        text,
-        timestamp: Date.now(),
-        toId,
-        type,
-      }
-      // console.info(payload)
-      this.messageStore[payload.id] = payload
-      this.emit('message', { messageId: payload.id })
     })
 
     this.sidecar.on('error', e => this.emit('error', { data: JSON.stringify(e as any) }))
 
+
     // FIXME: use the real login contact id
     await this.login(this.selfInfo.id)
+  }
+
+  private onScan(args:any) {
+    const status: number = args[0]
+    const qrcodeUrl: string = args[1]
+    const wxid: string = args[2]
+    const avatarUrl: string = args[3]
+    const nickname: string = args[4]
+    const phoneType: string = args[5]
+    const phoneClientVer: string = args[6]
+    const pairWaitTip: string = args[7]
+    log.info('PuppetXp', 'onHookScan(%d, %d, %s, %s, %s, %s, %s, %s)', status, qrcodeUrl, wxid, avatarUrl, nickname, phoneType, phoneClientVer, pairWaitTip)
+    // this.emit('scan', {
+    //   data: {
+    //     status,
+    //     qrcodeUrl,
+    //     wxid,
+    //     avatarUrl,
+    //     nickname,
+    //     phoneType,
+    //     phoneClientVer,
+    //     pairWaitTip,
+    //   },
+    // })
+  }
+
+  private onHookRecvMsg(args:any) {
+    // console.info(args)
+    let type = PUPPET.types.Message.Unknown
+    let roomId = ''
+    let toId = ''
+    let fromId = ''
+    const text = String(args[2])
+
+    if (args[0] === 34) {
+      type = PUPPET.types.Message.Audio
+    } else if (args[0] === 42) {
+      type = PUPPET.types.Message.Contact
+    } else if (args[0] === 47) {
+      type = PUPPET.types.Message.Emoticon
+    } else if (args[0] === 3) {
+      type = PUPPET.types.Message.Image
+    } else if (args[0] === 1) {
+      type = PUPPET.types.Message.Text
+    } else if (args[0] === 43) {
+      type = PUPPET.types.Message.Video
+    } else {
+      try {
+        xml2js.parseString(text, { explicitArray: false, ignoreAttrs: true }, function (err: any, json: { msg: { appmsg: { type: Number } } }) {
+          console.info(err)
+          console.info(JSON.stringify(json))
+          if (json.msg.appmsg.type === 5) {
+            type = PUPPET.types.Message.Url
+          } else if (json.msg.appmsg.type === 33) {
+            type = PUPPET.types.Message.MiniProgram
+          } else if (json.msg.appmsg.type === 6) {
+            type = PUPPET.types.Message.Attachment
+          } else {
+            type = PUPPET.types.Message.Unknown
+          }
+        })
+      } catch (err) {
+        console.error(err)
+      }
+    }
+
+    if (String(args[1]).split('@').length !== 2) {
+      fromId = String(args[1])
+      toId = this.selfInfo.id
+    } else {
+      fromId = String(args[3])
+      roomId = String(args[1])
+    }
+
+    // revert fromId and toId according to isMyMsg
+    if (args[5] === 1) {
+      toId = fromId
+      fromId = this.selfInfo.id
+    }
+
+    const payload: PUPPET.payloads.Message = {
+      fromId,
+      id: cuid(),
+      roomId,
+      text,
+      timestamp: Date.now(),
+      toId,
+      type,
+    }
+    // console.info(payload)
+    this.messageStore[payload.id] = payload
+    this.emit('message', { messageId: payload.id })
   }
 
   async onStop () {
