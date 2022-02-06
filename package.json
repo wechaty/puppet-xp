@@ -1,6 +1,6 @@
 {
   "name": "wechaty-puppet-xp",
-  "version": "1.10.3",
+  "version": "1.10.6",
   "description": "Puppet XP for Wechaty",
   "type": "module",
   "exports": {
@@ -62,6 +62,7 @@
     "@types/cuid": "^2.0.1",
     "@types/faker": "^5.5.9",
     "@types/xml2js": "^0.4.9",
+    "husky": "^7.0.4",
     "tstest": "^1.0.1",
     "typed-emitter": "^1.4.0",
     "wechaty": "^1.7.21"

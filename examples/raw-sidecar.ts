@@ -19,9 +19,9 @@
 import {
   attach,
   detach,
-}                         from 'sidecar'
+} from 'sidecar'
 
-import { WeChatSidecar }  from '../src/wechat-sidecar.js'
+import { WeChatSidecar } from '../src/wechat-sidecar.js'
 
 async function main () {
   console.info('WeChat Sidecar starting...')
@@ -43,8 +43,8 @@ async function main () {
       return
     }
 
-    const toId  = String(args[1])
-    const text      = String(args[2])
+    const toId = String(args[1])
+    const text = String(args[2])
     const talkerId = String(args[3])
 
     console.info('recvMsg: talkerId =', talkerId)
@@ -63,7 +63,7 @@ async function main () {
     await detach(sidecar)
   }
 
-  process.on('SIGINT',  clean)
+  process.on('SIGINT', clean)
   process.on('SIGTERM', clean)
 }
 
