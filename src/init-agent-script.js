@@ -306,9 +306,11 @@ const hookLoginEventCallback =(()=>{
     }
   })
 
-  if (isLoggedInFunction()) {
-    setImmediate(() => nativeativeFunction())
-  }
+  setTimeout(() => {
+    if (isLoggedInFunction()) {
+      setImmediate(() => nativeativeFunction())
+    }
+  }, 500);
 
   return nativeCallback
 })()
