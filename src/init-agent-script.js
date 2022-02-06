@@ -637,7 +637,7 @@ const getChatroomMemberNickInfoFunction = ( (memberId,roomId) =>{
  const nativeativeFunction = new NativeFunction(ptr(memberNickBuffAsm), 'void', [])
  nativeativeFunction()
 
- return nickRetAddr.readPointer().readPointer().readUtf16String()
+ return readStringPtr(nickRetAddr.readPointer()).readUtf16String()
 
 })
 
