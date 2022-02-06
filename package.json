@@ -1,6 +1,6 @@
 {
   "name": "wechaty-puppet-xp",
-  "version": "1.10.4",
+  "version": "1.10.5",
   "description": "Puppet XP for Wechaty",
   "type": "module",
   "exports": {
