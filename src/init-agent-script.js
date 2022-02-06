@@ -104,15 +104,12 @@ const getMyselfInfoFunction = (() => {
  let   wx_name      = ''
  let   head_img_url = ''
 
- ptr = readStringPtr(moduleBaseAddress.add(offset.wxid_offset))
- wx_id   = Memory.readUtf8String(ptr)
- wx_code = Memory.readUtf8String(ptr)
+ wx_id   = readStringPtr(moduleBaseAddress.add(offset.wxid_offset)).readUtf8String()
+ wx_code = wx_id
 
- ptr = readStringPtr(moduleBaseAddress.add(offset.nickname_offset));
- wx_name = Memory.readUtf8String(ptr)
+ wx_name   = readStringPtr(moduleBaseAddress.add(offset.nickname_offset)).readUtf8String()
+ head_img_url   = readStringPtr(moduleBaseAddress.add(offset.head_img_url_offset)).readUtf8String()
 
- ptr = readStringPtr(moduleBaseAddress.add(offset.head_img_url_offset));
- head_img_url = Memory.readUtf8String(ptr);
 
  const myself = {
    id: wx_id,
@@ -138,12 +135,12 @@ const chatroomRecurse = ((node)=>{
  }
 
  chatroomNodeList.push(node)
- const roomid = Memory.readUtf16String(node.add(0x10).readPointer())
+ const roomid = readWStringPtr(node.add(0x10)).readUtf16String()
 
  const len = Memory.readU32(node.add(0x50))   //
  //const memberJson={}
  if(len >4){//
-   const memberStr = Memory.readAnsiString(node.add(0x40).readPointer(),len)
+   const memberStr = readStringPtr(node.add(0x40)).readUtf8String()
    if(memberStr.length>0){
        const memberList = memberStr.split(/[\\^][G]/)
        const memberJson ={
@@ -169,18 +166,45 @@ const chatroomRecurse = ((node)=>{
 })
 
 // std::string
+// const str = readStringPtr(ptr).readUtf8String()
 const readStringPtr = (address) => {
-  const pStr = ptr(address)
-  const size = pStr.add(16).readU32()
-  const capacity = pStr.add(20).readU32()
-  let addr = pStr
-  if ((size == 0 || size>=16) && !addr.readPointer().isNull()) {
-    addr = addr.readPointer()
+  const addr = ptr(address)
+  const size = addr.add(16).readU32()
+  const capacity = addr.add(20).readU32()
+  addr.ptr = addr
+  addr.size = size
+  addr.capacity = capacity
+  if (capacity > 15 && !addr.readPointer().isNull()) {
+    addr.ptr = addr.readPointer()
   }
-  // console.log('readStringPtr() address:',address)
-  // console.log('readStringPtr() addr:',addr)
-  // console.log('readStringPtr() size:',size)
-  // console.log('readStringPtr() capacity:',capacity)
+  addr.ptr._readCString = addr.ptr.readCString
+  addr.ptr._readAnsiString = addr.ptr.readAnsiString
+  addr.ptr._readUtf8String = addr.ptr.readUtf8String
+  addr.readCString = () => {return addr.size ? addr.ptr._readCString(addr.size) : ''}
+  addr.readAnsiString = () => {return addr.size ? addr.ptr._readAnsiString(addr.size) : ''}
+  addr.readUtf8String = () => {return addr.size ? addr.ptr._readUtf8String(addr.size) : ''}
+
+  // console.log('readStringPtr() address:',address,' -> str ptr:', addr.ptr, 'size:', addr.size, 'capacity:', addr.capacity)
+  // console.log('readStringPtr() str:' , addr.readUtf8String())
+
+  return addr
+}
+
+// std::wstring
+// const wstr = readWStringPtr(ptr).readUtf16String()
+const readWStringPtr = (address) => {
+  const addr = ptr(address)
+  const size = addr.add(4).readU32()
+  const capacity = addr.add(8).readU32()
+  addr.ptr = addr.readPointer()
+  addr.size = size
+  addr.capacity = capacity
+  addr.ptr._readUtf16String = addr.ptr.readUtf16String
+  addr.readUtf16String = () => {return addr.size ? addr.ptr._readUtf16String(addr.size*2) : ''}
+
+  // console.log('readWStringPtr() address:',address,' -> ptr:', addr.ptr, 'size:', addr.size, 'capacity:', addr.capacity)
+  // console.log('readWStringPtr() str:' ,  `"${addr.readUtf16String()}"`,'\n',addr.ptr.readByteArray(addr.size*2+2),'\n')
+
   return addr
 }
 
@@ -199,18 +223,18 @@ const recurse = ((node) =>{
 
 
   nodeList.push(node)
-  const wxid    = Memory.readUtf16String(node.add(0x38).readPointer())
+  const wxid    = readStringPtr(node.add(0x38)).readUtf16String()
 
   const sign    = node.add(0x4c+0x4).readU32()//
   let wx_code=''
   if(sign == 0){
-    wx_code = Memory.readUtf16String(node.add(0x38).readPointer())
+    wx_code = readStringPtr(node.add(0x38)).readUtf16String()
   }else{
-    wx_code = Memory.readUtf16String(node.add(0x4c).readPointer())
+    wx_code = readStringPtr(node.add(0x4c)).readUtf16String()
   }
 
 
-  const name = Memory.readUtf16String(node.add(0x94).readPointer());
+  const name = readStringPtr(node.add(0x94)).readUtf16String()
 
   const contactJson={
     id:wxid,
@@ -637,7 +661,7 @@ const getChatroomMemberNickInfoFunction = ( (memberId,roomId) =>{
  const nativeativeFunction = new NativeFunction(ptr(memberNickBuffAsm), 'void', [])
  nativeativeFunction()
 
- return nickRetAddr.readPointer().readPointer().readUtf16String()
+ return readWStringPtr(nickRetAddr.readPointer()).readUtf16String()
 
 })
 
