@@ -107,10 +107,10 @@ class PuppetXp extends PUPPET.Puppet {
       switch (method) {
         case 'recvMsg':
           this.onHookRecvMsg(args)
-          break;
+          break
         case 'checkQRLogin':
           this.onScan(args)
-          break;
+          break
         case 'loginEvent':
           void this.onLogin()
           break
@@ -120,18 +120,17 @@ class PuppetXp extends PUPPET.Puppet {
 
         default:
           log.warn('PuppetXp', 'onHook(%s,...) lack of handing', method, JSON.stringify(args))
-          break;
+          break
       }
     })
 
-    this.sidecar.on('error', e => this.emit('error', { data: JSON.stringify(e as any) }))
+    this.sidecar.on('error', e => this.emit('error', { data : JSON.stringify(e as any) }))
 
   }
 
   private async onLogin () {
 
     this.selfInfo = JSON.parse(await this.sidecar.getMyselfInfo())
-
 
     await this.loadContactList()
     await this.loadRoomList()
@@ -142,11 +141,9 @@ class PuppetXp extends PUPPET.Puppet {
     // console.debug(this.contactStore)
   }
 
-
   private async onLogout (reasonNum:number) {
     await super.logout(reasonNum ? 'Kicked by server' : 'logout')
   }
-
 
   private onScan (args:any) {
     const statusMap = [
@@ -166,7 +163,20 @@ class PuppetXp extends PUPPET.Puppet {
     const phoneClientVer: number = args[6]
     const pairWaitTip: string = args[7]
 
-    log.info('PuppetXp', 'onScan() data: %s', JSON.stringify({status, qrcodeUrl, wxid, avatarUrl, nickname, phoneType, phoneClientVer: phoneClientVer.toString(16) , pairWaitTip}, null, 2))
+    log.info(
+      'PuppetXp',
+      'onScan() data: %s',
+      JSON.stringify(
+        {
+          avatarUrl,
+          nickname,
+          pairWaitTip,
+          phoneClientVer : phoneClientVer.toString(16),
+          phoneType,
+          qrcodeUrl,
+          status,
+          wxid,
+        }, null, 2))
 
     if (pairWaitTip) {
       log.warn('PuppetXp', 'onScan() pairWaitTip: "%s"', pairWaitTip)
@@ -179,7 +189,7 @@ class PuppetXp extends PUPPET.Puppet {
     this.emit('scan', this.scanEventData)
   }
 
-  private onHookRecvMsg(args:any) {
+  private onHookRecvMsg (args:any) {
     // console.info(args)
     let type = PUPPET.types.Message.Unknown
     let roomId = ''
@@ -289,7 +299,7 @@ class PuppetXp extends PUPPET.Puppet {
     }
   }
 
-  private async loadRoomList() {
+  private async loadRoomList () {
     const roomList = JSON.parse(await this.sidecar.getChatroomMemberInfo())
 
     for (const roomKey in roomList) {
