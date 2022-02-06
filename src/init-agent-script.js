@@ -242,7 +242,7 @@ const recvMsgNativeCallback = (() => {
      onEnter() {
        const addr = this.context.ebp.sub(0xc30)//0xc30-0x08
        const msgType = addr.add(0x38).readU32()
-       const isMyMsg = addr.add(0x4C).readU32()
+       const isMyMsg = addr.add(0x3C).readU32()//add isMyMsg
        
        if(msgType>0){  
 
