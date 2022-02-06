@@ -205,10 +205,17 @@ class PuppetXp extends PUPPET.Puppet {
         }
       }
 
-      if (String(args[1]).split('@').length !== 2) {
+      // set fromId and toId according to isMyMsg
+      if (args[5] === 1) {
+        fromId = this.selfInfo.id
+        toId = String(args[1])
+      } else {
         fromId = String(args[1])
         toId = this.selfInfo.id
-      } else {
+      }
+
+      // set formId if it is room message
+      if (String(args[1]).split('@').length === 2) {
         fromId = String(args[3])
         roomId = String(args[1])
       }

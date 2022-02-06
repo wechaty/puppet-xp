@@ -233,8 +233,8 @@ const getContactNativeFunction = (() => {
  */
 const recvMsgNativeCallback = (() => {
 
- const nativeCallback      = new NativeCallback(() => {}, 'void', ['int32', 'pointer','pointer','pointer','pointer'])
- const nativeativeFunction = new NativeFunction(nativeCallback, 'void', ['int32', 'pointer','pointer','pointer','pointer'])
+ const nativeCallback      = new NativeCallback(() => {}, 'void', ['int32', 'pointer','pointer','pointer','pointer','int32'])
+ const nativeativeFunction = new NativeFunction(nativeCallback, 'void', ['int32', 'pointer','pointer','pointer','pointer','int32'])
 
  Interceptor.attach(
    moduleBaseAddress.add(offset.hook_point),
@@ -242,6 +242,7 @@ const recvMsgNativeCallback = (() => {
      onEnter() {
        const addr = this.context.ebp.sub(0xc30)//0xc30-0x08
        const msgType = addr.add(0x38).readU32()
+       const isMyMsg = addr.add(0x4C).readU32()
        
        if(msgType>0){  
 
@@ -305,7 +306,7 @@ const recvMsgNativeCallback = (() => {
         }
 
         
-       setImmediate(() => nativeativeFunction(msgType,myTalkerIdPtr, myContentPtr,myGroupMsgSenderIdPtr,myXmlContentPtr))
+       setImmediate(() => nativeativeFunction(msgType,myTalkerIdPtr, myContentPtr,myGroupMsgSenderIdPtr,myXmlContentPtr,isMyMsg))
      }
    }
  })
