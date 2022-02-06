@@ -15,12 +15,7 @@ import { PuppetXp } from '../src/puppet-xp.js'
 
 function onScan (qrcode: string, status: ScanStatus) {
   if (status === ScanStatus.Waiting || status === ScanStatus.Timeout) {
-    const qrcodeImageUrl = [
-      'https://wechaty.js.org/qrcode/',
-      encodeURIComponent(qrcode),
-    ].join('')
-
-    log.info('StarterBot', 'onScan: %s(%s) - %s', ScanStatus[status], status, qrcodeImageUrl)
+    log.info('StarterBot', 'onScan: %s(%s) - %s', ScanStatus[status], status, qrcode)
   } else {
     log.info('StarterBot', 'onScan: %s(%s)', ScanStatus[status], status)
   }

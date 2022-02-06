@@ -68,11 +68,7 @@ puppet.start()
  */
 function onScan (payload: PUPPET.payloads.EventScan) {
   if (payload.qrcode) {
-    const qrcodeImageUrl = [
-      'https://wechaty.js.org/qrcode/',
-      payload.qrcode,
-    ].join('')
-    console.info(`[${payload.status}] ${qrcodeImageUrl}\nScan QR Code above to log in: `)
+    console.info(`[${payload.status}] ${payload.qrcode}\nScan QR Code above to log in: `)
   } else {
     console.info(`[${payload.status}]`)
   }
