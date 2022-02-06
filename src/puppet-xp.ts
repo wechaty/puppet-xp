@@ -213,6 +213,12 @@ class PuppetXp extends PUPPET.Puppet {
         roomId = String(args[1])
       }
 
+      // revert fromId and toId according to isMyMsg
+      if (args[5] === 1) {
+        toId = fromId
+        fromId = this.selfInfo.id
+      }
+
       const payload: PUPPET.payloads.Message = {
         fromId,
         id: cuid(),

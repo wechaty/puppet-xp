@@ -240,8 +240,8 @@ const getContactNativeFunction = (() => {
  */
 const recvMsgNativeCallback = (() => {
 
- const nativeCallback      = new NativeCallback(() => {}, 'void', ['int32', 'pointer','pointer','pointer','pointer'])
- const nativeativeFunction = new NativeFunction(nativeCallback, 'void', ['int32', 'pointer','pointer','pointer','pointer'])
+ const nativeCallback      = new NativeCallback(() => {}, 'void', ['int32', 'pointer','pointer','pointer','pointer','int32'])
+ const nativeativeFunction = new NativeFunction(nativeCallback, 'void', ['int32', 'pointer','pointer','pointer','pointer','int32'])
 
  Interceptor.attach(
    moduleBaseAddress.add(offset.hook_point),
@@ -249,8 +249,9 @@ const recvMsgNativeCallback = (() => {
      onEnter() {
        const addr = this.context.ebp.sub(0xc30)//0xc30-0x08
        const msgType = addr.add(0x38).readU32()
-
-       if(msgType>0){
+       const isMyMsg = addr.add(0x3C).readU32()//add isMyMsg
+       
+       if(msgType>0){  
 
         const talkerIdPtr = addr.add(0x48).readPointer()
         //console.log('txt msg',talkerIdPtr.readUtf16String())
@@ -310,9 +311,8 @@ const recvMsgNativeCallback = (() => {
            myXmlContentPtr = Memory.alloc(xmlContentLen)
            Memory.copy(myXmlContentPtr, xmlContentPtr, xmlContentLen)
         }
-
-
-       setImmediate(() => nativeativeFunction(msgType,myTalkerIdPtr, myContentPtr,myGroupMsgSenderIdPtr,myXmlContentPtr))
+        
+       setImmediate(() => nativeativeFunction(msgType,myTalkerIdPtr, myContentPtr,myGroupMsgSenderIdPtr,myXmlContentPtr,isMyMsg))
      }
    }
  })

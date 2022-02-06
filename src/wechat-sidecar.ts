@@ -94,7 +94,8 @@ class WeChatSidecar extends SidecarBody {
     @ParamType('pointer', 'Utf16String') text: string,
     @ParamType('pointer', 'Utf16String') groupMsgSenderId: string,
     @ParamType('pointer', 'Utf16String') xmlContent: string,
-  ) { return Ret(msgType, contactId, text, groupMsgSenderId, xmlContent) }
+    @ParamType('int32', 'U32') isMyMsg: number, // add isMyMsg type
+  ) { return Ret(msgType, contactId, text, groupMsgSenderId, xmlContent, isMyMsg) }
 
 }
 
