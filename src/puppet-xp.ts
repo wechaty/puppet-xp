@@ -61,6 +61,8 @@ class PuppetXp extends PUPPET.Puppet {
 
   private contactStore: { [k: string]: PUPPET.payloads.Contact }
 
+  private scanEventData?: PUPPET.payload.EventScan
+
   private selfInfo: any
 
   #sidecar?: WeChatSidecar
@@ -99,72 +101,8 @@ class PuppetXp extends PUPPET.Puppet {
 
     await attach(this.sidecar)
 
-    // TODO: move to `onLogin`
-
-    this.selfInfo = JSON.parse(await this.sidecar.getMyselfInfo())
-
-    const contactList = JSON.parse(await this.sidecar.getContact())
-
-    for (const contactKey in contactList) {
-      const contactInfo = contactList[contactKey]
-      const contact = {
-        alias: '',
-        avatar: '',
-        friend: true,
-        gender: PUPPET.types.ContactGender.Unknown,
-        id: contactInfo.id,
-        name: contactInfo.name,
-        phone: [],
-        type: PUPPET.types.Contact.Unknown,
-      }
-      this.contactStore[contactInfo.id] = contact
-    }
-
-    const roomList = JSON.parse(await this.sidecar.getChatroomMemberInfo())
-    for (const roomKey in roomList) {
-      const roomInfo = roomList[roomKey]
-      const roomId = roomInfo.roomid
-      const roomMember = roomInfo.roomMember || []
-      const topic = this.contactStore[roomId]?.name || ''
-      const room = {
-        adminIdList: [],
-        avatar: '',
-        external: false,
-        id: roomId,
-        memberIdList: roomMember,
-        ownerId: '',
-        topic: topic,
-      }
-      this.roomStore[roomId] = room
-
-      for (const memberKey in roomMember) {
-        const memberId = roomMember[memberKey]
-        if (!this.contactStore[memberId]) {
-          try {
-            const memberNickName = await this.sidecar.getChatroomMemberNickInfo(memberId, roomId)
-            const contact = {
-              alias: '',
-              avatar: '',
-              friend: false,
-              gender: PUPPET.types.ContactGender.Unknown,
-              id: memberId,
-              name: memberNickName,
-              phone: [],
-              type: PUPPET.types.Contact.Unknown,
-            }
-            this.contactStore[memberId] = contact
-          } catch (err) {
-            console.error(err)
-          }
-        }
-      }
-    }
-
-    // console.debug(this.roomStore)
-    // console.debug(this.contactStore)
-
     this.sidecar.on('hook', ({ method, args }) => {
-      log.info('PuppetXp', 'onHook(%s, %s)', method, JSON.stringify(args))
+      log.verbose('PuppetXp', 'onHook(%s, %s)', method, JSON.stringify(args))
 
       switch (method) {
         case 'recvMsg':
@@ -174,26 +112,48 @@ class PuppetXp extends PUPPET.Puppet {
           this.onScan(args)
           break
         case 'loginEvent':
-          // TODO:
-          // onLogin()
+          void this.onLogin()
           break
         case 'logoutEvent':
-          // TODO:
-          // onLogout(args[0] as number)
+          void this.onLogout(args[0] as number)
           break
 
         default:
+          log.warn('PuppetXp', 'onHook(%s,...) lack of handing', method, JSON.stringify(args))
           break
       }
     })
 
-    this.sidecar.on('error', e => this.emit('error', { data: JSON.stringify(e as any) }))
+    this.sidecar.on('error', e => this.emit('error', { data : JSON.stringify(e as any) }))
 
-    // FIXME: use the real login contact id
-    await this.login(this.selfInfo.id)
+  }
+
+  private async onLogin () {
+
+    this.selfInfo = JSON.parse(await this.sidecar.getMyselfInfo())
+
+    await this.loadContactList()
+    await this.loadRoomList()
+
+    await super.login(this.selfInfo.id)
+
+    // console.debug(this.roomStore)
+    // console.debug(this.contactStore)
+  }
+
+  private async onLogout (reasonNum:number) {
+    await super.logout(reasonNum ? 'Kicked by server' : 'logout')
   }
 
   private onScan (args:any) {
+    const statusMap = [
+      PUPPET.types.ScanStatus.Waiting,
+      PUPPET.types.ScanStatus.Scanned,
+      PUPPET.types.ScanStatus.Confirmed,
+      PUPPET.types.ScanStatus.Timeout,
+      PUPPET.types.ScanStatus.Cancel,
+    ]
+
     const status: number = args[0]
     const qrcodeUrl: string = args[1]
     const wxid: string = args[2]
@@ -203,20 +163,30 @@ class PuppetXp extends PUPPET.Puppet {
     const phoneClientVer: number = args[6]
     const pairWaitTip: string = args[7]
 
-    // TODO:
-    log.info('PuppetXp', 'onScan(%d, %s, %s, %s, %s, %s, %s, %s)', status, qrcodeUrl, wxid, avatarUrl, nickname, phoneType, phoneClientVer.toString(16), pairWaitTip)
-    // this.emit('scan', {
-    //   data: {
-    //     status,
-    //     qrcodeUrl,
-    //     wxid,
-    //     avatarUrl,
-    //     nickname,
-    //     phoneType,
-    //     phoneClientVer,
-    //     pairWaitTip,
-    //   },
-    // })
+    log.info(
+      'PuppetXp',
+      'onScan() data: %s',
+      JSON.stringify(
+        {
+          avatarUrl,
+          nickname,
+          pairWaitTip,
+          phoneClientVer : phoneClientVer.toString(16),
+          phoneType,
+          qrcodeUrl,
+          status,
+          wxid,
+        }, null, 2))
+
+    if (pairWaitTip) {
+      log.warn('PuppetXp', 'onScan() pairWaitTip: "%s"', pairWaitTip)
+    }
+
+    this.scanEventData = {
+      qrcode : qrcodeUrl,
+      status : statusMap[args[0]] ?? PUPPET.types.ScanStatus.Unknown,
+    }
+    this.emit('scan', this.scanEventData)
   }
 
   private onHookRecvMsg (args:any) {
@@ -261,10 +231,16 @@ class PuppetXp extends PUPPET.Puppet {
 
     if (String(args[1]).split('@').length !== 2) {
       fromId = String(args[1])
-      toId = this.selfInfo.id
+      toId = this.currentUserId
     } else {
       fromId = String(args[3])
       roomId = String(args[1])
+    }
+
+    // revert fromId and toId according to isMyMsg
+    if (args[5] === 1) {
+      toId = fromId
+      fromId = this.selfInfo.id
     }
 
     const payload: PUPPET.payloads.Message = {
@@ -302,6 +278,69 @@ class PuppetXp extends PUPPET.Puppet {
   override ding (data?: string): void {
     log.silly('PuppetXp', 'ding(%s)', data || '')
     setTimeout(() => this.emit('dong', { data: data || '' }), 1000)
+  }
+
+  private async loadContactList () {
+    const contactList = JSON.parse(await this.sidecar.getContact())
+
+    for (const contactKey in contactList) {
+      const contactInfo = contactList[contactKey]
+      const contact = {
+        alias: '',
+        avatar: '',
+        friend: true,
+        gender: PUPPET.types.ContactGender.Unknown,
+        id: contactInfo.id,
+        name: contactInfo.name,
+        phone: [],
+        type: PUPPET.types.Contact.Unknown,
+      }
+      this.contactStore[contactInfo.id] = contact
+    }
+  }
+
+  private async loadRoomList () {
+    const roomList = JSON.parse(await this.sidecar.getChatroomMemberInfo())
+
+    for (const roomKey in roomList) {
+      const roomInfo = roomList[roomKey]
+      const roomId = roomInfo.roomid
+      const roomMember = roomInfo.roomMember || []
+      const topic = this.contactStore[roomId]?.name || ''
+      const room = {
+        adminIdList: [],
+        avatar: '',
+        external: false,
+        id: roomId,
+        memberIdList: roomMember,
+        ownerId: '',
+        topic: topic,
+      }
+      this.roomStore[roomId] = room
+
+      for (const memberKey in roomMember) {
+        const memberId = roomMember[memberKey]
+        if (!this.contactStore[memberId]) {
+          try {
+            const memberNickName = await this.sidecar.getChatroomMemberNickInfo(memberId, roomId)
+            const contact = {
+              alias: '',
+              avatar: '',
+              friend: false,
+              gender: PUPPET.types.ContactGender.Unknown,
+              id: memberId,
+              name: memberNickName,
+              phone: [],
+              type: PUPPET.types.Contact.Unknown,
+            }
+            this.contactStore[memberId] = contact
+          } catch (err) {
+            console.error(err)
+          }
+        }
+      }
+    }
+
   }
 
   /**
