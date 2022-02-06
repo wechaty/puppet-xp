@@ -384,6 +384,14 @@ const checkQRLoginNativeCallback =(()=>{
       return retval
     },
   })
+
+  if (!isLoggedInFunction()) {
+    setTimeout(() => {
+      const json = getQrcodeLoginData()
+      ret(json)
+    }, 100);
+  }
+
   return nativeCallback
 })()
 
