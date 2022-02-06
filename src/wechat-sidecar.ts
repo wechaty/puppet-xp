@@ -50,6 +50,9 @@ class WeChatSidecar extends SidecarBody {
     roomId: string,
   ): Promise<string> { return Ret(memberId, roomId) }
 
+  @Call(agentTarget('isLoggedInFunction'))
+  isLoggedIn ():Promise<boolean> { return Ret() }
+
   @Call(agentTarget('getMyselfInfoFunction'))
   getMyselfInfo ():Promise<string> { return Ret() }
 
@@ -96,6 +99,27 @@ class WeChatSidecar extends SidecarBody {
     @ParamType('pointer', 'Utf16String') xmlContent: string,
     @ParamType('int32', 'U32') isMyMsg: number, // add isMyMsg type
   ) { return Ret(msgType, contactId, text, groupMsgSenderId, xmlContent, isMyMsg) }
+
+  @Hook(agentTarget('checkQRLoginNativeCallback'))
+  checkQRLogin (
+    @ParamType('int32', 'U32') status: number,
+    @ParamType('pointer', 'Utf8String') qrcodeUrl: string,
+    @ParamType('pointer', 'Utf8String') wxid: string,
+    @ParamType('pointer', 'Utf8String') avatarUrl: string,
+    @ParamType('pointer', 'Utf8String') nickname: string,
+    @ParamType('pointer', 'Utf8String') phoneType: string,
+    @ParamType('int32', 'U32') phoneClientVer: number,
+    @ParamType('pointer', 'Utf8String') pairWaitTip: string,
+  ) { return Ret(status, qrcodeUrl, wxid, avatarUrl, nickname, phoneType, phoneClientVer, pairWaitTip) }
+
+  @Hook(agentTarget('hookLogoutEventCallback'))
+  logoutEvent (
+    @ParamType('int32', 'U32') bySrv: number,
+  ) { return Ret(bySrv) }
+
+  @Hook(agentTarget('hookLoginEventCallback'))
+  loginEvent (
+  ) { return Ret() }
 
 }
 

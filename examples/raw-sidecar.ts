@@ -31,11 +31,69 @@ async function main () {
 
   console.info('WeChat Sidecar started.')
 
-  sidecar.on('hook', async ({ method, args }) => {
-    if (method !== 'recvMsg') {
-      return
+  const ver = await sidecar.getWeChatVersion()
+  console.info(`WeChat Version: ${ver}`)
+  const isLoggedIn = await sidecar.isLoggedIn()
+  console.info(`has Logged In: ${isLoggedIn}`)
+  const myselfInfo = await sidecar.getMyselfInfo()
+  console.info(`myInfo: ${myselfInfo}`)
+
+  sidecar.on('hook', ({ method, args }) => {
+
+    switch (method) {
+      case 'recvMsg':
+        void onRecvMsg(args)
+        break;
+      case 'checkQRLogin':
+        onScan(args)
+        break;
+      case 'loginEvent':
+        onLogin()
+        break
+      case 'logoutEvent':
+        onLogout(args[0] as number)
+        break
+
+      default:
+        console.info('onHook', method, JSON.stringify(args))
+        break;
     }
 
+  })
+
+  const onLogin = () => {
+    console.info('You are logged in.')
+  }
+
+  const onLogout = (bySrv:number) => {
+    console.info(`You are logged out${bySrv ? ' because you were kicked by server.' : ''}.`)
+  }
+
+  const onScan = (args:any) =>{
+    const status: number = args[0]
+    const qrcodeUrl: string = args[1]
+    const wxid: string = args[2]
+    const avatarUrl: string = args[3]
+    const nickname: string = args[4]
+    const phoneType: string = args[5]
+    const phoneClientVer: number = args[6]
+    const pairWaitTip: string = args[7]
+
+    const json = {
+      status,
+      qrcodeUrl,
+      wxid,
+      avatarUrl,
+      nickname,
+      phoneType,
+      phoneClientVer,
+      pairWaitTip,
+    }
+
+    console.info('onScan', JSON.stringify(json, null, 2))
+  }
+
+  const onRecvMsg = async (args:any) => {
     console.info('recvMsg:', args)
 
     if (args instanceof Error) {
@@ -55,8 +113,7 @@ async function main () {
       await sidecar.sendMsg(toId, 'dong')
       // await sidecar.sendAtMsg(toId, 'dong',talkerId)
     }
-
-  })
+  }
 
   const clean = async () => {
     console.info('Sidecar detaching...')

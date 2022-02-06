@@ -21,6 +21,13 @@ const offset = {
   nickname_offset: 0x1ddf534,
   wxid_offset: 0x1ddf4bc,
   head_img_url_offset: 0x1ddf7fc,
+  is_logged_in_offset: 0x1DDF9D4,
+  hook_on_login_offset: 0x51B790,
+  hook_on_logout_offset: 0x51C2C0,
+  hook_get_login_qr_offset: 0x4B6020,
+  hook_check_login_qr_offset: 0x478B90,
+  hook_save_login_qr_info_offset: 0x3DB2E0,
+  get_qr_login_data_offset: 0x282160,
   send_picmsg_call_offset1: 0x5ccb50,
   send_picmsg_call_offset2: 0x6f5c0,
   send_picmsg_call_offset3: 0x3e3490,
@@ -44,16 +51,12 @@ const availableVersion  = 1661141107 ////3.3.0.115
 const moduleBaseAddress = Module.getBaseAddress('WeChatWin.dll')
 const moduleLoad        = Module.load('WeChatWin.dll')
 
-const baseNodeAddress    = moduleBaseAddress.add(offset.node_offset).readPointer()
-const headerNodeAddress  = baseNodeAddress.add(offset.handle_offset).readPointer()
-
-const chatroomNodeAddress= baseNodeAddress.add(offset.chatroom_node_offset).readPointer()
-
 let nodeList=[]  //for contact
 let contactList=[] //for contact
 
 let chatroomNodeList=[] //for chatroom
 let chatroomMemberList=[]//for chatroom
+let loggedIn = false
 
 /*------------------global-------------------------------------------*/
 
@@ -62,7 +65,35 @@ const getTestInfoFunction = ( () => {
  nativeativeFunction()
 
 })
+
+// get global data
+
+const isLoggedInFunction = (()=>{
+  loggedIn = moduleBaseAddress.add(offset.is_logged_in_offset).readU32()
+  return !!loggedIn
+})
+
 // get myself info
+
+const getBaseNodeAddress =(()=>{
+  return moduleBaseAddress.add(offset.node_offset).readPointer()
+})
+
+const getHeaderNodeAddress =(()=>{
+  const baseAddress = getBaseNodeAddress()
+  if (baseAddress.isNull()) {
+    return baseAddress
+  }
+  return baseAddress.add(offset.handle_offset).readPointer()
+})
+
+const getChatroomNodeAddress =(()=>{
+  const baseAddress = getBaseNodeAddress()
+  if (baseAddress.isNull()) {
+    return baseAddress
+  }
+  return baseAddress.add(offset.chatroom_node_offset).readPointer()
+})
 
 
 const getMyselfInfoFunction = (() => {
@@ -95,6 +126,9 @@ const getMyselfInfoFunction = (() => {
 })
 // chatroom member
 const chatroomRecurse = ((node)=>{
+  const chatroomNodeAddress = getChatroomNodeAddress()
+  if (chatroomNodeAddress.isNull()) {return}
+
  if(node.equals(chatroomNodeAddress)){return}
 
  for (const item in chatroomNodeList){
@@ -139,14 +173,21 @@ const readStringPtr = (address) => {
   const pStr = ptr(address)
   const size = pStr.add(16).readU32()
   const capacity = pStr.add(20).readU32()
-  if (size<16) {
-    return pStr;
+  let addr = pStr
+  if ((size == 0 || size>=16) && !addr.readPointer().isNull()) {
+    addr = addr.readPointer()
   }
-  return pStr.add(0).readPointer()
+  // console.log('readStringPtr() address:',address)
+  // console.log('readStringPtr() addr:',addr)
+  // console.log('readStringPtr() size:',size)
+  // console.log('readStringPtr() capacity:',capacity)
+  return addr
 }
 
 //contact
 const recurse = ((node) =>{
+  const headerNodeAddress = getHeaderNodeAddress()
+  if (headerNodeAddress.isNull()) {return}
 
   if(node.equals(headerNodeAddress)){return}
 
@@ -193,6 +234,9 @@ const recurse = ((node) =>{
 })
 
 const getChatroomMemberInfoFunction = (() => {
+  const chatroomNodeAddress = getChatroomNodeAddress()
+  if (chatroomNodeAddress.isNull()) {return '[]'}
+
  const node = chatroomNodeAddress.add(0x0).readPointer()
  const ret = chatroomRecurse(node)
 
@@ -220,6 +264,9 @@ const getWechatVersionFunction = (() => {
 })
 
 const getContactNativeFunction = (() => {
+  const headerNodeAddress = getHeaderNodeAddress()
+  if (headerNodeAddress.isNull()) {return '[]'}
+
  const node = headerNodeAddress.add(0x0).readPointer()
  const ret = recurse(node)
 
@@ -233,6 +280,143 @@ const getContactNativeFunction = (() => {
 
  return cloneRet
 })
+
+
+const hookLogoutEventCallback =(()=>{
+  const nativeCallback      = new NativeCallback(() => {}, 'void', ['int32'])
+  const nativeativeFunction = new NativeFunction(nativeCallback, 'void', ['int32'])
+  Interceptor.attach(moduleBaseAddress.add(offset.hook_on_logout_offset),{
+    onEnter: function(args){
+      const bySrv = args[0].toInt32()
+      setImmediate(() => nativeativeFunction(bySrv))
+    }
+  })
+  return nativeCallback
+})()
+
+
+const hookLoginEventCallback =(()=>{
+  const nativeCallback      = new NativeCallback(() => {}, 'void', [])
+  const nativeativeFunction = new NativeFunction(nativeCallback, 'void', [])
+  Interceptor.attach(moduleBaseAddress.add(offset.hook_on_login_offset),{
+    onLeave: function(retval){
+      isLoggedInFunction()
+      setImmediate(() => nativeativeFunction())
+      return retval
+    }
+  })
+
+  setTimeout(() => {
+    if (isLoggedInFunction()) {
+      setImmediate(() => nativeativeFunction())
+    }
+  }, 500);
+
+  return nativeCallback
+})()
+
+
+const checkQRLoginNativeCallback =(()=>{
+
+  const nativeCallback      = new NativeCallback(() => {}, 'void', ['int32','pointer','pointer','pointer','pointer','pointer','int32','pointer'])
+  const nativeativeFunction = new NativeFunction(nativeCallback, 'void', ['int32','pointer','pointer','pointer','pointer','pointer','int32','pointer'])
+  // const json = {
+  //   status,
+  //   uuid,
+  //   wxid,
+  //   avatarUrl,
+  //   nickname,
+  //   phoneType,
+  //   phoneClientVer,
+  //   pairWaitTip,
+  // }
+
+  const callback = {
+    onLeave: function (retval) {
+      const json = getQrcodeLoginData()
+      if (json.status==0) {
+        // 当状态为 0 时，即未扫码。而其他状态会触发另一个方法，拥有更多数据。
+        ret(json)
+      }
+      return retval
+    },
+  }
+
+  const ret = (json) => {
+     const arr = [
+        json.status||0,
+        Memory.allocUtf8String(json.uuid?`https://weixin.qq.com/x/${json.uuid}`:''),
+        Memory.allocUtf8String(json.wxid||''),
+        Memory.allocUtf8String(json.avatarUrl||''),
+        Memory.allocUtf8String(json.nickname||''),
+        Memory.allocUtf8String(json.phoneType||''),
+        json.phoneClientVer||0,
+        Memory.allocUtf8String(json.pairWaitTip||''),
+     ]
+     setImmediate(() => nativeativeFunction(...arr))
+  }
+
+  Interceptor.attach(moduleBaseAddress.add(offset.hook_get_login_qr_offset),callback)
+  Interceptor.attach(moduleBaseAddress.add(offset.hook_check_login_qr_offset),callback)
+  Interceptor.attach(moduleBaseAddress.add(offset.hook_save_login_qr_info_offset),{
+    onEnter: function () {
+      const qrNotify = this.context['ebp'].sub(72)
+      const uuid = readStringPtr(qrNotify.add(4).readPointer()).readUtf8String()
+      const wxid = readStringPtr(qrNotify.add(8).readPointer()).readUtf8String()
+      const status = qrNotify.add(16).readUInt()
+      const avatarUrl = readStringPtr(qrNotify.add(24).readPointer()).readUtf8String()
+      const nickname = readStringPtr(qrNotify.add(28).readPointer()).readUtf8String()
+      const pairWaitTip = readStringPtr(qrNotify.add(32).readPointer()).readUtf8String()
+      const phoneClientVer = qrNotify.add(40).readUInt()
+      const phoneType = readStringPtr(qrNotify.add(44).readPointer()).readUtf8String()
+
+      const json = {
+        status,
+        uuid,
+        wxid,
+        avatarUrl,
+        nickname,
+        phoneType,
+        phoneClientVer,
+        pairWaitTip,
+      }
+      ret(json)
+    },
+    onLeave: function (retval) {
+      return retval
+    },
+  })
+
+  if (!isLoggedInFunction()) {
+    setTimeout(() => {
+      const json = getQrcodeLoginData()
+      ret(json)
+    }, 100);
+  }
+
+  return nativeCallback
+})()
+
+
+const getQrcodeLoginData = () => {
+  const getQRCodeLoginMgr = new NativeFunction(moduleBaseAddress.add(offset.get_qr_login_data_offset),'pointer',[])
+  const qlMgr = getQRCodeLoginMgr()
+
+  const json = {
+    status : 0,
+    uuid : '',
+    wxid : '',
+    avatarUrl : '',
+  }
+
+  if (!qlMgr.isNull()) {
+    json.uuid = readStringPtr(qlMgr.add(8)).readUtf8String()
+    json.status = qlMgr.add(40).readUInt()
+    json.wxid = readStringPtr(qlMgr.add(44)).readUtf8String()
+    json.avatarUrl = readStringPtr(qlMgr.add(92)).readUtf8String()
+  }
+  return json
+}
 
 
 /**
@@ -318,6 +502,7 @@ const recvMsgNativeCallback = (() => {
  })
  return nativeCallback
 })()
+
 
 let msgStruct=null
 let msgstrPtr=null
