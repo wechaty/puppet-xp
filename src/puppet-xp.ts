@@ -221,7 +221,7 @@ class PuppetXp extends PUPPET.Puppet {
 
     if (String(args[1]).split('@').length !== 2) {
       fromId = String(args[1])
-      toId = this.selfInfo.id
+      toId = this.currentUserId
     } else {
       fromId = String(args[3])
       roomId = String(args[1])
