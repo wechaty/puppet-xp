@@ -169,18 +169,45 @@ const chatroomRecurse = ((node)=>{
 })
 
 // std::string
+// const str = readStringPtr(ptr).readUtf8String()
 const readStringPtr = (address) => {
-  const pStr = ptr(address)
-  const size = pStr.add(16).readU32()
-  const capacity = pStr.add(20).readU32()
-  let addr = pStr
-  if ((size == 0 || size>=16) && !addr.readPointer().isNull()) {
-    addr = addr.readPointer()
+  const addr = ptr(address)
+  const size = addr.add(16).readU32()
+  const capacity = addr.add(20).readU32()
+  addr.ptr = addr
+  addr.size = size
+  addr.capacity = capacity
+  if (capacity > 15 && !addr.readPointer().isNull()) {
+    addr.ptr = addr.readPointer()
   }
-  // console.log('readStringPtr() address:',address)
-  // console.log('readStringPtr() addr:',addr)
-  // console.log('readStringPtr() size:',size)
-  // console.log('readStringPtr() capacity:',capacity)
+  addr.ptr._readCString = addr.ptr.readCString
+  addr.ptr._readAnsiString = addr.ptr.readAnsiString
+  addr.ptr._readUtf8String = addr.ptr.readUtf8String
+  addr.readCString = () => {return addr.size ? addr.ptr._readCString(addr.size) : ''}
+  addr.readAnsiString = () => {return addr.size ? addr.ptr._readAnsiString(addr.size) : ''}
+  addr.readUtf8String = () => {return addr.size ? addr.ptr._readUtf8String(addr.size) : ''}
+
+  // console.log('readStringPtr() address:',address,' -> str ptr:', addr.ptr, 'size:', addr.size, 'capacity:', addr.capacity)
+  // console.log('readStringPtr() str:' , addr.readUtf8String())
+
+  return addr
+}
+
+// std::wstring
+// const wstr = readWStringPtr(ptr).readUtf16String()
+const readWStringPtr = (address) => {
+  const addr = ptr(address)
+  const size = addr.add(4).readU32()
+  const capacity = addr.add(8).readU32()
+  addr.ptr = addr.readPointer()
+  addr.size = size
+  addr.capacity = capacity
+  addr.ptr._readUtf16String = addr.ptr.readUtf16String
+  addr.readUtf16String = () => {return addr.size ? addr.ptr._readUtf16String(addr.size*2) : ''}
+
+  // console.log('readWStringPtr() address:',address,' -> ptr:', addr.ptr, 'size:', addr.size, 'capacity:', addr.capacity)
+  // console.log('readWStringPtr() str:' ,  `"${addr.readUtf16String()}"`,'\n',addr.ptr.readByteArray(addr.size*2+2),'\n')
+
   return addr
 }
 
