@@ -458,8 +458,8 @@ const recvMsgNativeCallback = (() => {
        const addr = this.context.ebp.sub(0xc30)//0xc30-0x08
        const msgType = addr.add(0x38).readU32()
        const isMyMsg = addr.add(0x3C).readU32()//add isMyMsg
-       
-       if(msgType>0){  
+
+       if(msgType>0){
 
         const talkerIdPtr = addr.add(0x48).readPointer()
         //console.log('txt msg',talkerIdPtr.readUtf16String())
@@ -519,7 +519,7 @@ const recvMsgNativeCallback = (() => {
            myXmlContentPtr = Memory.alloc(xmlContentLen)
            Memory.copy(myXmlContentPtr, xmlContentPtr, xmlContentLen)
         }
-        
+
        setImmediate(() => nativeativeFunction(msgType,myTalkerIdPtr, myContentPtr,myGroupMsgSenderIdPtr,myXmlContentPtr,isMyMsg))
      }
    }
