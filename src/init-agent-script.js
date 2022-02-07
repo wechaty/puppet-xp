@@ -223,18 +223,18 @@ const recurse = ((node) =>{
 
 
   nodeList.push(node)
-  const wxid    = readStringPtr(node.add(0x38)).readUtf16String()
+  const wxid    = readStringPtr(node.add(0x38)).readUtf8String()
 
   const sign    = node.add(0x4c+0x4).readU32()//
   let wx_code=''
   if(sign == 0){
-    wx_code = readStringPtr(node.add(0x38)).readUtf16String()
+    wx_code = readStringPtr(node.add(0x38)).readUtf8String()
   }else{
-    wx_code = readStringPtr(node.add(0x4c)).readUtf16String()
+    wx_code = readStringPtr(node.add(0x4c)).readUtf8String()
   }
 
 
-  const name = readStringPtr(node.add(0x94)).readUtf16String()
+  const name = readStringPtr(node.add(0x94)).readUtf8String()
 
   const contactJson={
     id:wxid,
@@ -458,8 +458,8 @@ const recvMsgNativeCallback = (() => {
        const addr = this.context.ebp.sub(0xc30)//0xc30-0x08
        const msgType = addr.add(0x38).readU32()
        const isMyMsg = addr.add(0x3C).readU32()//add isMyMsg
-       
-       if(msgType>0){  
+
+       if(msgType>0){
 
         const talkerIdPtr = addr.add(0x48).readPointer()
         //console.log('txt msg',talkerIdPtr.readUtf16String())
@@ -519,7 +519,7 @@ const recvMsgNativeCallback = (() => {
            myXmlContentPtr = Memory.alloc(xmlContentLen)
            Memory.copy(myXmlContentPtr, xmlContentPtr, xmlContentLen)
         }
-        
+
        setImmediate(() => nativeativeFunction(msgType,myTalkerIdPtr, myContentPtr,myGroupMsgSenderIdPtr,myXmlContentPtr,isMyMsg))
      }
    }
