@@ -223,18 +223,18 @@ const recurse = ((node) =>{
 
 
   nodeList.push(node)
-  const wxid    = readStringPtr(node.add(0x38)).readUtf16String()
+  const wxid    = readStringPtr(node.add(0x38)).readUtf8String()
 
   const sign    = node.add(0x4c+0x4).readU32()//
   let wx_code=''
   if(sign == 0){
-    wx_code = readStringPtr(node.add(0x38)).readUtf16String()
+    wx_code = readStringPtr(node.add(0x38)).readUtf8String()
   }else{
-    wx_code = readStringPtr(node.add(0x4c)).readUtf16String()
+    wx_code = readStringPtr(node.add(0x4c)).readUtf8String()
   }
 
 
-  const name = readStringPtr(node.add(0x94)).readUtf16String()
+  const name = readStringPtr(node.add(0x94)).readUtf8String()
 
   const contactJson={
     id:wxid,
