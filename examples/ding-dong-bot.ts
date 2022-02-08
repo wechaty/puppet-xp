@@ -22,6 +22,8 @@ import {
   PuppetXp,
 }               from '../src/mod.js'
 
+import qrcodeTerminal from 'qrcode-terminal'
+
 /**
  *
  * 1. Declare your Bot!
@@ -68,6 +70,13 @@ puppet.start()
  */
 function onScan (payload: PUPPET.payloads.EventScan) {
   if (payload.qrcode) {
+    const qrcodeImageUrl = [
+      'https://wechaty.js.org/qrcode/',
+      encodeURIComponent(payload.qrcode),
+    ].join('')
+    console.info('StarterBot', 'onScan: %s(%s) - %s', payload.status, qrcodeImageUrl)
+
+    qrcodeTerminal.generate(payload.qrcode, { small: true })  // show qrcode on console
     console.info(`[${payload.status}] ${payload.qrcode}\nScan QR Code above to log in: `)
   } else {
     console.info(`[${payload.status}]`)

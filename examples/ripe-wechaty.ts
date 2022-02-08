@@ -12,12 +12,20 @@ import {
 } from 'wechaty'
 
 import { PuppetXp } from '../src/puppet-xp.js'
+import qrcodeTerminal from 'qrcode-terminal'
 
 function onScan (qrcode: string, status: ScanStatus) {
-  if (status === ScanStatus.Waiting || status === ScanStatus.Timeout) {
-    log.info('StarterBot', 'onScan: %s(%s) - %s', ScanStatus[status], status, qrcode)
+  if (qrcode) {
+    const qrcodeImageUrl = [
+      'https://wechaty.js.org/qrcode/',
+      encodeURIComponent(qrcode),
+    ].join('')
+    console.info('StarterBot', 'onScan: %s(%s) - %s', status, qrcodeImageUrl)
+
+    qrcodeTerminal.generate(qrcode, { small: true })  // show qrcode on console
+    console.info(`[${status}] ${qrcode}\nScan QR Code above to log in: `)
   } else {
-    log.info('StarterBot', 'onScan: %s(%s)', ScanStatus[status], status)
+    console.info(`[${status}]`)
   }
 }
 

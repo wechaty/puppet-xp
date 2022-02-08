@@ -18,7 +18,7 @@ Official website: <https://wechaty.js.org/docs/puppet-providers/xp>
 
 ## WECHATY PUPPET YOUTH STAR
 
-wechaty-puppet-xp is a local puppet for Wecaty:
+wechaty-puppet-xp is a local puppet for Wechaty:
 
 1. If you are a user of Windows,You can use this puppet to implement your chatbot.
 1. It's a completely free service and doesn't need token.

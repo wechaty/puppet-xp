@@ -23,7 +23,7 @@ import {
 
 import { WeChatSidecar } from '../src/wechat-sidecar.js'
 
-async function main () {
+async function main() {
   console.info('WeChat Sidecar starting...')
 
   const sidecar = new WeChatSidecar()
@@ -43,10 +43,10 @@ async function main () {
     switch (method) {
       case 'recvMsg':
         void onRecvMsg(args)
-        break;
+        break
       case 'checkQRLogin':
         onScan(args)
-        break;
+        break
       case 'loginEvent':
         onLogin()
         break
@@ -56,7 +56,7 @@ async function main () {
 
       default:
         console.info('onHook', method, JSON.stringify(args))
-        break;
+        break
     }
 
   })
@@ -65,11 +65,11 @@ async function main () {
     console.info('You are logged in.')
   }
 
-  const onLogout = (bySrv:number) => {
+  const onLogout = (bySrv: number) => {
     console.info(`You are logged out${bySrv ? ' because you were kicked by server.' : ''}.`)
   }
 
-  const onScan = (args:any) =>{
+  const onScan = (args: any) => {
     const status: number = args[0]
     const qrcodeUrl: string = args[1]
     const wxid: string = args[2]
@@ -80,20 +80,20 @@ async function main () {
     const pairWaitTip: string = args[7]
 
     const json = {
-      status,
-      qrcodeUrl,
-      wxid,
       avatarUrl,
       nickname,
-      phoneType,
-      phoneClientVer,
       pairWaitTip,
+      phoneClientVer,
+      phoneType,
+      qrcodeUrl,
+      status,
+      wxid,
     }
 
     console.info('onScan', JSON.stringify(json, null, 2))
   }
 
-  const onRecvMsg = async (args:any) => {
+  const onRecvMsg = async (args: any) => {
     console.info('recvMsg:', args)
 
     if (args instanceof Error) {
