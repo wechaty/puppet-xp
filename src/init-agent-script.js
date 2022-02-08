@@ -104,11 +104,11 @@ const getMyselfInfoFunction = (() => {
  let   wx_name      = ''
  let   head_img_url = ''
 
- wx_id   = readStringPtr(moduleBaseAddress.add(offset.wxid_offset)).readUtf8String()
+ wx_id   = readString(moduleBaseAddress.add(offset.wxid_offset))
  wx_code = wx_id
 
- wx_name   = readStringPtr(moduleBaseAddress.add(offset.nickname_offset)).readUtf8String()
- head_img_url   = readStringPtr(moduleBaseAddress.add(offset.head_img_url_offset)).readUtf8String()
+ wx_name   = readString(moduleBaseAddress.add(offset.nickname_offset))
+ head_img_url   = readString(moduleBaseAddress.add(offset.head_img_url_offset))
 
 
  const myself = {
@@ -135,12 +135,12 @@ const chatroomRecurse = ((node)=>{
  }
 
  chatroomNodeList.push(node)
- const roomid = readWStringPtr(node.add(0x10)).readUtf16String()
+ const roomid = readWideString(node.add(0x10))
 
  const len = Memory.readU32(node.add(0x50))   //
  //const memberJson={}
  if(len >4){//
-   const memberStr = readStringPtr(node.add(0x40)).readUtf8String()
+   const memberStr = readString(node.add(0x40))
    if(memberStr.length>0){
        const memberList = memberStr.split(/[\\^][G]/)
        const memberJson ={
@@ -395,14 +395,14 @@ const checkQRLoginNativeCallback =(()=>{
   Interceptor.attach(moduleBaseAddress.add(offset.hook_save_login_qr_info_offset),{
     onEnter: function () {
       const qrNotify = this.context['ebp'].sub(72)
-      const uuid = readStringPtr(qrNotify.add(4).readPointer()).readUtf8String()
-      const wxid = readStringPtr(qrNotify.add(8).readPointer()).readUtf8String()
+      const uuid = readString(qrNotify.add(4).readPointer())
+      const wxid = readString(qrNotify.add(8).readPointer())
       const status = qrNotify.add(16).readUInt()
-      const avatarUrl = readStringPtr(qrNotify.add(24).readPointer()).readUtf8String()
-      const nickname = readStringPtr(qrNotify.add(28).readPointer()).readUtf8String()
-      const pairWaitTip = readStringPtr(qrNotify.add(32).readPointer()).readUtf8String()
+      const avatarUrl = readString(qrNotify.add(24).readPointer())
+      const nickname = readString(qrNotify.add(28).readPointer())
+      const pairWaitTip = readString(qrNotify.add(32).readPointer())
       const phoneClientVer = qrNotify.add(40).readUInt()
-      const phoneType = readStringPtr(qrNotify.add(44).readPointer()).readUtf8String()
+      const phoneType = readString(qrNotify.add(44).readPointer())
 
       const json = {
         status,
@@ -444,10 +444,10 @@ const getQrcodeLoginData = () => {
   }
 
   if (!qlMgr.isNull()) {
-    json.uuid = readStringPtr(qlMgr.add(8)).readUtf8String()
+    json.uuid = readString(qlMgr.add(8))
     json.status = qlMgr.add(40).readUInt()
-    json.wxid = readStringPtr(qlMgr.add(44)).readUtf8String()
-    json.avatarUrl = readStringPtr(qlMgr.add(92)).readUtf8String()
+    json.wxid = readString(qlMgr.add(44))
+    json.avatarUrl = readString(qlMgr.add(92))
   }
   return json
 }
@@ -671,7 +671,7 @@ const getChatroomMemberNickInfoFunction = ( (memberId,roomId) =>{
  const nativeativeFunction = new NativeFunction(ptr(memberNickBuffAsm), 'void', [])
  nativeativeFunction()
 
- return readWStringPtr(nickRetAddr.readPointer()).readUtf16String()
+ return readWideString(nickRetAddr.readPointer())
 
 })
 
