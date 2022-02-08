@@ -235,13 +235,7 @@ const recurse = ((node) =>{
   nodeList.push(node)
   const wxid    = readWideString(node.add(0x38))
 
-  const sign    = node.add(0x4c+0x4).readU32()//
-  let wx_code=''
-  if(sign == 0){
-    wx_code = readWideString(node.add(0x38))
-  }else{
-    wx_code = readWideString(node.add(0x4c))
-  }
+  const wx_code = readWideString(node.add(0x4c)) || readWideString(node.add(0x38))
 
 
   const name = readWideString(node.add(0x94))
