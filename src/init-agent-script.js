@@ -186,6 +186,7 @@ const readStringPtr = (address) => {
 
   // console.log('readStringPtr() address:',address,' -> str ptr:', addr.ptr, 'size:', addr.size, 'capacity:', addr.capacity)
   // console.log('readStringPtr() str:' , addr.readUtf8String())
+  // console.log('readStringPtr() address:', addr,'dump:', addr.readByteArray(24))
 
   return addr
 }
@@ -204,8 +205,17 @@ const readWStringPtr = (address) => {
 
   // console.log('readWStringPtr() address:',address,' -> ptr:', addr.ptr, 'size:', addr.size, 'capacity:', addr.capacity)
   // console.log('readWStringPtr() str:' ,  `"${addr.readUtf16String()}"`,'\n',addr.ptr.readByteArray(addr.size*2+2),'\n')
+  // console.log('readWStringPtr() address:', addr,'dump:', addr.readByteArray(16),'\n')
 
   return addr
+}
+
+const readString = (address) => {
+  return readStringPtr(address).readUtf8String()
+}
+
+const readWideString = (address) => {
+  return readWStringPtr(address).readUtf16String()
 }
 
 //contact
