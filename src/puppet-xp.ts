@@ -286,7 +286,7 @@ class PuppetXp extends PUPPET.Puppet {
     for (const contactKey in contactList) {
       const contactInfo = contactList[contactKey]
       const contact = {
-        alias: '',
+        alias: contactInfo.alias,
         avatar: '',
         friend: true,
         gender: PUPPET.types.ContactGender.Unknown,

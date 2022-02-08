@@ -233,17 +233,23 @@ const recurse = ((node) =>{
 
 
   nodeList.push(node)
+  //wxid, format relates to registration method
   const wxid    = readWideString(node.add(0x38))
 
+  //custom id, if not set return null, and use wxid which should be custom id
   const wx_code = readWideString(node.add(0x4c)) || readWideString(node.add(0x38))
 
-
+  //custom Nickname
   const name = readWideString(node.add(0x94))
+
+  //alias aka 'remark' in wechat
+  const alias = readWideString(node.add(0x80))
 
   const contactJson={
     id:wxid,
     code:wx_code,
-    name:name
+    name:name,
+    alias:alias
   }
 
   contactList.push(contactJson)
