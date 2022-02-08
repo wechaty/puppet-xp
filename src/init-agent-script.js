@@ -369,7 +369,7 @@ const checkQRLoginNativeCallback =(()=>{
   const ret = (json) => {
      const arr = [
         json.status||0,
-        Memory.allocUtf8String(json.uuid?`https://weixin.qq.com/x/${json.uuid}`:''),
+        Memory.allocUtf8String(json.uuid?`http://weixin.qq.com/x/${json.uuid}`:''),
         Memory.allocUtf8String(json.wxid||''),
         Memory.allocUtf8String(json.avatarUrl||''),
         Memory.allocUtf8String(json.nickname||''),
