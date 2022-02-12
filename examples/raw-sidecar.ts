@@ -32,7 +32,10 @@ async function main() {
   console.info('WeChat Sidecar started.')
 
   const ver = await sidecar.getWeChatVersion()
-  console.info(`WeChat Version: ${ver}`)
+  const verStr = await sidecar.getWechatVersionString()
+  const isSupported = await sidecar.checkSupported()
+  console.info(`\nWeChat Version: ${ver} -> ${verStr} , Supported: ${isSupported}\n`)
+
   const isLoggedIn = await sidecar.isLoggedIn()
   console.info(`has Logged In: ${isLoggedIn}`)
   const myselfInfo = await sidecar.getMyselfInfo()

@@ -60,7 +60,13 @@ class WeChatSidecar extends SidecarBody {
   getChatroomMemberInfo ():Promise<string> { return Ret() }
 
   @Call(agentTarget('getWechatVersionFunction'))
-  getWeChatVersion ():Promise<Boolean> { return Ret() }
+  getWeChatVersion ():Promise<number> { return Ret() }
+
+  @Call(agentTarget('getWechatVersionStringFunction'))
+  getWechatVersionString ():Promise<string> { return Ret() }
+
+  @Call(agentTarget('checkSupportedFunction'))
+  checkSupported ():Promise<Boolean> { return Ret() }
 
   @Call(agentTarget('getContactNativeFunction'))
   getContact ():Promise<string> { return Ret() }
