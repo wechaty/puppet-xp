@@ -50,6 +50,7 @@ const offset = {
 const availableVersion  = 1661141107 ////3.3.0.115
 const moduleBaseAddress = Module.getBaseAddress('WeChatWin.dll')
 const moduleLoad        = Module.load('WeChatWin.dll')
+let   currentVersion    = 0
 
 let nodeList=[]  //for contact
 let contactList=[] //for contact
@@ -275,21 +276,43 @@ const getChatroomMemberInfoFunction = (() => {
 })
 
 const getWechatVersionFunction = (() => {
+  if (currentVersion) {
+    return currentVersion
+  }
    const pattern ='55 8B ?? 83 ?? ?? A1 ?? ?? ?? ?? 83 ?? ?? 85 ?? 7F ?? 8D ?? ?? E8 ?? ?? ?? ?? 84 ?? 74 ?? 8B ?? ?? ?? 85 ?? 75 ?? E8 ?? ?? ?? ?? 0F ?? ?? 0D ?? ?? ?? ?? A3 ?? ?? ?? ?? A3 ?? ?? ?? ?? 8B ?? 5D C3'
    const results = Memory.scanSync(moduleLoad.base,moduleLoad.size,pattern)
-   if(results.length > 0){
-     const addr = results[0].address
-     const ret  = addr.add(0x07).readPointer()
-     const ver  = ret.add(0x0).readU32()
-     if(ver == availableVersion){
-       return true
-     }
-     else{
-       return false
-     }
+   if(results.length == 0){
+     return 0
    }
-   return false
+   const addr = results[0].address
+   const ret  = addr.add(0x07).readPointer()
+   const ver  = ret.add(0x0).readU32()
+   currentVersion = ver
+   return ver
 })
+
+const getWechatVersionStringFunction = ((ver = getWechatVersionFunction()) => {
+  if (!ver) {
+    return '0.0.0.0'
+  }
+  const vers = []
+  vers.push((ver >> 24) & 255 - 0x60)
+  vers.push((ver >> 16) & 255)
+  vers.push((ver >> 8) & 255)
+  vers.push(ver & 255)
+  return vers.join('.')
+})
+
+const checkSupportedFunction = (() => {
+  const ver  = getWechatVersionFunction()
+  return ver == availableVersion
+})
+
+const isSupported = checkSupportedFunction()
+
+if (!isSupported) {
+  throw new Error(`Wechat version not supported. \nWechat version: ${getWechatVersionStringFunction()}, supported version: ${getWechatVersionStringFunction(availableVersion)}`)
+}
 
 const getContactNativeFunction = (() => {
   const headerNodeAddress = getHeaderNodeAddress()
