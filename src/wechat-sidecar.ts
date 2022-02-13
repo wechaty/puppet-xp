@@ -68,6 +68,9 @@ class WeChatSidecar extends SidecarBody {
   @Call(agentTarget('checkSupportedFunction'))
   checkSupported ():Promise<Boolean> { return Ret() }
 
+  @Call(agentTarget('callLoginQrcodeFunction'))
+  callLoginQrcode ():Promise<null> { return Ret() }
+
   @Call(agentTarget('getContactNativeFunction'))
   getContact ():Promise<string> { return Ret() }
 
