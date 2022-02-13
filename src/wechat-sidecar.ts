@@ -68,6 +68,11 @@ class WeChatSidecar extends SidecarBody {
   @Call(agentTarget('checkSupportedFunction'))
   checkSupported ():Promise<Boolean> { return Ret() }
 
+  @Call(agentTarget('callLoginQrcodeFunction'))
+  callLoginQrcode (
+    forceRefresh: boolean,
+  ):Promise<null> { return Ret(forceRefresh) }
+
   @Call(agentTarget('getContactNativeFunction'))
   getContact ():Promise<string> { return Ret() }
 
@@ -125,6 +130,10 @@ class WeChatSidecar extends SidecarBody {
 
   @Hook(agentTarget('hookLoginEventCallback'))
   loginEvent (
+  ) { return Ret() }
+
+  @Hook(agentTarget('agentReadyCallback'))
+  agentReady (
   ) { return Ret() }
 
 }

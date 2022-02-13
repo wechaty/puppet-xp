@@ -27,7 +27,9 @@ const offset = {
   hook_get_login_qr_offset: 0x4B6020,
   hook_check_login_qr_offset: 0x478B90,
   hook_save_login_qr_info_offset: 0x3DB2E0,
+  get_login_wnd_offset: 0x1DB96A4,
   get_qr_login_data_offset: 0x282160,
+  get_qr_login_call_offset: 0x286930,
   send_picmsg_call_offset1: 0x5ccb50,
   send_picmsg_call_offset2: 0x6f5c0,
   send_picmsg_call_offset3: 0x3e3490,
@@ -1009,4 +1011,44 @@ const sendMsgNativeFunction = (() => {
  }
 
  return (...args) => refHolder.sendMsg(...args)
+})()
+
+
+const callLoginQrcodeFunction = ((forceRefresh=false) => {
+  const json = getQrcodeLoginData()
+  if (!forceRefresh && json.uuid) {
+    return
+  }
+
+  const callAsm  = Memory.alloc(Process.pageSize)
+  const loginWnd = moduleBaseAddress.add(offset.get_login_wnd_offset).readPointer()
+
+  Memory.patchCode(callAsm, Process.pageSize, code => {
+    var cw = new X86Writer(code, { pc: callAsm })
+    cw.putPushfx();
+    cw.putPushax();
+
+    cw.putMovRegAddress('ecx',loginWnd)
+    cw.putCallAddress(moduleBaseAddress.add(offset.get_qr_login_call_offset))
+
+    cw.putPopax()
+    cw.putPopfx()
+    cw.putRet()
+    cw.flush()
+  })
+
+  const nativeativeFunction = new NativeFunction(ptr(callAsm), 'void', [])
+  nativeativeFunction()
+})
+
+
+
+const agentReadyCallback = (() => {
+  const nativeCallback      = new NativeCallback(() => {}, 'void', [])
+  const nativeativeFunction = new NativeFunction(nativeCallback, 'void', [])
+
+  setTimeout(() => {
+    nativeativeFunction()
+  }, 500);
+  return nativeCallback
 })()

@@ -114,6 +114,9 @@ class PuppetXp extends PUPPET.Puppet {
         case 'loginEvent':
           void this.onLogin()
           break
+        case 'agentReady':
+          void this.onAgentReady()
+          break
         case 'logoutEvent':
           void this.onLogout(args[0] as number)
           break
@@ -126,6 +129,14 @@ class PuppetXp extends PUPPET.Puppet {
 
     this.sidecar.on('error', e => this.emit('error', { data : JSON.stringify(e as any) }))
 
+  }
+
+  private async onAgentReady () {
+    log.verbose('PuppetXp', 'onAgentReady()')
+    const isLoggedIn = await this.sidecar.isLoggedIn()
+    if (!isLoggedIn) {
+      await this.sidecar.callLoginQrcode(false)
+    }
   }
 
   private async onLogin () {
