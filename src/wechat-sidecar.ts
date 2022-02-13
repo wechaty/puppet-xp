@@ -130,6 +130,10 @@ class WeChatSidecar extends SidecarBody {
   loginEvent (
   ) { return Ret() }
 
+  @Hook(agentTarget('agentReadyCallback'))
+  agentReady (
+  ) { return Ret() }
+
 }
 
 export { WeChatSidecar }

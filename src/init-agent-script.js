@@ -1036,3 +1036,14 @@ const callLoginQrcodeFunction = (() => {
   nativeativeFunction()
 })
 
+
+
+const agentReadyCallback = (() => {
+  const nativeCallback      = new NativeCallback(() => {}, 'void', [])
+  const nativeativeFunction = new NativeFunction(nativeCallback, 'void', [])
+
+  setTimeout(() => {
+    nativeativeFunction()
+  }, 500);
+  return nativeCallback
+})()
