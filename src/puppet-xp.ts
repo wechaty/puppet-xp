@@ -135,7 +135,7 @@ class PuppetXp extends PUPPET.Puppet {
     log.verbose('PuppetXp', 'onAgentReady()')
     const isLoggedIn = await this.sidecar.isLoggedIn()
     if (!isLoggedIn) {
-      await this.sidecar.callLoginQrcode()
+      await this.sidecar.callLoginQrcode(false)
     }
   }
 

@@ -1014,7 +1014,12 @@ const sendMsgNativeFunction = (() => {
 })()
 
 
-const callLoginQrcodeFunction = (() => {
+const callLoginQrcodeFunction = ((forceRefresh=false) => {
+  const json = getQrcodeLoginData()
+  if (!forceRefresh && json.uuid) {
+    return
+  }
+
   const callAsm  = Memory.alloc(Process.pageSize)
   const loginWnd = moduleBaseAddress.add(offset.get_login_wnd_offset).readPointer()
 
