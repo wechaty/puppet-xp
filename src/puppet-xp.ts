@@ -23,15 +23,15 @@ import xml2js from 'xml2js'
 
 import os from 'os'
 
-import * as PUPPET    from 'wechaty-puppet'
-import { log }        from 'wechaty-puppet'
+import * as PUPPET from 'wechaty-puppet'
+import { log } from 'wechaty-puppet'
 import type {
   FileBoxInterface,
-}                     from 'file-box'
+} from 'file-box'
 import {
   FileBox,
   FileBoxType,
-}                     from 'file-box'
+} from 'file-box'
 import {
   attach,
   detach,
@@ -127,7 +127,7 @@ class PuppetXp extends PUPPET.Puppet {
       }
     })
 
-    this.sidecar.on('error', e => this.emit('error', { data : JSON.stringify(e as any) }))
+    this.sidecar.on('error', e => this.emit('error', { data: JSON.stringify(e as any) }))
 
   }
 
@@ -152,11 +152,11 @@ class PuppetXp extends PUPPET.Puppet {
     // console.debug(this.contactStore)
   }
 
-  private async onLogout (reasonNum:number) {
+  private async onLogout (reasonNum: number) {
     await super.logout(reasonNum ? 'Kicked by server' : 'logout')
   }
 
-  private onScan (args:any) {
+  private onScan (args: any) {
     const statusMap = [
       PUPPET.types.ScanStatus.Waiting,
       PUPPET.types.ScanStatus.Scanned,
@@ -182,7 +182,7 @@ class PuppetXp extends PUPPET.Puppet {
           avatarUrl,
           nickname,
           pairWaitTip,
-          phoneClientVer : phoneClientVer.toString(16),
+          phoneClientVer: phoneClientVer.toString(16),
           phoneType,
           qrcodeUrl,
           status,
@@ -194,13 +194,13 @@ class PuppetXp extends PUPPET.Puppet {
     }
 
     this.scanEventData = {
-      qrcode : qrcodeUrl,
-      status : statusMap[args[0]] ?? PUPPET.types.ScanStatus.Unknown,
+      qrcode: qrcodeUrl,
+      status: statusMap[args[0]] ?? PUPPET.types.ScanStatus.Unknown,
     }
     this.emit('scan', this.scanEventData)
   }
 
-  private onHookRecvMsg (args:any) {
+  private onHookRecvMsg (args: any) {
     // console.info(args)
     let type = PUPPET.types.Message.Unknown
     let roomId = ''
@@ -208,36 +208,82 @@ class PuppetXp extends PUPPET.Puppet {
     let fromId = ''
     const text = String(args[2])
 
-    if (args[0] === 34) {
-      type = PUPPET.types.Message.Audio
-    } else if (args[0] === 42) {
-      type = PUPPET.types.Message.Contact
-    } else if (args[0] === 47) {
-      type = PUPPET.types.Message.Emoticon
-    } else if (args[0] === 3) {
-      type = PUPPET.types.Message.Image
-    } else if (args[0] === 1) {
-      type = PUPPET.types.Message.Text
-    } else if (args[0] === 43) {
-      type = PUPPET.types.Message.Video
-    } else {
-      try {
-        xml2js.parseString(text, { explicitArray: false, ignoreAttrs: true }, function (err: any, json: { msg: { appmsg: { type: Number } } }) {
-          console.info(err)
-          console.info(JSON.stringify(json))
-          if (json.msg.appmsg.type === 5) {
-            type = PUPPET.types.Message.Url
-          } else if (json.msg.appmsg.type === 33) {
-            type = PUPPET.types.Message.MiniProgram
-          } else if (json.msg.appmsg.type === 6) {
-            type = PUPPET.types.Message.Attachment
-          } else {
-            type = PUPPET.types.Message.Unknown
-          }
-        })
-      } catch (err) {
-        console.error(err)
-      }
+    switch (args[0]) {
+      case 1:
+        type = PUPPET.types.Message.Text
+        break
+      case 3:
+        type = PUPPET.types.Message.Image
+        break
+      case 34:
+        type = PUPPET.types.Message.Audio
+        break
+      case 37:
+        break
+      case 40:
+        break
+      case 42:
+        type = PUPPET.types.Message.Contact
+        break
+      case 43:
+        type = PUPPET.types.Message.Video
+        break
+      case 47:
+        type = PUPPET.types.Message.Emoticon
+        break
+      case 48:
+        type = PUPPET.types.Message.Location
+        break
+      case 49:
+        try {
+          xml2js.parseString(text, { explicitArray: false, ignoreAttrs: true }, function (err: any, json: { msg: { appmsg: { type: String } } }) {
+            // console.info(err)
+            // console.info(JSON.stringify(json))
+            log.verbose('PuppetXp', 'xml2json err:%s', err)
+            log.verbose('PuppetXp', 'json content:%s', JSON.stringify(json))
+            switch (json.msg.appmsg.type) {
+              case '5':
+                type = PUPPET.types.Message.Url
+                break
+              case '6':
+                type = PUPPET.types.Message.Attachment
+                break
+              case '19':
+                type = PUPPET.types.Message.ChatHistory
+                break
+              case '33':
+                type = PUPPET.types.Message.MiniProgram
+                break
+              case '2000':
+                type = PUPPET.types.Message.Transfer
+                break
+              case '2001':
+                type = PUPPET.types.Message.RedEnvelope
+                break
+              default:
+            }
+          })
+        } catch (err) {
+          console.error(err)
+        }
+        break
+      case 50:
+        break
+      case 51:
+        break
+      case 52:
+        break
+      case 53:
+        break
+      case 62:
+        break
+      case 9999:
+        break
+      case 10000:
+        break
+      case 10002:
+        break
+      default:
     }
 
     if (String(args[1]).split('@').length !== 2) {
@@ -298,9 +344,9 @@ class PuppetXp extends PUPPET.Puppet {
       const contactInfo = contactList[contactKey]
       const contact = {
         alias: contactInfo.alias,
-        avatar: '',
+        avatar: contactInfo.avatarUrl,
         friend: true,
-        gender: PUPPET.types.ContactGender.Unknown,
+        gender: contactInfo.gender,
         id: contactInfo.id,
         name: contactInfo.name,
         phone: [],
@@ -381,8 +427,8 @@ class PuppetXp extends PUPPET.Puppet {
  * Contact
  *
  */
-  override contactAlias(contactId: string): Promise<string>
-  override contactAlias(contactId: string, alias: string | null): Promise<void>
+  override contactAlias (contactId: string): Promise<string>
+  override contactAlias (contactId: string, alias: string | null): Promise<void>
 
   override async contactAlias (contactId: string, alias?: string | null): Promise<void | string> {
     log.verbose('PuppetXp', 'contactAlias(%s, %s)', contactId, alias)
@@ -393,8 +439,8 @@ class PuppetXp extends PUPPET.Puppet {
     return contact.alias
   }
 
-  override async contactPhone(contactId: string): Promise<string[]>
-  override async contactPhone(contactId: string, phoneList: string[]): Promise<void>
+  override async contactPhone (contactId: string): Promise<string[]>
+  override async contactPhone (contactId: string, phoneList: string[]): Promise<void>
 
   override async contactPhone (contactId: string, phoneList?: string[]): Promise<string[] | void> {
     log.verbose('PuppetXp', 'contactPhone(%s, %s)', contactId, phoneList)
@@ -417,8 +463,8 @@ class PuppetXp extends PUPPET.Puppet {
     return idList
   }
 
-  override async contactAvatar(contactId: string): Promise<FileBoxInterface>
-  override async contactAvatar(contactId: string, file: FileBoxInterface): Promise<void>
+  override async contactAvatar (contactId: string): Promise<FileBoxInterface>
+  override async contactAvatar (contactId: string, file: FileBoxInterface): Promise<void>
 
   override async contactAvatar (contactId: string, file?: FileBoxInterface): Promise<void | FileBoxInterface> {
     log.verbose('PuppetXp', 'contactAvatar(%s)', contactId)
@@ -699,8 +745,8 @@ class PuppetXp extends PUPPET.Puppet {
     log.verbose('PuppetXp', 'roomAdd(%s, %s)', roomId, contactId)
   }
 
-  override async roomTopic(roomId: string): Promise<string>
-  override async roomTopic(roomId: string, topic: string): Promise<void>
+  override async roomTopic (roomId: string): Promise<string>
+  override async roomTopic (roomId: string, topic: string): Promise<void>
 
   override async roomTopic (
     roomId: string,
@@ -757,8 +803,8 @@ class PuppetXp extends PUPPET.Puppet {
     return rawPayload
   }
 
-  override async roomAnnounce(roomId: string): Promise<string>
-  override async roomAnnounce(roomId: string, text: string): Promise<void>
+  override async roomAnnounce (roomId: string): Promise<string>
+  override async roomAnnounce (roomId: string, text: string): Promise<void>
 
   override async roomAnnounce (roomId: string, text?: string): Promise<void | string> {
     if (text) {
