@@ -101,6 +101,16 @@ class WeChatSidecar extends SidecarBody {
     contactId: string,
   ): Promise<string> { return Ret(roomId, text, contactId) }
 
+  @Call(agentTarget('SendLittleAppNativeFunction'))
+  SendLittleApp (
+    bg_path_str:string,
+    send_wxid_str:string,
+    recv_wxid_str:string,
+    xmlstr:string,
+
+  ): Promise<string> { return Ret(bg_path_str,send_wxid_str,recv_wxid_str,xmlstr) }
+
+
   @Hook(agentTarget('recvMsgNativeCallback'))
   recvMsg (
     @ParamType('int32', 'U32') msgType: number,
