@@ -982,7 +982,7 @@ const sendMsgNativeFunction = (() => {
     talkerIdPtr.writeUtf16String(talkerId)
     contentPtr.writeUtf16String(content)
 
-    const sizeOfStringStruct = Process.pointerSize * 3 // + 0xd
+    const sizeOfStringStruct = Process.pointerSize * 5 // + 0xd
 
     // allocate space for the struct
     const talkerIdStruct = Memory.alloc(sizeOfStringStruct) // returns a NativePointer
