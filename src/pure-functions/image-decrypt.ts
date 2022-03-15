@@ -1,10 +1,5 @@
 import fs from 'fs'
 
-const PIC_HEAD = [
-  'ffd8', // jpg
-  '8950', // png
-  '4749', // gif
-]
 let xorCache:string|null = null
 // let xor = '9a9a'   // 异或值(十六进制)
 // xor = hexToBin(xor)
@@ -16,7 +11,7 @@ function ImageDecrypt (dataPath: string, messageId: string) {
   try {
     const data = fs.readFileSync(dataPath, 'hex')
     const res = handleEncrypted(data)   // 解密后的十六进制数据
-    const extension = getNameExtension(res.substring(0, 2))
+    const extension = getNameExtension(res.substring(0, 4))
     // console.debug(extension)
     const imageInfo = {
       base64: Buffer.from(res, 'hex').toString('base64'),
@@ -84,7 +79,8 @@ function getXor (str: string): string {
   }
   const str01 = str.substring(0, 2)
   const str23 = str.substring(2)
-  for (const h of PIC_HEAD) {
+  for (const head of dataHead) {
+    const h = head.hex
     const h01 = h.substring(0, 2)
     const h23 = h.substring(2)
     const code = hexXor(h01, str01)
@@ -203,19 +199,19 @@ function hexXor (a: string, b: string) {
 // 扩展名-十六进制表
 const dataHead = [
   {
-    hex: 'ff',
+    hex: 'ffd8',
     name: 'jpg',
   },
   {
-    hex: '89',
+    hex: '8950',
     name: 'png',
   },
   {
-    hex: '47',
+    hex: '4749',
     name: 'gif',
   },
   {
-    hex: '42',
+    hex: '424d',
     name: 'bmp',
   },
 ]
