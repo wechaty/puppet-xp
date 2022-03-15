@@ -5,6 +5,7 @@ const PIC_HEAD = [
   '8950', // png
   '4749', // gif
 ]
+let xorCache:string|null = null
 // let xor = '9a9a'   // 异或值(十六进制)
 // xor = hexToBin(xor)
 
@@ -78,6 +79,9 @@ function handleEncrypted (strEncrypted: string) {
  * @return xor
  */
 function getXor (str: string): string {
+  if (typeof xorCache === 'string') {
+    return xorCache
+  }
   const str01 = str.substring(0, 2)
   const str23 = str.substring(2)
   for (const h of PIC_HEAD) {
@@ -86,7 +90,8 @@ function getXor (str: string): string {
     const code = hexXor(h01, str01)
     const testResult = hexXor(str23, code)
     if (testResult === h23) {
-      return code
+      xorCache = code
+      return xorCache
     }
   }
   throw new Error('getXor error')
