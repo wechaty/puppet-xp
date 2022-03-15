@@ -1,7 +1,12 @@
 import fs from 'fs'
 
-let xor = '88888888'   // 异或值(十六进制)
-xor = hexToBin(xor)
+const PIC_HEAD = [
+  'ffd8', // jpg
+  '8950', // png
+  '4749', // gif
+]
+// let xor = '9a9a'   // 异或值(十六进制)
+// xor = hexToBin(xor)
 
 const xorLen = 2
 
@@ -13,7 +18,7 @@ function ImageDecrypt (dataPath: string, messageId: string) {
     const extension = getNameExtension(res.substring(0, 2))
     // console.debug(extension)
     const imageInfo = {
-      base64: res,
+      base64: Buffer.from(res, 'hex').toString('base64'),
       fileName: `message-${messageId}-url-thumb.${extension}`,
     }
     // console.debug(imageInfo)
@@ -51,14 +56,14 @@ function ImageDecrypt (dataPath: string, messageId: string) {
 // 解密加密数据
 function handleEncrypted (strEncrypted: string) {
   // 先获取异或值(仅限于jpg文件)
-  // getXor(strEncrypted.substring(0, 4));
+  const code = getXor(strEncrypted.substring(0, 4))
   const strLength = strEncrypted.length
   let source = ''
   const list = []
   for (let i = 0; i < strLength; i = i + xorLen) {
     const str = strEncrypted.substring(0, xorLen)
     strEncrypted = strEncrypted.substring(xorLen)
-    const res = getResult(str)
+    const res = hexXor(str, code)
     list.push(res)
   }
   source = list.join('')
@@ -67,9 +72,24 @@ function handleEncrypted (strEncrypted: string) {
 }
 
 // 获取异或值
-function getXor (str: string) {
-  xor = 'ffd8'
-  xor = getResult(str)
+/**
+ *
+ * @param str strEncrypted.substring(0, 4)
+ * @return xor
+ */
+function getXor (str: string): string {
+  const str01 = str.substring(0, 2)
+  const str23 = str.substring(2)
+  for (const h of PIC_HEAD) {
+    const h01 = h.substring(0, 2)
+    const h23 = h.substring(2)
+    const code = hexXor(h01, str01)
+    const testResult = hexXor(str23, code)
+    if (testResult === h23) {
+      return code
+    }
+  }
+  throw new Error('getXor error')
 }
 void getXor
 
@@ -147,9 +167,23 @@ function binToHex (str: string) {
 }
 
 // 获取计算结果
-function getResult (a: string) {
+// function getResult (a: string) {
+//   const A = hexToBin(a)
+//   const B = xor
+//   let d = ''
+//   for (let i = 0; i < A.length; i++) {
+//     if (A[i] === B[i]) {
+//       d = d.concat('0')
+//     } else {
+//       d = d.concat('1')
+//     }
+//   }
+//   return binToHex(d)
+// }
+
+function hexXor (a: string, b: string) {
   const A = hexToBin(a)
-  const B = xor
+  const B = hexToBin(b)
   let d = ''
   for (let i = 0; i < A.length; i++) {
     if (A[i] === B[i]) {
