@@ -15,6 +15,7 @@ function ImageDecrypt (dataPath: string, messageId: string) {
     // console.debug(extension)
     const imageInfo = {
       base64: Buffer.from(res, 'hex').toString('base64'),
+      extension,
       fileName: `message-${messageId}-url-thumb.${extension}`,
     }
     // console.debug(imageInfo)
