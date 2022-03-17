@@ -543,7 +543,7 @@ class PuppetXp extends PUPPET.Puppet {
         await fsPromise.access(dataPath)
 
         const imageInfo = ImageDecrypt(dataPath, messageId)
-        console.info(dataPath, imageInfo.fileName, imageInfo.extension)
+        // console.info(dataPath, imageInfo.fileName, imageInfo.extension)
         base64 = imageInfo.base64
         fileName = `message-${messageId}-url-${imageType}.${imageInfo.extension}`
       }
