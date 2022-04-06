@@ -61,12 +61,13 @@
     "@chatie/tsconfig": "^4.5.3",
     "@types/cuid": "^2.0.1",
     "@types/faker": "^5.5.9",
+    "@types/qrcode-terminal": "^0.12.0",
     "@types/xml2js": "^0.4.9",
     "husky": "^7.0.4",
+    "qrcode-terminal": "^0.12.0",
     "tstest": "^1.0.1",
     "typed-emitter": "^1.4.0",
-    "wechaty": "^1.7.21",
-    "qrcode-terminal": "^0.12.0"
+    "wechaty": "^1.7.21"
   },
   "peerDependencies": {
     "wechaty-puppet": "^1.10.2"

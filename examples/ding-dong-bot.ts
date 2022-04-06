@@ -68,7 +68,7 @@ puppet.start()
  *  `scan`, `login`, `logout`, `error`, and `message`
  *
  */
-function onScan (payload: PUPPET.EventScanPayload) {
+function onScan (payload: PUPPET.payloads.EventScan) {
   if (payload.qrcode) {
     const qrcodeImageUrl = [
       'https://wechaty.js.org/qrcode/',
@@ -83,15 +83,15 @@ function onScan (payload: PUPPET.EventScanPayload) {
   }
 }
 
-function onLogin (payload: PUPPET.EventLoginPayload) {
+function onLogin (payload: PUPPET.payloads.EventLogin) {
   console.info(`${payload.contactId} login`)
 }
 
-function onLogout (payload: PUPPET.EventLogoutPayload) {
+function onLogout (payload: PUPPET.payloads.EventLogout) {
   console.info(`${payload.contactId} logouted`)
 }
 
-function onError (payload: PUPPET.EventErrorPayload) {
+function onError (payload: PUPPET.payloads.EventError) {
   console.error('Bot error:', payload.data)
   /*
   if (bot.logonoff()) {
@@ -108,7 +108,7 @@ function onError (payload: PUPPET.EventErrorPayload) {
  */
 async function onMessage ({
   messageId,
-}: PUPPET.EventMessagePayload) {
+}: PUPPET.payloads.EventMessage) {
   const {
     fromId,
     roomId,
