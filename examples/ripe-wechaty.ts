@@ -8,7 +8,7 @@ import {
   ScanStatus,
   WechatyBuilder,
   log,
-  type,
+  types,
 } from 'wechaty'
 
 import { PuppetXp } from '../src/puppet-xp.js'
@@ -45,7 +45,7 @@ async function onMessage (msg: Message) {
   if (msg.text() === 'ding') {
     await msg.say('dong')
   }
-  if (msg.type() === type.Message.Image) {
+  if (msg.type() === types.Message.Image) {
     const img = await msg.toImage()
     const thumbFile = await img.thumbnail()
     log.info('thumbFile', thumbFile.name)

@@ -62,7 +62,7 @@ class PuppetXp extends PUPPET.Puppet {
 
   private contactStore: { [k: string]: PUPPET.payloads.Contact }
 
-  private scanEventData?: PUPPET.payload.EventScan
+  private scanEventData?: PUPPET.payloads.EventScan
 
   private selfInfo: any
 
@@ -206,7 +206,7 @@ class PuppetXp extends PUPPET.Puppet {
     let type = PUPPET.types.Message.Unknown
     let roomId = ''
     let toId = ''
-    let fromId = ''
+    let talkerId = ''
     const text = String(args[2])
 
     switch (args[0]) {
@@ -288,23 +288,23 @@ class PuppetXp extends PUPPET.Puppet {
     }
 
     if (String(args[1]).split('@').length !== 2) {
-      fromId = String(args[1])
+      talkerId = String(args[1])
       toId = this.currentUserId
     } else {
-      fromId = String(args[3])
+      talkerId = String(args[3])
       roomId = String(args[1])
     }
 
-    // revert fromId and toId according to isMyMsg
+    // revert talkerId and toId according to isMyMsg
     if (args[5] === 1) {
-      toId = fromId
-      fromId = this.selfInfo.id
+      toId = talkerId
+      talkerId = this.selfInfo.id
     }
 
     const payload: PUPPET.payloads.Message = {
-      fromId,
       id: cuid(),
       roomId,
+      talkerId,
       text,
       timestamp: Date.now(),
       toId,
