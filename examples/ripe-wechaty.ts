@@ -56,6 +56,12 @@ async function onMessage (msg: Message) {
     const hdFile = await img.hd()
     log.info('hdFile', hdFile.name)
     await hdFile.toFile(`${process.cwd()}/cache/${hdFile.name}`, true)
+    setTimeout(msg.wechaty.wrapAsync(
+      async function () {
+        const imginfo = await msg.toFileBox()
+        console.info(imginfo)
+      },
+    ), 500)
   }
 }
 
