@@ -1060,7 +1060,7 @@ const agentReadyCallback = (() => {
   }, 500);
   return nativeCallback
 })()
-const SendLittleAppNativeFunction = ((bg_path_str,send_wxid_str,recv_wxid_str,xmlstr) => {
+const SendMiniProgramNativeFunction = ((bg_path_str,send_wxid_str,recv_wxid_str,xmlstr) => {
   console.log("------------------------------------------------------");
   var asmCode=Memory.alloc(Process.pageSize);
 
