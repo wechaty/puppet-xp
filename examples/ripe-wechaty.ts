@@ -13,6 +13,7 @@ import {
 
 import { PuppetXp } from '../src/puppet-xp.js'
 import qrcodeTerminal from 'qrcode-terminal'
+import timersPromise from 'timers/promises'
 
 function onScan (qrcode: string, status: ScanStatus) {
   if (qrcode) {
@@ -45,6 +46,16 @@ async function onMessage (msg: Message) {
     await msg.say('dong')
   }
   if (msg.type() === types.Message.Image) {
+    const img = await msg.toImage()
+    const thumbFile = await img.thumbnail()
+    log.info('thumbFile', thumbFile.name)
+    await thumbFile.toFile(`${process.cwd()}/cache/${thumbFile.name}`, true)
+    await timersPromise.setTimeout(1000)
+
+    // console.info(img)
+    const hdFile = await img.hd()
+    log.info('hdFile', hdFile.name)
+    await hdFile.toFile(`${process.cwd()}/cache/${hdFile.name}`, true)
     setTimeout(msg.wechaty.wrapAsync(
       async function () {
         const imginfo = await msg.toFileBox()

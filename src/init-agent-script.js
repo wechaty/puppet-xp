@@ -516,11 +516,18 @@ const recvMsgNativeCallback = (() => {
           let contentLen = 0
           let myContentPtr = null
           if (msgType == 3) {// pic path
-            contentPtr = addr.add(0x198).readPointer()
-            contentLen = addr.add(0x198 + 0x04).readU32() * 2 + 2
-            myContentPtr = Memory.alloc(contentLen)
-            Memory.copy(myContentPtr, contentPtr, contentLen)
-
+            let thumbPtr = addr.add(0x198).readPointer();
+            let hdPtr = addr.add(0x1ac).readPointer();
+            let thumbPath = thumbPtr.readUtf16String();
+            let hdPath = hdPtr.readUtf16String();
+            let picData = [
+              thumbPath,//  PUPPET.types.Image.Unknown
+              thumbPath,//  PUPPET.types.Image.Thumbnail
+              hdPath,//  PUPPET.types.Image.HD
+              hdPath//  PUPPET.types.Image.Artwork
+            ]
+            let content = JSON.stringify(picData);
+            myContentPtr = Memory.allocUtf16String(content);
           } else {
             contentPtr = addr.add(0x70).readPointer()
             contentLen = addr.add(0x70 + 0x04).readU32() * 2 + 2

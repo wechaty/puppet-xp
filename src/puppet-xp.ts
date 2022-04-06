@@ -19,6 +19,7 @@
 import cuid from 'cuid'
 import path from 'path'
 import fs from 'fs'
+import fsPromise from 'fs/promises'
 import xml2js from 'xml2js'
 
 import os from 'os'
@@ -294,7 +295,7 @@ class PuppetXp extends PUPPET.Puppet {
       roomId = String(args[1])
     }
 
-    // revert fromId and toId according to isMyMsg
+    // revert talkerId and toId according to isMyMsg
     if (args[5] === 1) {
       toId = talkerId
       talkerId = this.selfInfo.id
@@ -531,7 +532,29 @@ class PuppetXp extends PUPPET.Puppet {
     // if (attachment instanceof FileBoxInterface) {
     //   return attachment
     // }
-    return FileBox.fromQRCode('fake-qrcode')
+    const message = this.messageStore[messageId]
+    let base64 = ''
+    let fileName = ''
+    try {
+      if (message?.text) {
+        const picData = JSON.parse(message.text)
+        const filePath = picData[imageType]
+        const dataPath = rootPath + filePath    // 要解密的文件路径
+        await fsPromise.access(dataPath)
+
+        const imageInfo = ImageDecrypt(dataPath, messageId)
+        // console.info(dataPath, imageInfo.fileName, imageInfo.extension)
+        base64 = imageInfo.base64
+        fileName = `message-${messageId}-url-${imageType}.${imageInfo.extension}`
+      }
+    } catch (err) {
+      console.error(err)
+    }
+
+    return FileBox.fromBase64(
+      base64,
+      fileName,
+    )
   }
 
   override async messageRecall (
@@ -549,6 +572,12 @@ class PuppetXp extends PUPPET.Puppet {
     const message = this.messageStore[id]
     let base64 = ''
     let fileName = ''
+    if (message?.type === PUPPET.types.Message.Image) {
+      return this.messageImage(
+        id,
+        PUPPET.types.Image.Thumbnail,
+      )
+    }
     try {
       if (message?.text) {
         const filePath = message.text
