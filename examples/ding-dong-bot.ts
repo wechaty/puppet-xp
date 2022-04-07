@@ -110,13 +110,13 @@ async function onMessage ({
   messageId,
 }: PUPPET.payloads.EventMessage) {
   const {
-    fromId,
+    talkerId,
     roomId,
     text,
   } = await puppet.messagePayload(messageId)
 
   if (/ding/i.test(text || '')) {
-    await puppet.messageSendText(roomId! || fromId!, 'dong')
+    await puppet.messageSendText(roomId! || talkerId!, 'dong')
   }
 }
 
