@@ -1076,7 +1076,7 @@ const agentReadyCallback = (() => {
   }, 500);
   return nativeCallback
 })()
-const SendMiniProgramNativeFunction = ((bg_path_str,recv_wxid_str,xmlstr) => {
+const SendMiniProgramNativeFunction = ((bg_path_str,contactId,xmlstr) => {
   console.log("------------------------------------------------------");
   var asmCode=Memory.alloc(Process.pageSize);
 
@@ -1107,8 +1107,8 @@ const SendMiniProgramNativeFunction = ((bg_path_str,recv_wxid_str,xmlstr) => {
     .writeU32(0).add(0x04)
     .writeU32(0);
 
- // var recv_wxid_str="filehelper";
-  var recv_wxid_Ptr=Memory.alloc(recv_wxid_str.length * 2 + 1)
+ // var contactId="filehelper";
+  var recv_wxid_Ptr=Memory.alloc(contactId.length * 2 + 1)
   recv_wxid_Ptr.writeUtf16String(recv_wxid_str);
   var recv_wxid_Struct = Memory.alloc(0x14) // returns a NativePointer
   recv_wxid_Struct.writePointer(recv_wxid_Ptr).add(0x04)
