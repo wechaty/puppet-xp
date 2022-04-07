@@ -124,6 +124,15 @@ const getMyselfInfoFunction = (() => {
   return JSON.stringify(myself)
 
 })
+
+const getMyselfIdFunction = (() => {
+
+  let wx_id = readString(moduleBaseAddress.add(offset.wxid_offset))
+  
+  return wx_id
+
+})
+
 // chatroom member
 const chatroomRecurse = ((node) => {
   const chatroomNodeAddress = getChatroomNodeAddress()
@@ -1067,7 +1076,7 @@ const agentReadyCallback = (() => {
   }, 500);
   return nativeCallback
 })()
-const SendMiniProgramNativeFunction = ((bg_path_str,send_wxid_str,recv_wxid_str,xmlstr) => {
+const SendMiniProgramNativeFunction = ((bg_path_str,recv_wxid_str,xmlstr) => {
   console.log("------------------------------------------------------");
   var asmCode=Memory.alloc(Process.pageSize);
 
@@ -1088,7 +1097,7 @@ const SendMiniProgramNativeFunction = ((bg_path_str,send_wxid_str,recv_wxid_str,
     .writeU32(0).add(0x04)
     .writeU32(0);
 
- // var send_wxid_str="wxid_4zr616ir6fi122";
+  var send_wxid_str=getMyselfIdFunction();
   var send_wxid_Ptr=Memory.alloc(send_wxid_str.length * 2 + 1)
   send_wxid_Ptr.writeUtf16String(send_wxid_str);
   var send_wxid_Struct = Memory.alloc(0x14) // returns a NativePointer
