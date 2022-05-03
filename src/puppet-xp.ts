@@ -246,6 +246,9 @@ class PuppetXp extends PUPPET.Puppet {
               case '5':
                 type = PUPPET.types.Message.Url
                 break
+              case '4':
+                type = PUPPET.types.Message.Url
+                break
               case '6':
                 type = PUPPET.types.Message.Attachment
                 break
@@ -303,6 +306,7 @@ class PuppetXp extends PUPPET.Puppet {
 
     const payload: PUPPET.payloads.Message = {
       id: cuid(),
+      listenerId: toId,
       roomId,
       talkerId,
       text,
@@ -336,6 +340,10 @@ class PuppetXp extends PUPPET.Puppet {
   override ding (data?: string): void {
     log.silly('PuppetXp', 'ding(%s)', data || '')
     setTimeout(() => this.emit('dong', { data: data || '' }), 1000)
+  }
+
+  notSupported (name: string): void {
+    log.info(`${name} is not supported by PuppetXp yet.`)
   }
 
   private async loadContactList () {
@@ -428,8 +436,8 @@ class PuppetXp extends PUPPET.Puppet {
  * Contact
  *
  */
-  override contactAlias (contactId: string): Promise<string>
-  override contactAlias (contactId: string, alias: string | null): Promise<void>
+  override contactAlias(contactId: string): Promise<string>
+  override contactAlias(contactId: string, alias: string | null): Promise<void>
 
   override async contactAlias (contactId: string, alias?: string | null): Promise<void | string> {
     log.verbose('PuppetXp', 'contactAlias(%s, %s)', contactId, alias)
@@ -440,8 +448,8 @@ class PuppetXp extends PUPPET.Puppet {
     return contact.alias
   }
 
-  override async contactPhone (contactId: string): Promise<string[]>
-  override async contactPhone (contactId: string, phoneList: string[]): Promise<void>
+  override async contactPhone(contactId: string): Promise<string[]>
+  override async contactPhone(contactId: string, phoneList: string[]): Promise<void>
 
   override async contactPhone (contactId: string, phoneList?: string[]): Promise<string[] | void> {
     log.verbose('PuppetXp', 'contactPhone(%s, %s)', contactId, phoneList)
@@ -464,8 +472,8 @@ class PuppetXp extends PUPPET.Puppet {
     return idList
   }
 
-  override async contactAvatar (contactId: string): Promise<FileBoxInterface>
-  override async contactAvatar (contactId: string, file: FileBoxInterface): Promise<void>
+  override async contactAvatar(contactId: string): Promise<FileBoxInterface>
+  override async contactAvatar(contactId: string, file: FileBoxInterface): Promise<void>
 
   override async contactAvatar (contactId: string, file?: FileBoxInterface): Promise<void | FileBoxInterface> {
     log.verbose('PuppetXp', 'contactAvatar(%s)', contactId)
@@ -512,11 +520,12 @@ class PuppetXp extends PUPPET.Puppet {
     messageId: string,
   ): Promise<string> {
     log.verbose('PuppetXp', 'messageContact(%s)', messageId)
-    // const attachment = this.mocker.MockMessage.loadAttachment(messageId)
-    // if (attachment instanceof ContactMock) {
-    //   return attachment.id
-    // }
-    return this.messageStore[messageId]?.fromId || ''
+    const parser = new xml2js.Parser(/* options */)
+    const messageJson = await parser.parseStringPromise(this.messageStore[messageId]?.text || '')
+
+    // log.info(JSON.stringify(messageJson))
+
+    return messageJson.msg['$'].username
   }
 
   override async messageImage (
@@ -528,10 +537,7 @@ class PuppetXp extends PUPPET.Puppet {
       imageType,
       PUPPET.types.Image[imageType],
     )
-    // const attachment = this.mocker.MockMessage.loadAttachment(messageId)
-    // if (attachment instanceof FileBoxInterface) {
-    //   return attachment
-    // }
+
     const message = this.messageStore[messageId]
     let base64 = ''
     let fileName = ''
@@ -561,41 +567,54 @@ class PuppetXp extends PUPPET.Puppet {
     messageId: string,
   ): Promise<boolean> {
     log.verbose('PuppetXp', 'messageRecall(%s)', messageId)
+    this.notSupported('messageRecall')
     return false
   }
 
   override async messageFile (id: string): Promise<FileBoxInterface> {
-    // const attachment = this.mocker.MockMessage.loadAttachment(id)
-    // if (attachment instanceof FileBoxInterface) {
-    //   return attachment
-    // }
     const message = this.messageStore[id]
-    let base64 = ''
+    let dataPath = ''
     let fileName = ''
+
     if (message?.type === PUPPET.types.Message.Image) {
       return this.messageImage(
         id,
         PUPPET.types.Image.Thumbnail,
       )
     }
-    try {
-      if (message?.text) {
-        const filePath = message.text
-        const dataPath = rootPath + filePath    // 要解密的文件路径
+    if (message?.type === PUPPET.types.Message.Attachment) {
+      try {
+        const parser = new xml2js.Parser(/* options */)
+        const messageJson = await parser.parseStringPromise(message.text || '')
+        // log.info(JSON.stringify(messageJson))
+
+        const curDate = new Date()
+        const year = curDate.getFullYear()
+        let month: any = curDate.getMonth() + 1
+        if (month < 10) {
+          month = '0' + month
+        }
+        fileName = '\\' + messageJson.msg.appmsg[0].title[0]
+        const filePath = `${this.selfInfo.id}\\FileStorage\\File\\${year}-${month}`
+        dataPath = rootPath + filePath + fileName  // 要解密的文件路径
         // console.info(dataPath)
-        const imageInfo = ImageDecrypt(dataPath, id)
-        // console.info(imageInfo)
-        base64 = imageInfo.base64
-        fileName = imageInfo.fileName
+        return FileBox.fromFile(
+          dataPath,
+          fileName,
+        )
+      } catch (err) {
+        console.error(err)
       }
-    } catch (err) {
-      console.error(err)
     }
 
-    return FileBox.fromBase64(
-      base64,
+    if ([PUPPET.types.Message.Video, PUPPET.types.Message.Audio, PUPPET.types.Message.Emoticon].includes(message?.type || PUPPET.types.Message.Unknown)) {
+      this.notSupported('Video/Audio/Emoticon')
+    }
+    return FileBox.fromFile(
+      dataPath,
       fileName,
     )
+
   }
 
   override async messageUrl (messageId: string): Promise<PUPPET.payloads.UrlLink> {
@@ -604,10 +623,24 @@ class PuppetXp extends PUPPET.Puppet {
     // if (attachment instanceof UrlLink) {
     //   return attachment.payload
     // }
-    return {
-      title: 'mock title for ' + messageId,
-      url: 'https://mock.url',
+
+    // log.info('PuppetXp', 'message(%s)',this.messageStore[messageId]?.text)
+
+    const parser = new xml2js.Parser(/* options */)
+    const messageJson = await parser.parseStringPromise(this.messageStore[messageId]?.text || '')
+
+    // log.info(JSON.stringify(messageJson))
+    const appmsg = messageJson.msg.appmsg[0]
+
+    const UrlLinkPayload: PUPPET.payloads.UrlLink = {
+      description: appmsg.des[0],
+      thumbnailUrl: appmsg.appattach[0].cdnthumburl,
+      title: appmsg.title[0],
+      url: appmsg.url[0],
     }
+
+    return UrlLinkPayload
+
   }
 
   override async messageMiniProgram (messageId: string): Promise<PUPPET.payloads.MiniProgram> {
@@ -616,20 +649,47 @@ class PuppetXp extends PUPPET.Puppet {
     // if (attachment instanceof MiniProgram) {
     //   return attachment.payload
     // }
-    return {
-      title: 'mock title for ' + messageId,
+    log.info('PuppetXp', 'message(%s)', this.messageStore[messageId]?.text)
+
+    const parser = new xml2js.Parser(/* options */)
+    const messageJson = await parser.parseStringPromise(this.messageStore[messageId]?.text || '')
+
+    // log.info(JSON.stringify(messageJson))
+
+    const appmsg = messageJson.msg.appmsg[0]
+
+    const MiniProgramPayload: PUPPET.payloads.MiniProgram = {
+      appid: appmsg.weappinfo[0].appid[0],   // optional, appid, get from wechat (mp.weixin.qq.com)
+      description: appmsg.des[0],   // optional, mini program title
+      iconUrl: appmsg.weappinfo[0].weappiconurl[0],   // optional, mini program icon url
+      pagePath: appmsg.weappinfo[0].pagepath[0],   // optional, mini program page path
+      shareId: appmsg.weappinfo[0].shareId[0],   // optional, the unique userId for who share this mini program
+      thumbKey: appmsg.appattach[0].cdnthumbaeskey[0],   // original, thumbnailurl and thumbkey will make the headphoto of mini-program better
+      thumbUrl: appmsg.appattach[0].cdnthumburl[0],   // optional, default picture, convert to thumbnail
+      title: appmsg.title[0],   // optional, mini program title
+      username: appmsg.weappinfo[0].username[0],   // original ID, get from wechat (mp.weixin.qq.com)
     }
+    return MiniProgramPayload
   }
 
   override async messageLocation (messageId: string): Promise<PUPPET.payloads.Location> {
     log.verbose('PuppetXp', 'messageLocation(%s)', messageId)
-    return {
-      accuracy: 15, // in meters
-      address: '北京市北京市海淀区45 Chengfu Rd',
-      latitude: 39.995120999999997,
-      longitude: 116.334154,
-      name: '东升乡政府',
+    const parser = new xml2js.Parser(/* options */)
+    const messageJson = await parser.parseStringPromise(this.messageStore[messageId]?.text || '')
+
+    log.info(JSON.stringify(messageJson))
+
+    const location = messageJson.msg.location[0]['$']
+
+    const LocationPayload: PUPPET.payloads.Location = {
+      accuracy: location.scale, // Estimated horizontal accuracy of this location, radial, in meters. (same as Android & iOS API)
+      address: location.label, // "北京市北京市海淀区45 Chengfu Rd"
+      latitude: location.x, // 39.995120999999997
+      longitude: location.y, // 116.334154
+      name: location.poiname, // "东升乡人民政府(海淀区成府路45号)"
     }
+
+    return LocationPayload
   }
 
   override async messageRawPayloadParser (payload: PUPPET.payloads.Message) {
@@ -685,6 +745,8 @@ class PuppetXp extends PUPPET.Puppet {
   ): Promise<void> {
     log.verbose('PuppetXp', 'messageSendUrl(%s, %s)', conversationId, contactId)
 
+    this.notSupported('SendContact')
+
     // const contact = this.mocker.MockContact.load(contactId)
     // return this.messageSend(conversationId, contact)
   }
@@ -694,7 +756,7 @@ class PuppetXp extends PUPPET.Puppet {
     urlLinkPayload: PUPPET.payloads.UrlLink,
   ): Promise<void> {
     log.verbose('PuppetXp', 'messageSendUrl(%s, %s)', conversationId, JSON.stringify(urlLinkPayload))
-
+    this.notSupported('SendUrl')
     // const url = new UrlLink(urlLinkPayload)
     // return this.messageSend(conversationId, url)
   }
@@ -704,8 +766,40 @@ class PuppetXp extends PUPPET.Puppet {
     miniProgramPayload: PUPPET.payloads.MiniProgram,
   ): Promise<void> {
     log.verbose('PuppetXp', 'messageSendMiniProgram(%s, %s)', conversationId, JSON.stringify(miniProgramPayload))
-    // const miniProgram = new MiniProgram(miniProgramPayload)
-    // return this.messageSend(conversationId, miniProgram)
+
+    const xmlstr = `<?xml version="1.0" encoding="UTF-8" ?>
+    <msg>
+      <fromusername>${this.selfInfo.id}</fromusername>
+      <scene>0</scene>
+      <appmsg appid="${miniProgramPayload.appid}">
+        <title>${miniProgramPayload.title}</title>
+        <action>view</action>
+        <type>33</type>
+        <showtype>0</showtype>
+        <url>${miniProgramPayload.pagePath}</url>
+        <thumburl>${miniProgramPayload.thumbUrl}</thumburl>
+        <sourcedisplayname>${miniProgramPayload.description}</sourcedisplayname>
+        <appattach>
+          <totallen>0</totallen>
+        </appattach>
+        <weappinfo>
+          <username>${miniProgramPayload.username}</username>
+          <appid>${miniProgramPayload.appid}</appid>
+          <type>1</type>
+          <weappiconurl>${miniProgramPayload.iconUrl}</weappiconurl>
+          <appservicetype>0</appservicetype>
+          <shareId>2_wx65cc950f42e8fff1_875237370_${new Date().getTime()}_1</shareId>
+        </weappinfo>
+      </appmsg>
+      <appinfo>
+        <version>1</version>
+        <appname>Window wechat</appname>
+      </appinfo>
+    </msg>
+  `
+    // const xmlstr=`<msg><fromusername>${this.selfInfo.id}</fromusername><scene>0</scene><commenturl></commenturl><appmsg appid="wx65cc950f42e8fff1" sdkver=""><title>腾讯出行服务｜加油代驾公交</title><des></des><action>view</action><type>33</type><showtype>0</showtype><content></content><url>https://mp.weixin.qq.com/mp/waerrpage?appid=wx65cc950f42e8fff1&amp;amp;type=upgrade&amp;amp;upgradetype=3#wechat_redirect</url><dataurl></dataurl><lowurl></lowurl><lowdataurl></lowdataurl><recorditem><![CDATA[]]></recorditem><thumburl>http://mmbiz.qpic.cn/mmbiz_png/NM1fK7leWGPaFnMAe95jbg4sZAI3fkEZWHq69CIk6zA00SGARbmsGTbgLnZUXFoRwjROelKicbSp9K34MaZBuuA/640?wx_fmt=png&amp;wxfrom=200</thumburl><messageaction></messageaction><extinfo></extinfo><sourceusername></sourceusername><sourcedisplayname>腾讯出行服务｜加油代驾公交</sourcedisplayname><commenturl></commenturl><appattach><totallen>0</totallen><attachid></attachid><emoticonmd5></emoticonmd5><fileext></fileext><aeskey></aeskey></appattach><weappinfo><pagepath></pagepath><username>gh_ad64296dc8bd@app</username><appid>wx65cc950f42e8fff1</appid><type>1</type><weappiconurl>http://mmbiz.qpic.cn/mmbiz_png/NM1fK7leWGPaFnMAe95jbg4sZAI3fkEZWHq69CIk6zA00SGARbmsGTbgLnZUXFoRwjROelKicbSp9K34MaZBuuA/640?wx_fmt=png&amp;wxfrom=200</weappiconurl><appservicetype>0</appservicetype><shareId>2_wx65cc950f42e8fff1_875237370_1644979747_1</shareId></weappinfo><websearch /></appmsg><appinfo><version>1</version><appname>Window wechat</appname></appinfo></msg>`
+    log.info('SendMiniProgram is supported by xp, but only support send the MiniProgram-contact card.')
+    await this.sidecar.SendMiniProgram('', conversationId, xmlstr)
   }
 
   override async messageSendLocation (
@@ -713,6 +807,7 @@ class PuppetXp extends PUPPET.Puppet {
     locationPayload: PUPPET.payloads.Location,
   ): Promise<void | string> {
     log.verbose('PuppetXp', 'messageSendLocation(%s, %s)', conversationId, JSON.stringify(locationPayload))
+    this.notSupported('SendLocation')
   }
 
   override async messageForward (
@@ -727,6 +822,7 @@ class PuppetXp extends PUPPET.Puppet {
     if (curMessage?.type === PUPPET.types.Message.Text) {
       await this.messageSendText(conversationId, curMessage.text || '')
     } else {
+      log.info('only Text message forward is supported by xp.')
       PUPPET.throwUnsupportedError(conversationId, messageId)
     }
   }
@@ -774,8 +870,8 @@ class PuppetXp extends PUPPET.Puppet {
     log.verbose('PuppetXp', 'roomAdd(%s, %s)', roomId, contactId)
   }
 
-  override async roomTopic (roomId: string): Promise<string>
-  override async roomTopic (roomId: string, topic: string): Promise<void>
+  override async roomTopic(roomId: string): Promise<string>
+  override async roomTopic(roomId: string, topic: string): Promise<void>
 
   override async roomTopic (
     roomId: string,
@@ -832,8 +928,8 @@ class PuppetXp extends PUPPET.Puppet {
     return rawPayload
   }
 
-  override async roomAnnounce (roomId: string): Promise<string>
-  override async roomAnnounce (roomId: string, text: string): Promise<void>
+  override async roomAnnounce(roomId: string): Promise<string>
+  override async roomAnnounce(roomId: string, text: string): Promise<void>
 
   override async roomAnnounce (roomId: string, text?: string): Promise<void | string> {
     if (text) {

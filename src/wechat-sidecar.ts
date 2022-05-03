@@ -26,7 +26,6 @@ import {
   Hook,
   ParamType,
   Ret,
-
   agentTarget,
 }                 from 'sidecar'
 
@@ -104,11 +103,10 @@ class WeChatSidecar extends SidecarBody {
   @Call(agentTarget('SendMiniProgramNativeFunction'))
   SendMiniProgram (
     BgPathStr:string,
-    SendWxidStr:string,
     RecvWxidStr:string,
     mlstr:string,
 
-  ): Promise<string> { return Ret(BgPathStr, SendWxidStr, RecvWxidStr, mlstr) }
+  ): Promise<string> { return Ret(BgPathStr, RecvWxidStr, mlstr) }
 
   @Hook(agentTarget('recvMsgNativeCallback'))
   recvMsg (

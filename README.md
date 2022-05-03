@@ -50,13 +50,16 @@ npm install
 
 XP is a young puppet,it keeps growing and improving.
 
-Puppet|xp👍
-:---|:---:
-支持账号|个人微信
+Puppet|xp👍|
+:---|:---|
+支持账号|个人微信|
 **<消息>**|
-收发文本|✅|
-发送图片、文件|✅
-接收图片、文件|✅
+接收文本|✅
+发送文本|✅
+发送图片|✅
+接收图片|✅
+发送文件|✅
+接收文件|✅
 接收动图|✅
 发送动图|✅（以文件形式发送）
 转发文本|✅
@@ -75,7 +78,11 @@ Puppet|xp👍
 
 ## HISTORY
 
-### main v0.5
+### v1.0
+
+1. wechaty 1.xx support
+
+### v0.5
 
 1. ES Module support
 2. [WeChatSetup-v3.3.0.115.exe](https://github.com/wechaty/wechaty-puppet-xp/releases/download/v0.5/WeChatSetup-v3.3.0.115.exe)
