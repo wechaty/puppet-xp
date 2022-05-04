@@ -105,7 +105,6 @@ class WeChatSidecar extends SidecarBody {
     BgPathStr:string,
     RecvWxidStr:string,
     mlstr:string,
-
   ): Promise<string> { return Ret(BgPathStr, RecvWxidStr, mlstr) }
 
   @Hook(agentTarget('recvMsgNativeCallback'))

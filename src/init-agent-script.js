@@ -124,6 +124,15 @@ const getMyselfInfoFunction = (() => {
   return JSON.stringify(myself)
 
 })
+
+const getMyselfIdFunction = (() => {
+
+  let wx_id = readString(moduleBaseAddress.add(offset.wxid_offset))
+  
+  return wx_id
+
+})
+
 // chatroom member
 const chatroomRecurse = ((node) => {
   const chatroomNodeAddress = getChatroomNodeAddress()
@@ -1067,9 +1076,11 @@ const agentReadyCallback = (() => {
   }, 500);
   return nativeCallback
 })()
+
 const SendMiniProgramNativeFunction = ((bg_path_str,recv_wxid_str,xmlstr) => {
   // console.log("------------------------------------------------------");
   bg_path_str="";
+
   var asmCode=Memory.alloc(Process.pageSize);
   var ECX_buf=Memory.alloc(0x300);
   var Buf_EAX=Memory.alloc(0x300);
@@ -1088,6 +1099,7 @@ const SendMiniProgramNativeFunction = ((bg_path_str,recv_wxid_str,xmlstr) => {
 
   var send_wxid_str=JSON.parse(getMyselfInfoFunction()).id;
   // console.log(send_wxid_str)
+
   var send_wxid_Ptr=Memory.alloc(send_wxid_str.length * 2 + 1)
   send_wxid_Ptr.writeUtf16String(send_wxid_str);
   var send_wxid_Struct = Memory.alloc(0x14) // returns a NativePointer
@@ -1097,8 +1109,8 @@ const SendMiniProgramNativeFunction = ((bg_path_str,recv_wxid_str,xmlstr) => {
     .writeU32(0).add(0x04)
     .writeU32(0);
 
- // var recv_wxid_str="filehelper";
-  var recv_wxid_Ptr=Memory.alloc(recv_wxid_str.length * 2 + 1)
+ // var contactId="filehelper";
+  var recv_wxid_Ptr=Memory.alloc(contactId.length * 2 + 1)
   recv_wxid_Ptr.writeUtf16String(recv_wxid_str);
   var recv_wxid_Struct = Memory.alloc(0x14) // returns a NativePointer
   recv_wxid_Struct.writePointer(recv_wxid_Ptr).add(0x04)

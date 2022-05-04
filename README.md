@@ -78,9 +78,9 @@ Puppet|xp👍|
 
 ## HISTORY
 
-### v1.0
+### main v1.0
 
-1. wechaty 1.xx support
+wechaty 1.xx support
 
 ### v0.5
 
