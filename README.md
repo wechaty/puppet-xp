@@ -75,7 +75,11 @@ Puppet|xp👍
 
 ## HISTORY
 
-### main v0.5
+### main v1.0
+
+wechaty 1.xx support
+
+### v0.5
 
 1. ES Module support
 2. [WeChatSetup-v3.3.0.115.exe](https://github.com/wechaty/wechaty-puppet-xp/releases/download/v0.5/WeChatSetup-v3.3.0.115.exe)
