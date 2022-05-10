@@ -65,8 +65,9 @@ async function onMessage (msg: Message) {
     ), 500)
   }
   if (msg.text() === 'file') {
-    let newpath = `C:/Users/wechaty/Documents/GitHub/wechat-openai-qa-bot/data1652164144918.xls`
-    log.info('newpath==================================',newpath)
+    const newpath = 'C:\\Users\\wechaty\\Documents\\GitHub\\wechat-openai-qa-bot\\data1652169999200.xls'
+
+    log.info('newpath==================================', newpath)
     const fileBox = FileBox.fromFile(newpath)
     await msg.say(fileBox)
   }
