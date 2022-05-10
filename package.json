@@ -89,10 +89,5 @@
   "publishConfig": {
     "access": "public",
     "tag": "latest"
-  },
-  "git": {
-    "scripts": {
-      "pre-push": "npx git-scripts-pre-push"
-    }
   }
 }
