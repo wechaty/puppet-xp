@@ -724,7 +724,7 @@ class PuppetXp extends PUPPET.Puppet {
     file: FileBoxInterface,
   ): Promise<void> {
     // PUPPET.throwUnsupportedError(conversationId, file)
-    const filePath = path.resolve('temp\\' + file.name)
+    const filePath = path.resolve(file.name)
     log.verbose('filePath===============', filePath)
     await file.toFile(filePath, true)
     if (file.type === FileBoxType.Url) {
