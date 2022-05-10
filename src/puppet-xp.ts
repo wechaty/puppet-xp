@@ -724,13 +724,13 @@ class PuppetXp extends PUPPET.Puppet {
     file: FileBoxInterface,
   ): Promise<void> {
     // PUPPET.throwUnsupportedError(conversationId, file)
-    const filePath = path.resolve(file.name)
+    const filePath = path.resolve('temp\\' + file.name)
     log.verbose('filePath===============', filePath)
     await file.toFile(filePath, true)
     if (file.type === FileBoxType.Url) {
       try {
         await this.sidecar.sendPicMsg(conversationId, filePath)
-        fs.unlinkSync(filePath)
+        // fs.unlinkSync(filePath)
       } catch {
         fs.unlinkSync(filePath)
       }
@@ -739,7 +739,7 @@ class PuppetXp extends PUPPET.Puppet {
       // filePath = 'C:\\Users\\wechaty\\Documents\\GitHub\\wechat-openai-qa-bot\\data1652169999200.xls'
       try {
         await this.sidecar.sendPicMsg(conversationId, filePath)
-        fs.unlinkSync(filePath)
+        // fs.unlinkSync(filePath)
       } catch (err) {
         PUPPET.throwUnsupportedError(conversationId, file)
         fs.unlinkSync(filePath)
