@@ -736,10 +736,12 @@ class PuppetXp extends PUPPET.Puppet {
       }
 
     } else {
+      // filePath = 'C:\\Users\\wechaty\\Documents\\GitHub\\wechat-openai-qa-bot\\data1652169999200.xls'
       try {
         await this.sidecar.sendPicMsg(conversationId, filePath)
         fs.unlinkSync(filePath)
-      } catch {
+      } catch (err) {
+        PUPPET.throwUnsupportedError(conversationId, file)
         fs.unlinkSync(filePath)
       }
     }
