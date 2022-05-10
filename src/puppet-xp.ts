@@ -649,7 +649,7 @@ class PuppetXp extends PUPPET.Puppet {
     // if (attachment instanceof MiniProgram) {
     //   return attachment.payload
     // }
-    log.info('PuppetXp', 'message(%s)', this.messageStore[messageId]?.text)
+    // log.verbose('PuppetXp', 'message(%s)', this.messageStore[messageId]?.text)
 
     const parser = new xml2js.Parser(/* options */)
     const messageJson = await parser.parseStringPromise(this.messageStore[messageId]?.text || '')
@@ -725,6 +725,7 @@ class PuppetXp extends PUPPET.Puppet {
   ): Promise<void> {
     // PUPPET.throwUnsupportedError(conversationId, file)
     const filePath = path.resolve(file.name)
+    log.verbose('filePath===============', filePath)
     await file.toFile(filePath, true)
     if (file.type === FileBoxType.Url) {
       try {
@@ -735,7 +736,12 @@ class PuppetXp extends PUPPET.Puppet {
       }
 
     } else {
-      PUPPET.throwUnsupportedError(conversationId, file)
+      try {
+        await this.sidecar.sendPicMsg(conversationId, filePath)
+        fs.unlinkSync(filePath)
+      } catch {
+        fs.unlinkSync(filePath)
+      }
     }
   }
 

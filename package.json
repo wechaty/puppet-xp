@@ -1,6 +1,6 @@
 {
   "name": "wechaty-puppet-xp",
-  "version": "1.11.2",
+  "version": "1.11.3",
   "description": "Puppet XP for Wechaty",
   "type": "module",
   "exports": {
@@ -89,10 +89,5 @@
   "publishConfig": {
     "access": "public",
     "tag": "next"
-  },
-  "git": {
-    "scripts": {
-      "pre-push": "npx git-scripts-pre-push"
-    }
   }
 }

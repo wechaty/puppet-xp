@@ -10,6 +10,7 @@ import {
   log,
   types,
 } from 'wechaty'
+import { FileBox } from 'file-box'
 
 import { PuppetXp } from '../src/puppet-xp.js'
 import qrcodeTerminal from 'qrcode-terminal'
@@ -62,6 +63,12 @@ async function onMessage (msg: Message) {
         console.info(imginfo)
       },
     ), 500)
+  }
+  if (msg.text() === 'file') {
+    let newpath = `C:/Users/wechaty/Documents/GitHub/wechat-openai-qa-bot/data1652164144918.xls`
+    log.info('newpath==================================',newpath)
+    const fileBox = FileBox.fromFile(newpath)
+    await msg.say(fileBox)
   }
 }
 
