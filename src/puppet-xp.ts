@@ -144,8 +144,8 @@ class PuppetXp extends PUPPET.Puppet {
 
      this.selfInfo = JSON.parse(await this.sidecar.getMyselfInfo())
 
-     await this.loadRoomList()
      await this.loadContactList()
+     await this.loadRoomList()
 
      await super.login(this.selfInfo.id)
 
