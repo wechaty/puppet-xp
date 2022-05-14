@@ -144,8 +144,8 @@ class PuppetXp extends PUPPET.Puppet {
 
      this.selfInfo = JSON.parse(await this.sidecar.getMyselfInfo())
 
-     await this.loadRoomList()
      await this.loadContactList()
+     await this.loadRoomList()
 
      await super.login(this.selfInfo.id)
 
@@ -372,26 +372,24 @@ class PuppetXp extends PUPPET.Puppet {
      for (const contactKey in contactList) {
        const contactInfo = contactList[contactKey]
 
-       if (contactInfo.id.indexOf('@chatroom') === -1) {
-         let contactType = PUPPET.types.Contact.Individual
-         if (contactInfo.id.indexOf('gh_') !== -1) {
-           contactType = PUPPET.types.Contact.Official
-         }
-         if (contactInfo.id.indexOf('@openim') !== -1) {
-           contactType = PUPPET.types.Contact.Corporation
-         }
-         const contact = {
-           alias: contactInfo.alias,
-           avatar: contactInfo.avatarUrl,
-           friend: true,
-           gender: contactInfo.gender,
-           id: contactInfo.id,
-           name: contactInfo.name || 'Unknow',
-           phone: [],
-           type: contactType,
-         }
-         this.contactStore[contactInfo.id] = contact
+       let contactType = PUPPET.types.Contact.Individual
+       if (contactInfo.id.indexOf('gh_') !== -1) {
+         contactType = PUPPET.types.Contact.Official
        }
+       if (contactInfo.id.indexOf('@openim') !== -1) {
+         contactType = PUPPET.types.Contact.Corporation
+       }
+       const contact = {
+         alias: contactInfo.alias,
+         avatar: contactInfo.avatarUrl,
+         friend: true,
+         gender: contactInfo.gender,
+         id: contactInfo.id,
+         name: contactInfo.name || 'Unknow',
+         phone: [],
+         type: contactType,
+       }
+       this.contactStore[contactInfo.id] = contact
 
      }
    }
@@ -419,7 +417,7 @@ class PuppetXp extends PUPPET.Puppet {
            topic: topic,
          }
          this.roomStore[roomId] = room
-
+         delete this.contactStore[roomId]
          for (const memberKey in roomMember) {
            const memberId = roomMember[memberKey]
            if (!this.contactStore[memberId]) {
@@ -882,7 +880,7 @@ class PuppetXp extends PUPPET.Puppet {
   */
    override async roomRawPayloadParser (payload: PUPPET.payloads.Room) { return payload }
    override async roomRawPayload (id: string): Promise<PUPPET.payloads.Room> {
-     //  log.verbose('PuppetXp----------------------', 'roomRawPayload(%s%s)', id, this.roomStore[id]?.topic)
+     log.verbose('PuppetXp----------------------', 'roomRawPayload(%s%s)', id, this.roomStore[id]?.topic)
      if (this.roomStore[id]) {
        return this.roomStore[id] || {} as any
      } else {
