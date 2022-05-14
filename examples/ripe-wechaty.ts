@@ -35,6 +35,8 @@ async function onLogin (user: Contact) {
   log.info('StarterBot', '%s login', user)
   const roomList = await bot.Room.findAll()
   console.info(roomList.length)
+  const contactList = await bot.Contact.findAll()
+  console.info(contactList.length)
 }
 
 function onLogout (user: Contact) {

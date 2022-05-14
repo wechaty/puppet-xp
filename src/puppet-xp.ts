@@ -333,7 +333,7 @@ class PuppetXp extends PUPPET.Puppet {
        toId,
        type,
      }
-     console.info('payloadType----------', PUPPET.types.Message[type])
+     //  console.info('payloadType----------', PUPPET.types.Message[type])
      // console.info('payload----------', payload)
      this.messageStore[payload.id] = payload
      this.emit('message', { messageId: payload.id })
@@ -371,17 +371,28 @@ class PuppetXp extends PUPPET.Puppet {
 
      for (const contactKey in contactList) {
        const contactInfo = contactList[contactKey]
-       const contact = {
-         alias: contactInfo.alias,
-         avatar: contactInfo.avatarUrl,
-         friend: true,
-         gender: contactInfo.gender,
-         id: contactInfo.id,
-         name: contactInfo.name,
-         phone: [],
-         type: PUPPET.types.Contact.Unknown,
+
+       if (contactInfo.id.indexOf('@chatroom') === -1) {
+         let contactType = PUPPET.types.Contact.Individual
+         if (contactInfo.id.indexOf('gh_') !== -1) {
+           contactType = PUPPET.types.Contact.Official
+         }
+         if (contactInfo.id.indexOf('@openim') !== -1) {
+           contactType = PUPPET.types.Contact.Corporation
+         }
+         const contact = {
+           alias: contactInfo.alias,
+           avatar: contactInfo.avatarUrl,
+           friend: true,
+           gender: contactInfo.gender,
+           id: contactInfo.id,
+           name: contactInfo.name || 'Unknow',
+           phone: [],
+           type: contactType,
+         }
+         this.contactStore[contactInfo.id] = contact
        }
-       this.contactStore[contactInfo.id] = contact
+
      }
    }
 
@@ -395,40 +406,43 @@ class PuppetXp extends PUPPET.Puppet {
        // log.info(JSON.stringify(Object.keys(roomInfo)))
 
        const roomId = roomInfo.roomid
-       const roomMember = roomInfo.roomMember || []
-       const topic = this.contactStore[roomId]?.name || ''
-       const room = {
-         adminIdList: [],
-         avatar: '',
-         external: false,
-         id: roomId,
-         memberIdList: roomMember,
-         ownerId: '',
-         topic: topic,
-       }
-       this.roomStore[roomId] = room
+       if (roomId.indexOf('@chatroom') !== -1) {
+         const roomMember = roomInfo.roomMember || []
+         const topic = this.contactStore[roomId]?.name || ''
+         const room = {
+           adminIdList: [],
+           avatar: '',
+           external: false,
+           id: roomId,
+           memberIdList: roomMember,
+           ownerId: '',
+           topic: topic,
+         }
+         this.roomStore[roomId] = room
 
-       for (const memberKey in roomMember) {
-         const memberId = roomMember[memberKey]
-         if (!this.contactStore[memberId]) {
-           try {
-             const memberNickName = await this.sidecar.getChatroomMemberNickInfo(memberId, roomId)
-             const contact = {
-               alias: '',
-               avatar: '',
-               friend: false,
-               gender: PUPPET.types.ContactGender.Unknown,
-               id: memberId,
-               name: memberNickName,
-               phone: [],
-               type: PUPPET.types.Contact.Individual,
+         for (const memberKey in roomMember) {
+           const memberId = roomMember[memberKey]
+           if (!this.contactStore[memberId]) {
+             try {
+               const memberNickName = await this.sidecar.getChatroomMemberNickInfo(memberId, roomId)
+               const contact = {
+                 alias: '',
+                 avatar: '',
+                 friend: false,
+                 gender: PUPPET.types.ContactGender.Unknown,
+                 id: memberId,
+                 name: memberNickName || 'Unknown',
+                 phone: [],
+                 type: PUPPET.types.Contact.Individual,
+               }
+               this.contactStore[memberId] = contact
+             } catch (err) {
+               console.error(err)
              }
-             this.contactStore[memberId] = contact
-           } catch (err) {
-             console.error(err)
            }
          }
        }
+
      }
 
    }
@@ -522,7 +536,7 @@ class PuppetXp extends PUPPET.Puppet {
    }
 
    override async contactRawPayload (id: string): Promise<PUPPET.payloads.Contact> {
-     log.verbose('PuppetXp----------------------', 'contactRawPayload(%s)', id)
+     //  log.verbose('PuppetXp----------------------', 'contactRawPayload(%s,%s)', id, this.contactStore[id]?.name)
      return this.contactStore[id] || {} as any
    }
 
@@ -868,7 +882,7 @@ class PuppetXp extends PUPPET.Puppet {
   */
    override async roomRawPayloadParser (payload: PUPPET.payloads.Room) { return payload }
    override async roomRawPayload (id: string): Promise<PUPPET.payloads.Room> {
-     // log.verbose('PuppetXp', 'roomRawPayload(%s)', id)
+     //  log.verbose('PuppetXp----------------------', 'roomRawPayload(%s%s)', id, this.roomStore[id]?.topic)
      if (this.roomStore[id]) {
        return this.roomStore[id] || {} as any
      } else {
@@ -969,7 +983,7 @@ class PuppetXp extends PUPPET.Puppet {
          avatar: '',
          id: contactId,
          inviterId: contactId,   // "wxid_7708837087612",
-         name: contact?.name || '',
+         name: contact?.name || 'Unknow',
          roomAlias: contact?.name || '',
        }
        // console.info(MemberRawPayload)
@@ -987,7 +1001,7 @@ class PuppetXp extends PUPPET.Puppet {
    }
 
    override async roomMemberRawPayloadParser (rawPayload: PUPPET.payloads.RoomMember): Promise<PUPPET.payloads.RoomMember> {
-     log.verbose('PuppetXp---------------------', 'roomMemberRawPayloadParser(%s)', rawPayload)
+     //  log.verbose('PuppetXp---------------------', 'roomMemberRawPayloadParser(%s)', rawPayload)
      return rawPayload
    }
 
