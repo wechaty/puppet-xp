@@ -85,6 +85,35 @@ bot.on('scan', onScan)
 bot.on('login', onLogin)
 bot.on('logout', onLogout)
 bot.on('message', onMessage)
+bot.on('room-join', async (room, inviteeList, inviter) => {
+  // "超超超哥"邀请"瓦力"加入了群聊
+  // "超超超哥"邀请你加入了群聊，群聊参与人还有：瓦力
+  // "luyuchao"邀请"瓦力"加入了群聊
+  // 你邀请"瓦力"加入了群聊
+  const nameList = inviteeList.map(c => c.name()).join(',')
+  log.info(`Room ${await room.topic()} got new member ${nameList}, invited by ${inviter}`)
+})
+bot.on('room-leave', async (room, leaverList, remover) => {
+  // 你被"luyuchao"移出群聊
+  // 你将"瓦力"移出了群聊
+  const nameList = leaverList.map(c => c.name()).join(',')
+  log.info(`Room ${await room.topic()} lost member ${nameList}, the remover is: ${remover}`)
+})
+bot.on('room-topic', async (room, topic, oldTopic, changer) => {
+  // "luyuchao"修改群名为“北辰香麓欣麓园抗疫”
+  // 你修改群名为“大师是群主”
+  log.info(`Room ${await room.topic()} topic changed from ${oldTopic} to ${topic} by ${changer.name()}`)
+})
+bot.on('room-invite', async roomInvitation => {
+  log.info(JSON.stringify(roomInvitation))
+  // "超超超哥"邀请你加入了群聊，群聊参与人还有：瓦力
+  try {
+    log.info('received room-invite event.')
+    await roomInvitation.accept()
+  } catch (e) {
+    console.error(e)
+  }
+})
 
 bot.start()
   .then(() => {

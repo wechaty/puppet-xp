@@ -46,6 +46,7 @@ import {
 
 import { WeChatSidecar } from './wechat-sidecar.js'
 import { ImageDecrypt } from './pure-functions/image-decrypt.js'
+// import type { Contact } from 'wechaty'
 
 const userInfo = os.userInfo()
 const rootPath = `${userInfo.homedir}\\Documents\\WeChat Files\\`
@@ -142,8 +143,18 @@ class PuppetXp extends PUPPET.Puppet {
 
    private async onLogin () {
 
-     this.selfInfo = JSON.parse(await this.sidecar.getMyselfInfo())
+     const selfInfoRaw = JSON.parse(await this.sidecar.getMyselfInfo())
 
+     this.selfInfo =  {
+       alias: '',
+       avatar: selfInfoRaw.head_img_url,
+       friend: false,
+       gender: PUPPET.types.ContactGender.Unknown,
+       id: selfInfoRaw.id,
+       name: selfInfoRaw.name,
+       phone: [],
+       type: PUPPET.types.Contact.Individual,
+     }
      await this.loadContactList()
      await this.loadRoomList()
 
@@ -208,8 +219,9 @@ class PuppetXp extends PUPPET.Puppet {
      let toId = ''
      let talkerId = ''
      const text = String(args[2])
+     const code = args[0]
 
-     switch (args[0]) {
+     switch (code) {
        case 1:
          try {
            xml2js.parseString(String(args[4]), { explicitArray: false, ignoreAttrs: true }, function (err: any, json:any) {
@@ -302,7 +314,7 @@ class PuppetXp extends PUPPET.Puppet {
          break
        case 10000:
          // 群事件
-         type = PUPPET.types.Message.Unknown
+         //  type = PUPPET.types.Message.Unknown
          break
        case 10002:
          break
@@ -335,8 +347,104 @@ class PuppetXp extends PUPPET.Puppet {
      }
      //  console.info('payloadType----------', PUPPET.types.Message[type])
      // console.info('payload----------', payload)
-     this.messageStore[payload.id] = payload
-     this.emit('message', { messageId: payload.id })
+     try {
+       if (code === 10000) {
+         // 你邀请"瓦力"加入了群聊
+         // "超超超哥"邀请"瓦力"加入了群聊
+         // "luyuchao"邀请"瓦力"加入了群聊
+         // "超超超哥"邀请你加入了群聊，群聊参与人还有：瓦力
+
+         // 你将"瓦力"移出了群聊
+         // 你被"luyuchao"移出群聊
+
+         // 你修改群名为“瓦力专属”
+         // 你修改群名为“大师是群主”
+         // "luyuchao"修改群名为“北辰香麓欣麓园抗疫”
+
+         const room = this.roomStore[roomId]
+         //  console.info('room=========================', room)
+         let topic = ''
+         const oldTopic = room ? room.topic : ''
+
+         if (text.indexOf('修改群名为') !== -1) {
+           const arrInfo = text.split('修改群名为')
+           let changer = this.selfInfo
+           if (arrInfo[0] && room) {
+             topic = arrInfo[1]?.split(/“|”|"/)[1] || ''
+             //  topic = arrInfo[1] || ''
+             this.roomStore[roomId] = room
+             room.topic = topic
+             if (arrInfo[0] === '你') {
+               //  changer = this.selfInfo
+             } else {
+               const name = arrInfo[0].split(/“|”|"/)[1] || ''
+               for (const i in this.contactStore) {
+                 if (this.contactStore[i] && this.contactStore[i]?.name === name) {
+                   changer = this.contactStore[i]
+                 }
+               }
+
+             }
+           }
+           //  console.info(room)
+           //  console.info(changer)
+           //  console.info(oldTopic)
+           //  console.info(topic)
+           const changerId = changer.id
+           this.emit('room-topic', { changerId, newTopic:topic, oldTopic, roomId })
+
+         }
+         if (text.indexOf('加入了群聊') !== -1) {
+           void this.loadRoomList()
+           void this.loadContactList()
+           const inviteeList = []
+           let inviter = this.selfInfo
+           const arrInfo = text.split(/邀请|加入了群聊/)
+
+           if (arrInfo[0]) {
+             topic = arrInfo[0]?.split(/“|”|"/)[1] || ''
+             if (arrInfo[0] === '你') {
+               //  changer = this.selfInfo
+             } else {
+               const name = arrInfo[0].split(/“|”|"/)[1] || ''
+               for (const i in this.contactStore) {
+                 if (this.contactStore[i] && this.contactStore[i]?.name === name) {
+                   inviter = this.contactStore[i]
+                 }
+               }
+             }
+           }
+
+           if (arrInfo[1]) {
+             topic = arrInfo[1]?.split(/“|”|"/)[1] || ''
+             if (arrInfo[1] === '你') {
+               inviteeList.push(this.selfInfo.id)
+             } else {
+               const name = arrInfo[1].split(/“|”|"/)[1] || ''
+               for (const i in this.contactStore) {
+                 if (this.contactStore[i] && this.contactStore[i]?.name === name) {
+                   if (this.contactStore[i]?.id && room?.memberIdList.includes(this.contactStore[i]?.id || '')) {
+                     inviteeList.push(this.contactStore[i]?.id)
+                   }
+                 }
+               }
+
+             }
+           }
+           //  console.info(inviteeList)
+           //  console.info(inviter)
+           //  console.info(room)
+
+           this.emit('room-join', { inviteeIdList:inviteeList, inviterId:inviter.id, roomId })
+         }
+       } else {
+         this.messageStore[payload.id] = payload
+         this.emit('message', { messageId: payload.id })
+       }
+     } catch (e) {
+       console.error(e)
+     }
+
    }
 
    async onStop () {
@@ -895,7 +1003,7 @@ class PuppetXp extends PUPPET.Puppet {
    }
 
    override async roomList (): Promise<string[]> {
-     log.verbose('PuppetXp', 'roomList()')
+     log.verbose('PuppetXp', 'call roomList()')
      const idList = Object.keys(this.roomStore)
      return idList
    }
