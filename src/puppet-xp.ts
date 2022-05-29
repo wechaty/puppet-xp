@@ -423,7 +423,7 @@ class PuppetXp extends PUPPET.Puppet {
                const name = arrInfo[1].split(/“|”|"/)[1] || ''
                for (const i in this.contactStore) {
                  if (this.contactStore[i] && this.contactStore[i]?.name === name) {
-                   if (this.contactStore[i]?.id) {
+                   if (this.contactStore[i]?.id && room?.memberIdList.includes(this.contactStore[i]?.id || '')) {
                      inviteeList.push(this.contactStore[i]?.id)
                    }
                  }
