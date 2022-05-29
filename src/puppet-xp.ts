@@ -431,11 +431,11 @@ class PuppetXp extends PUPPET.Puppet {
 
              }
            }
-           console.info(inviteeList)
-           console.info(inviter)
-           console.info(room)
+           //  console.info(inviteeList)
+           //  console.info(inviter)
+           //  console.info(room)
 
-           this.emit('room-join', { inviteeList:[], inviterId:inviter.id, roomId })
+           this.emit('room-join', { inviteeIdList:inviteeList, inviterId:inviter.id, roomId })
          }
        } else {
          this.messageStore[payload.id] = payload
