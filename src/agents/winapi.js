@@ -1,34 +1,35 @@
-const LoadLibraryA_addr = Module.findExportByName(
+const LoadLibraryAAddr = Module.findExportByName(
   'Kernel32.dll',
   'LoadLibraryA',
 )
-const LoadLibraryA = new NativeFunction(LoadLibraryA_addr, 'int', ['pointer'])
+const LoadLibraryA = new NativeFunction(LoadLibraryAAddr, 'int', ['pointer'])
 
-const GetFileVersionInfoSizeA_addr = Module.findExportByName(
+const GetFileVersionInfoSizeAAddr = Module.findExportByName(
   'version.dll',
   'GetFileVersionInfoSizeA',
 )
 const GetFileVersionInfoSizeA = new NativeFunction(
-  GetFileVersionInfoSizeA_addr,
+  GetFileVersionInfoSizeAAddr,
   'int',
   ['pointer', 'pointer'],
 )
 
-const GetFileVersionInfoA_addr = Module.findExportByName(
+const GetFileVersionInfoAAddr = Module.findExportByName(
   'version.dll',
   'GetFileVersionInfoA',
 )
+
 const GetFileVersionInfoA = new NativeFunction(
-  GetFileVersionInfoA_addr,
+  GetFileVersionInfoAAddr,
   'int',
   ['pointer', 'uint', 'uint', 'pointer'],
 )
 
-const VerQueryValueA_addr = Module.findExportByName(
+const VerQueryValueAAddr = Module.findExportByName(
   'version.dll',
   'VerQueryValueA',
 )
-const VerQueryValueA = new NativeFunction(VerQueryValueA_addr, 'int', [
+const VerQueryValueA = new NativeFunction(VerQueryValueAAddr, 'int', [
   'pointer',
   'pointer',
   'pointer',
@@ -43,6 +44,8 @@ const WINAPI = {
 }
 
 function getPEVersion (peFileName) {
+  console.info('getPEVersion .................................................')
+
   const filename = Memory.allocAnsiString(peFileName)
   const Handle = Memory.alloc(4)
   Handle.writeUInt(0)
@@ -64,15 +67,11 @@ function getPEVersion (peFileName) {
 
   if (size <= 0) return ''
   const verBuf = lplpBuf.readPointer()
+  console.info('getPEVersion ...', verBuf.readCString())
   return verBuf.readCString()
 }
 
-export default getPEVersion
-
-export {
-  getPEVersion
+const getWechatVersion =async () => {
+  const DllName = 'WeChatWin.dll'
+  return await getPEVersion(DllName)
 }
-
-// module.exports = {
-//   getPEVersion,
-// }
