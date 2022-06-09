@@ -31,11 +31,47 @@ import {
 
 import { codeRoot } from './cjs.js'
 
-const initAgentScript = fs.readFileSync(path.join(
-  codeRoot,
-  'src',
-  'init-agent-script.js',
-), 'utf-8')
+import { getPEVersion } from './agents/winapi.js'
+
+const supportedVersions = {
+  v330115:'3.3.0.115',
+  v360000:'3.6.0.18',
+}
+const DllName = 'WeChatWin.dll'
+
+// async function test () {
+//   const currentVersion = await getPEVersion(DllName)
+//   console.info(currentVersion)
+// }
+
+// void test()
+
+const currentVersion = getPEVersion(DllName)
+
+console.info('currentVersion is ：', currentVersion)
+
+let initAgentScript = ''
+
+switch (currentVersion) {
+  case supportedVersions.v330115:
+    initAgentScript = fs.readFileSync(path.join(
+      codeRoot,
+      'src',
+      'agent',
+      'agent-script-3-3-0-115.js',
+    ), 'utf-8')
+    break
+  case supportedVersions.v360000:
+    initAgentScript = fs.readFileSync(path.join(
+      codeRoot,
+      'src',
+      'agent',
+      'agent-script-3-6-0-18.js',
+    ), 'utf-8')
+    break
+  default:
+    throw new Error(`Wechat version not supported. \nWechat version: ${currentVersion}, supported version: ${JSON.stringify(supportedVersions)}`)
+}
 
 @Sidecar('WeChat.exe', initAgentScript)
 class WeChatSidecar extends SidecarBody {
