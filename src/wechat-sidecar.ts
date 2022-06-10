@@ -27,6 +27,8 @@ import {
   ParamType,
   Ret,
   agentTarget,
+  attach,
+  detach,
 }                 from 'sidecar'
 
 import { codeRoot } from './cjs.js'
@@ -37,19 +39,25 @@ const supportedVersions = {
   v360000:'3.6.0.18',
 }
 
-let initAgentScript = fs.readFileSync(path.join(
-  codeRoot,
-  'src',
-  'agents',
-  'agent-script-3-3-0-115.js',
-), 'utf-8')
+// let initAgentScript = fs.readFileSync(path.join(
+//   codeRoot,
+//   'src',
+//   'agents',
+//   'agent-script-3-3-0-115.js',
+// ), 'utf-8')
+
+let initAgentScript = ''
 
 try {
   const wechatVersion = new WeChatVersion()
+  await attach(wechatVersion)
 
   const currentVersion = await wechatVersion.getWechatVersion()
 
-  console.info('currentVersion is ：', currentVersion)
+  console.info('currentVersion is ............................................... ：', currentVersion)
+
+  await detach(wechatVersion)
+
   switch (currentVersion) {
     case supportedVersions.v330115:
       initAgentScript = fs.readFileSync(path.join(

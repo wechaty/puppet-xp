@@ -23,6 +23,7 @@ import {
   Sidecar,
   SidecarBody,
   Call,
+  Hook,
   Ret,
   agentTarget,
 }                 from 'sidecar'
@@ -39,8 +40,15 @@ const winapi = fs.readFileSync(path.join(
  @Sidecar('WeChat.exe', winapi)
 class WeChatVersion extends SidecarBody {
 
-   @Call(agentTarget('getWechatVersion'))
+   //       @Call(agentTarget('getWechatVersion'))
+   //    getWechatVersion ():Promise<string> { return Ret() }
+
+         @Call(agentTarget('getWechatVersionStringFunction'))
    getWechatVersion ():Promise<string> { return Ret() }
+
+   @Hook(agentTarget('agentReadyCallback'))
+         agentReady (
+         ) { return Ret() }
 
  }
 
