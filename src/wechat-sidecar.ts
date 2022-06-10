@@ -43,7 +43,7 @@ const supportedVersions = {
 //   codeRoot,
 //   'src',
 //   'agents',
-//   'agent-script-3-3-0-115.js',
+//   'agent-script-3.3.0.115.js',
 // ), 'utf-8')
 
 let initAgentScript = ''
@@ -64,7 +64,7 @@ try {
         codeRoot,
         'src',
         'agents',
-        'agent-script-3-3-0-115.js',
+        'agent-script-3.3.0.115.js',
       ), 'utf-8')
       break
     case supportedVersions.v360000:
@@ -72,7 +72,7 @@ try {
         codeRoot,
         'src',
         'agents',
-        'agent-script-3-6-0-18.js',
+        'agent-script-3.6.0.18.js',
       ), 'utf-8')
       break
     default:
