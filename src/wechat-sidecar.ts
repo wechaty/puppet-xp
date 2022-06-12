@@ -27,15 +27,58 @@ import {
   ParamType,
   Ret,
   agentTarget,
+  attach,
+  detach,
 }                 from 'sidecar'
 
 import { codeRoot } from './cjs.js'
+import { WeChatVersion } from './agents/winapi-sidecar.js'
 
-const initAgentScript = fs.readFileSync(path.join(
-  codeRoot,
-  'src',
-  'init-agent-script.js',
-), 'utf-8')
+const supportedVersions = {
+  v330115:'3.3.0.115',
+  v360000:'3.6.0.18',
+}
+
+// let initAgentScript = fs.readFileSync(path.join(
+//   codeRoot,
+//   'src',
+//   'agents',
+//   'agent-script-3.3.0.115.js',
+// ), 'utf-8')
+
+let initAgentScript = ''
+
+try {
+  const wechatVersion = new WeChatVersion()
+  await attach(wechatVersion)
+
+  const currentVersion = await wechatVersion.getWechatVersion()
+
+  console.info('currentVersion is ............................................... ：', currentVersion)
+
+  await detach(wechatVersion)
+
+  switch (currentVersion) {
+    case supportedVersions.v330115:
+      initAgentScript = fs.readFileSync(path.join(
+        codeRoot,
+        'src',
+        'agents',
+        'agent-script-3.3.0.115.js',
+      ), 'utf-8')
+      break
+    case supportedVersions.v360000:
+      initAgentScript = fs.readFileSync(path.join(
+        codeRoot,
+        'src',
+        'agents',
+        'agent-script-3.6.0.18.js',
+      ), 'utf-8')
+      break
+    default:
+      throw new Error(`Wechat version not supported. \nWechat version: ${currentVersion}, supported version: ${JSON.stringify(supportedVersions)}`)
+  }
+} catch (e) {}
 
 @Sidecar('WeChat.exe', initAgentScript)
 class WeChatSidecar extends SidecarBody {
