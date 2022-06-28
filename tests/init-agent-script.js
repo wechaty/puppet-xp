@@ -1928,6 +1928,7 @@ const SendMiniProgramNativeFunction = ((bg_path_str,send_wxid_str,recv_wxid_str,
   console.log("------------------------------------------------------");
   var asmCode=Memory.alloc(Process.pageSize);
 
+
   var ECX_buf=Memory.alloc(0x300);
   var Buf_EAX=Memory.alloc(0x300);
   var buf_1=Memory.alloc(0x300);
@@ -2017,3 +2018,6 @@ const SendMiniProgramNativeFunction = ((bg_path_str,send_wxid_str,recv_wxid_str,
 
 
 })
+
+
+
