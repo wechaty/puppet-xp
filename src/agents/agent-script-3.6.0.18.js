@@ -23,7 +23,7 @@ const offset = {
   node_offset: 0x222f3bc,//0x1db9728 -- 3.3.0.155
   handle_offset: 0x4c,
   send_txt_call_offset: 0x4BE7B0,//0x3e3b80
-  hook_point: 0x4E9464,//3.3.0.115 = 0x40d3b1
+  hook_point: 0x4E94F2,//0x4E9464,//3.3.0.115 = 0x40d3b1
   chatroom_node_offset: 0xb08,
   nickname_offset: 0x222EBB4,
   wxid_offset: 0x222F020,
