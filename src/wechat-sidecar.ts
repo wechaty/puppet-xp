@@ -124,7 +124,7 @@ class WeChatSidecar extends SidecarBody {
     text: string,
   ): Promise<string> { return Ret(contactId, text) }
 
-  @Call(agentTarget('sendAttatchMsgNativeFunction'))
+  @Call(agentTarget('sendPicMsgNativeFunction'))
   sendAttatchMsg (
     contactId: string,
     path: string,

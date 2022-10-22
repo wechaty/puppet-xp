@@ -979,7 +979,7 @@ const getQrcodeLoginData = () => {
 /**
  * @Hook: recvMsg -> recvMsgNativeCallback
  */
-/*
+
 const recvMsgNativeCallback = (() => {
 
   
@@ -990,7 +990,7 @@ const recvMsgNativeCallback = (() => {
     moduleBaseAddress.add(offset.hook_point),
     {
       onEnter() {
-        const addr = this.context.ebp.sub(0xc30)//0xc30-0x08
+        const addr = this.context.eax//0xc30-0x08
         const msgType = addr.add(0x38).readU32()
         const isMyMsg = addr.add(0x3C).readU32()//add isMyMsg
 
@@ -1047,7 +1047,7 @@ const recvMsgNativeCallback = (() => {
 
           }
 
-          const xmlNullPtr = addr.add(0x1d8).readU32()
+          const xmlNullPtr = addr.add(0x1ec).readU32()
           let myXmlContentPtr = null
           if (xmlNullPtr == 0) {
 
@@ -1055,9 +1055,9 @@ const recvMsgNativeCallback = (() => {
             myXmlContentPtr.writeUtf16String("null")
 
           } else {
-            const xmlContentPtr = addr.add(0x1d8).readPointer()
+            const xmlContentPtr = addr.add(0x1ec).readPointer()
 
-            const xmlContentLen = addr.add(0x1d8 + 0x04).readU32() * 2 + 2
+            const xmlContentLen = addr.add(0x1ec + 0x04).readU32() * 2 + 2
             myXmlContentPtr = Memory.alloc(xmlContentLen)
             Memory.copy(myXmlContentPtr, xmlContentPtr, xmlContentLen)
           }
@@ -1067,7 +1067,7 @@ const recvMsgNativeCallback = (() => {
       }
     })
   return nativeCallback
-})()*/
+})()
 
 
 let msgStruct = null
