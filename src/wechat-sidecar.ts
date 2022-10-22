@@ -30,14 +30,13 @@ import {
 }                 from 'sidecar'
 
 import { codeRoot } from './cjs.js'
-
 const initAgentScript = fs.readFileSync(path.join(
   codeRoot,
   'src',
   'init-agent-script.js',
 ), 'utf-8')
-
-@Sidecar('WeChat.exe', initAgentScript)
+const namespace:string = 'puppetXp'
+@Sidecar('WeChat.exe', initAgentScript,namespace)
 class WeChatSidecar extends SidecarBody {
 
   @Call(agentTarget('getTestInfoFunction'))
