@@ -26,74 +26,58 @@ import {
   Hook,
   ParamType,
   Ret,
+
   agentTarget,
-  attach,
-  detach,
 }                 from 'sidecar'
 
 import { codeRoot } from './cjs.js'
-import { WeChatVersion } from './agents/winapi-sidecar.js'
 
-const supportedVersions = {
-  v330115:'3.3.0.115',
-  v360000:'3.6.0.18',
-}
-
-// let initAgentScript = fs.readFileSync(path.join(
-//   codeRoot,
-//   'src',
-//   'agents',
-//   'agent-script-3.3.0.115.js',
-// ), 'utf-8')
-
-let initAgentScript = ''
-
-try {
-  const wechatVersion = new WeChatVersion()
-  await attach(wechatVersion)
-
-  const currentVersion = await wechatVersion.getWechatVersion()
-
-  console.info('currentVersion is ............................................... ：', currentVersion)
-
-  await detach(wechatVersion)
-
-  switch (currentVersion) {
-    case supportedVersions.v330115:
-      initAgentScript = fs.readFileSync(path.join(
-        codeRoot,
-        'src',
-        'agents',
-        'agent-script-3.3.0.115.js',
-      ), 'utf-8')
-      break
-    case supportedVersions.v360000:
-      initAgentScript = fs.readFileSync(path.join(
-        codeRoot,
-        'src',
-        'agents',
-        'agent-script-3.6.0.18.js',
-      ), 'utf-8')
-      break
-    default:
-      throw new Error(`Wechat version not supported. \nWechat version: ${currentVersion}, supported version: ${JSON.stringify(supportedVersions)}`)
-  }
-} catch (e) {}
+const initAgentScript = fs.readFileSync(path.join(
+  codeRoot,
+  'src',
+  'init-agent-script.js',
+), 'utf-8')
 
 @Sidecar('WeChat.exe', initAgentScript)
 class WeChatSidecar extends SidecarBody {
 
+  /*@Call(agentTarget('turnOnLog'))
+  trunOnLog (
+    ):Promise<string> { return Ret() }
+*/
+
+@Call(agentTarget('initGlobal'))
+initGlobal (
+    contactId:string,
+    attatchFile: string,
+    //content:string
+    ):Promise<string> { return Ret(contactId,attatchFile) }
+@Call(agentTarget('getOldTest'))
+getOldTest (
+    wxid: string,
+    //content:string
+    ):Promise<string> { return Ret(wxid) }
+
+@Call(agentTarget('getWxTest'))
+getWxTest (
+    name: string,
+    content:string
+    ):Promise<string> { return Ret(name,content) }
+
   @Call(agentTarget('getTestInfoFunction'))
-  getTestInfo ():Promise<string> { return Ret() }
+  getTestInfo (
+    addr: number
+    ):Promise<string> { return Ret(addr) }
 
   @Call(agentTarget('getChatroomMemberNickInfoFunction'))
+  //@Call(agentTarget('getChatroomMemberNickInfoV1Function'))
   getChatroomMemberNickInfo (
     memberId: string,
     roomId: string,
   ): Promise<string> { return Ret(memberId, roomId) }
 
-  @Call(agentTarget('isLoggedInFunction'))
-  isLoggedIn ():Promise<boolean> { return Ret() }
+  /*@Call(agentTarget('isLoggedInFunction'))
+  isLoggedIn ():Promise<boolean> { return Ret() }*/
 
   @Call(agentTarget('getMyselfInfoFunction'))
   getMyselfInfo ():Promise<string> { return Ret() }
@@ -110,10 +94,10 @@ class WeChatSidecar extends SidecarBody {
   @Call(agentTarget('checkSupportedFunction'))
   checkSupported ():Promise<Boolean> { return Ret() }
 
-  @Call(agentTarget('callLoginQrcodeFunction'))
+  /*@Call(agentTarget('callLoginQrcodeFunction'))
   callLoginQrcode (
     forceRefresh: boolean,
-  ):Promise<null> { return Ret(forceRefresh) }
+  ):Promise<null> { return Ret(forceRefresh) }*/
 
   @Call(agentTarget('getContactNativeFunction'))
   getContact ():Promise<string> { return Ret() }
@@ -124,11 +108,14 @@ class WeChatSidecar extends SidecarBody {
     text: string,
   ): Promise<string> { return Ret(contactId, text) }
 
-  @Call(agentTarget('sendPicMsgNativeFunction'))
+  @Call(agentTarget('sendAttatchMsgNativeFunction'))
   sendAttatchMsg (
     contactId: string,
+    senderId:string,
     path: string,
-  ): Promise<string> { return Ret(contactId, path) }
+    filename:string,
+    size:number,
+  ): Promise<string> { return Ret(contactId, senderId,path,filename,size) }
 
   @Call(agentTarget('sendPicMsgNativeFunction'))
   sendPicMsg (
@@ -146,11 +133,17 @@ class WeChatSidecar extends SidecarBody {
   @Call(agentTarget('SendMiniProgramNativeFunction'))
   SendMiniProgram (
     BgPathStr:string,
-    contactId:string,
-    xmlstr:string,
-  ): Promise<string> { return Ret(BgPathStr, contactId, xmlstr) }
+    SendWxidStr:string,
+    RecvWxidStr:string,
+    mlstr:string,
 
-  @Hook(agentTarget('recvMsgNativeCallback'))
+  ): Promise<string> { return Ret(BgPathStr, SendWxidStr, RecvWxidStr, mlstr) }
+
+
+  @Hook(agentTarget('writeLogNativeCallback'))
+  writeLogMsg (
+  ) { return Ret() }
+  /*@Hook(agentTarget('recvMsgNativeCallback'))
   recvMsg (
     @ParamType('int32', 'U32') msgType: number,
     @ParamType('pointer', 'Utf16String') contactId: string,
@@ -183,7 +176,7 @@ class WeChatSidecar extends SidecarBody {
 
   @Hook(agentTarget('agentReadyCallback'))
   agentReady (
-  ) { return Ret() }
+  ) { return Ret() }*/
 
 }
 

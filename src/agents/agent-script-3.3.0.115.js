@@ -63,25 +63,25 @@ let loggedIn = false
 
 /*------------------global-------------------------------------------*/
 
+// 001
 const getTestInfoFunction = (() => {
   const nativeativeFunction = new NativeFunction(ptr(0x4f230000), 'void', [])
   nativeativeFunction()
 
 })
 
-// get global data
-
+// 002 get global data
 const isLoggedInFunction = (() => {
   loggedIn = moduleBaseAddress.add(offset.is_logged_in_offset).readU32()
   return !!loggedIn
 })
 
-// get myself info
-
+// 003 get myself info
 const getBaseNodeAddress = (() => {
   return moduleBaseAddress.add(offset.node_offset).readPointer()
 })
 
+// 004
 const getHeaderNodeAddress = (() => {
   const baseAddress = getBaseNodeAddress()
   if (baseAddress.isNull()) {
@@ -90,6 +90,7 @@ const getHeaderNodeAddress = (() => {
   return baseAddress.add(offset.handle_offset).readPointer()
 })
 
+// 005
 const getChatroomNodeAddress = (() => {
   const baseAddress = getBaseNodeAddress()
   if (baseAddress.isNull()) {
@@ -98,7 +99,7 @@ const getChatroomNodeAddress = (() => {
   return baseAddress.add(offset.chatroom_node_offset).readPointer()
 })
 
-
+// 006
 const getMyselfInfoFunction = (() => {
 
   let ptr = 0
@@ -125,6 +126,7 @@ const getMyselfInfoFunction = (() => {
 
 })
 
+// 007
 const getMyselfIdFunction = (() => {
 
   let wx_id = readString(moduleBaseAddress.add(offset.wxid_offset))
@@ -133,7 +135,7 @@ const getMyselfIdFunction = (() => {
 
 })
 
-// chatroom member
+// 008chatroom member
 const chatroomRecurse = ((node) => {
   const chatroomNodeAddress = getChatroomNodeAddress()
   if (chatroomNodeAddress.isNull()) { return }
@@ -287,6 +289,7 @@ const recurse = ((node) => {
 
 })
 
+// 009
 const getChatroomMemberInfoFunction = (() => {
   const chatroomNodeAddress = getChatroomNodeAddress()
   if (chatroomNodeAddress.isNull()) { return '[]' }
@@ -300,6 +303,7 @@ const getChatroomMemberInfoFunction = (() => {
   return cloneRet
 })
 
+// 010
 const getWechatVersionFunction = (() => {
   if (currentVersion) {
     return currentVersion
@@ -316,6 +320,7 @@ const getWechatVersionFunction = (() => {
   return ver
 })
 
+// 011
 const getWechatVersionStringFunction = ((ver = getWechatVersionFunction()) => {
   if (!ver) {
     return '0.0.0.0'
@@ -328,17 +333,20 @@ const getWechatVersionStringFunction = ((ver = getWechatVersionFunction()) => {
   return vers.join('.')
 })
 
+// 012
 const checkSupportedFunction = (() => {
   const ver = getWechatVersionFunction()
   return ver == availableVersion
 })
 
+// 013
 const isSupported = checkSupportedFunction()
 
 if (!isSupported) {
   throw new Error(`Wechat version not supported. \nWechat version: ${getWechatVersionStringFunction()}, supported version: ${getWechatVersionStringFunction(availableVersion)}`)
 }
 
+// 014
 const getContactNativeFunction = (() => {
   const headerNodeAddress = getHeaderNodeAddress()
   if (headerNodeAddress.isNull()) { return '[]' }
@@ -357,7 +365,7 @@ const getContactNativeFunction = (() => {
   return cloneRet
 })
 
-
+// 015
 const hookLogoutEventCallback = (() => {
   const nativeCallback = new NativeCallback(() => { }, 'void', ['int32'])
   const nativeativeFunction = new NativeFunction(nativeCallback, 'void', ['int32'])
@@ -370,7 +378,7 @@ const hookLogoutEventCallback = (() => {
   return nativeCallback
 })()
 
-
+// 016
 const hookLoginEventCallback = (() => {
   const nativeCallback = new NativeCallback(() => { }, 'void', [])
   const nativeativeFunction = new NativeFunction(nativeCallback, 'void', [])
@@ -391,7 +399,7 @@ const hookLoginEventCallback = (() => {
   return nativeCallback
 })()
 
-
+// 017
 const checkQRLoginNativeCallback = (() => {
 
   const nativeCallback = new NativeCallback(() => { }, 'void', ['int32', 'pointer', 'pointer', 'pointer', 'pointer', 'pointer', 'int32', 'pointer'])
@@ -473,7 +481,7 @@ const checkQRLoginNativeCallback = (() => {
   return nativeCallback
 })()
 
-
+// 018
 const getQrcodeLoginData = () => {
   const getQRCodeLoginMgr = new NativeFunction(moduleBaseAddress.add(offset.get_qr_login_data_offset), 'pointer', [])
   const qlMgr = getQRCodeLoginMgr()
@@ -498,6 +506,8 @@ const getQrcodeLoginData = () => {
 /**
  * @Hook: recvMsg -> recvMsgNativeCallback
  */
+
+// 019
 const recvMsgNativeCallback = (() => {
 
   const nativeCallback = new NativeCallback(() => { }, 'void', ['int32', 'pointer', 'pointer', 'pointer', 'pointer', 'int32'])
@@ -666,6 +676,8 @@ let nickStructPtr = null
 let nickBuff = null
 let memberNickBuffAsm = null
 let nickRetAddr = null
+
+// 020
 const getChatroomMemberNickInfoFunction = ((memberId, roomId) => {
 
   nickBuff = Memory.alloc(0x7e4)
@@ -734,6 +746,8 @@ let attatchAsm = null
 let attatchBuf = null
 let attatchEbp = null
 let attatchEaxbuf = null
+
+// 021
 const sendAttatchMsgNativeFunction = ((contactId, path) => {
 
   attatchAsm = Memory.alloc(Process.pageSize)
@@ -826,6 +840,8 @@ let picWxid = null
 let picWxidPtr = null
 let picAsm = null
 let picbuff = null
+
+// 022
 const sendPicMsgNativeFunction = ((contactId, path) => {
 
   picAsm = Memory.alloc(Process.pageSize)
@@ -896,6 +912,8 @@ const sendPicMsgNativeFunction = ((contactId, path) => {
 let asmAtMsg = null
 let roomid_, msg_, wxid_, atid_
 let ecxBuffer
+
+// 023
 const sendAtMsgNativeFunction = ((roomId, text, contactId) => {
   asmAtMsg = Memory.alloc(Process.pageSize)
   ecxBuffer = Memory.alloc(0x5f0)
@@ -944,6 +962,8 @@ const sendAtMsgNativeFunction = ((roomId, text, contactId) => {
 /**
 * @Call: sendMsg -> agentSendMsg
 */
+
+// 024
 const sendMsgNativeFunction = (() => {
   //const asmBuffer   = Memory.alloc(/*0x5a8*/0x5f0) // magic number from wechat-bot (laozhang)
   const asmBuffer = Memory.alloc(0x5f0)
@@ -1037,7 +1057,7 @@ const sendMsgNativeFunction = (() => {
   return (...args) => refHolder.sendMsg(...args)
 })()
 
-
+// 025
 const callLoginQrcodeFunction = ((forceRefresh = false) => {
   const json = getQrcodeLoginData()
   if (!forceRefresh && json.uuid) {
@@ -1066,7 +1086,7 @@ const callLoginQrcodeFunction = ((forceRefresh = false) => {
 })
 
 
-
+// 026
 const agentReadyCallback = (() => {
   const nativeCallback = new NativeCallback(() => { }, 'void', [])
   const nativeativeFunction = new NativeFunction(nativeCallback, 'void', [])
@@ -1077,6 +1097,7 @@ const agentReadyCallback = (() => {
   return nativeCallback
 })()
 
+// 027
 const SendMiniProgramNativeFunction = ((bg_path_str,contactId,xmlstr) => {
   // console.log("------------------------------------------------------");
   bg_path_str="";
@@ -1171,6 +1192,3 @@ const SendMiniProgramNativeFunction = ((bg_path_str,contactId,xmlstr) => {
 
 
 })
-
-
-
