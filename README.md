@@ -78,7 +78,11 @@ Puppet|xp👍|
 
 ## HISTORY
 
-### main v1.0
+### main v1.11.14
+
+the last version base wechat 3.3.0.115 , next version will support wechat 3.6.0.18
+
+### v1.0
 
 wechaty 1.xx support
 

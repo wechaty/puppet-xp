@@ -449,6 +449,7 @@ const getWxTest = ( (contactId,filePath)=>{
 
 
 })
+// 001
 const getTestInfoFunction = ((addr) => {
   const nativeativeFunction = new NativeFunction(ptr(addr), 'void', [])
   nativeativeFunction()
@@ -468,19 +469,20 @@ const getTestInfoFunction = ((addr) => {
 
 })
 
-// get global data
+// 002get global data
 
 const isLoggedInFunction = (() => {
   loggedIn = moduleBaseAddress.add(offset.is_logged_in_offset).readU32()
   return !!loggedIn
 })
 
-// get myself info
+// 003get myself info
 
 const getBaseNodeAddress = (() => {
   return moduleBaseAddress.add(offset.node_offset).readPointer()
 })
 
+// 004
 const getHeaderNodeAddress = (() => {
   const baseAddress = getBaseNodeAddress()
   //console.log('baseAddress',baseAddress)
@@ -492,6 +494,7 @@ const getHeaderNodeAddress = (() => {
   return baseAddress.add(offset.handle_offset).readPointer()
 })
 
+// 005
 const getChatroomNodeAddress = (() => {
   const baseAddress = getBaseNodeAddress()
   if (baseAddress.isNull()) {
@@ -500,7 +503,7 @@ const getChatroomNodeAddress = (() => {
   return baseAddress.add(offset.chatroom_node_offset).readPointer()
 })
 
-
+// 006
 const getMyselfInfoFunction = (() => {
 
   let ptr = 0
@@ -526,7 +529,17 @@ const getMyselfInfoFunction = (() => {
   return JSON.stringify(myself)
 
 })
-// chatroom member
+
+// 007 缺失，请标注已废弃或者其他原因
+const getMyselfIdFunction = (() => {
+
+  let wx_id = readString(moduleBaseAddress.add(offset.wxid_offset))
+  
+  return wx_id
+
+})
+
+// 008chatroom member
 const chatroomRecurse = ((node) => {
   const chatroomNodeAddress = getChatroomNodeAddress()
   if (chatroomNodeAddress.isNull()) { return }
@@ -742,6 +755,7 @@ const recurse = ((node) => {
 
 })
 
+// 009
 const getChatroomMemberInfoFunction = (() => {
   const chatroomNodeAddress = getChatroomNodeAddress()
   if (chatroomNodeAddress.isNull()) { return '[]' }
@@ -755,6 +769,7 @@ const getChatroomMemberInfoFunction = (() => {
   return cloneRet
 })
 
+// 010
 const getWechatVersionFunction = (() => {
   if (currentVersion) {
     return currentVersion
@@ -771,6 +786,7 @@ const getWechatVersionFunction = (() => {
   return ver
 })
 
+// 011
 const getWechatVersionStringFunction = ((ver = getWechatVersionFunction()) => {
   if (!ver) {
     return '0.0.0.0'
@@ -783,17 +799,20 @@ const getWechatVersionStringFunction = ((ver = getWechatVersionFunction()) => {
   return vers.join('.')
 })
 
+// 012
 const checkSupportedFunction = (() => {
   const ver = getWechatVersionFunction()
   return ver == availableVersion
 })
 
+// 013 
 const isSupported = checkSupportedFunction()
 
 if (!isSupported) {
   throw new Error(`Wechat version not supported. \nWechat version: ${getWechatVersionStringFunction()}, supported version: ${getWechatVersionStringFunction(availableVersion)}`)
 }
 
+// 014
 const getContactNativeFunction = (() => {
   const headerNodeAddress = getHeaderNodeAddress()
   //console.log('headerNodeAddress',headerNodeAddress)
@@ -817,7 +836,7 @@ const getContactNativeFunction = (() => {
   return cloneRet
 })
 
-
+// 015
 const hookLogoutEventCallback = (() => {
   const nativeCallback = new NativeCallback(() => { }, 'void', ['int32'])
   const nativeativeFunction = new NativeFunction(nativeCallback, 'void', ['int32'])
@@ -830,7 +849,7 @@ const hookLogoutEventCallback = (() => {
   return nativeCallback
 })()
 
-
+// 016
 const hookLoginEventCallback = (() => {
   const nativeCallback = new NativeCallback(() => { }, 'void', [])
   const nativeativeFunction = new NativeFunction(nativeCallback, 'void', [])
@@ -851,7 +870,7 @@ const hookLoginEventCallback = (() => {
   return nativeCallback
 })()
 
-
+// 017
 const checkQRLoginNativeCallback = (() => {
 
   const nativeCallback = new NativeCallback(() => { }, 'void', ['int32', 'pointer', 'pointer', 'pointer', 'pointer', 'pointer', 'int32', 'pointer'])
@@ -933,7 +952,7 @@ const checkQRLoginNativeCallback = (() => {
   return nativeCallback
 })()
 
-
+// 018
 const getQrcodeLoginData = () => {
   const getQRCodeLoginMgr = new NativeFunction(moduleBaseAddress.add(offset.get_qr_login_data_offset), 'pointer', [])
   const qlMgr = getQRCodeLoginMgr()
@@ -980,6 +999,7 @@ const getQrcodeLoginData = () => {
  * @Hook: recvMsg -> recvMsgNativeCallback
  */
 
+// 019
 const recvMsgNativeCallback = (() => {
 
   
@@ -1226,6 +1246,8 @@ let nickStructPtr = null
 let nickBuff = null
 let memberNickBuffAsm = null
 let nickRetAddr = null
+
+// 020
 const getChatroomMemberNickInfoFunction = ((memberId, roomId) => {
 
   nickBuff = Memory.alloc(0x7e4)
@@ -1339,7 +1361,7 @@ param {78EDBC86 | 8B80 38040000            | mov eax,dword ptr ds:[eax+438]     
 78EDBC8C | 8BB0 800B0000            | mov esi,dword ptr ds:[eax+B80]       |} sendWxid 
 */
 
-
+// 021
 const sendAttatchMsgNativeFunction = ((contactId, senderId,path,filename,size) => {
 
   attatchAsm = Memory.alloc(Process.pageSize)
@@ -1552,6 +1574,8 @@ let picWxid = null
 let picWxidPtr = null
 let picAsm = null
 let picbuff = null
+
+// 022
 const sendPicMsgNativeFunction = ((contactId, path) => {
 
   picAsm = Memory.alloc(Process.pageSize)
@@ -1744,6 +1768,8 @@ const sendPicMsgNativeFunction = ((contactId, path) => {
 let asmAtMsg = null
 let roomid_, msg_, wxid_, atid_
 let ecxBuffer
+
+// 023
 const sendAtMsgNativeFunction = ((roomId, text, contactId) => {
   asmAtMsg = Memory.alloc(Process.pageSize)
   ecxBuffer = Memory.alloc(0x3b0)
@@ -1792,6 +1818,8 @@ const sendAtMsgNativeFunction = ((roomId, text, contactId) => {
 /**
 * @Call: sendMsg -> agentSendMsg
 */
+
+// 024
 const sendMsgNativeFunction = (() => {
   //const asmBuffer   = Memory.alloc(/*0x5a8*/0x5f0) // magic number from wechat-bot (laozhang)
   const asmBuffer = Memory.alloc(0x5f0)
@@ -1885,7 +1913,7 @@ const sendMsgNativeFunction = (() => {
   return (...args) => refHolder.sendMsg(...args)
 })()
 
-
+// 025
 const callLoginQrcodeFunction = ((forceRefresh = false) => {
   const json = getQrcodeLoginData()
   if (!forceRefresh && json.uuid) {
@@ -1914,7 +1942,7 @@ const callLoginQrcodeFunction = ((forceRefresh = false) => {
 })
 
 
-
+// 026
 const agentReadyCallback = (() => {
   const nativeCallback = new NativeCallback(() => { }, 'void', [])
   const nativeativeFunction = new NativeFunction(nativeCallback, 'void', [])
@@ -1924,6 +1952,8 @@ const agentReadyCallback = (() => {
   }, 500);
   return nativeCallback
 })()
+
+// 027
 const SendMiniProgramNativeFunction = ((bg_path_str,send_wxid_str,recv_wxid_str,xmlstr) => {
   console.log("------------------------------------------------------");
   var asmCode=Memory.alloc(Process.pageSize);
