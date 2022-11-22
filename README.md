@@ -78,7 +78,7 @@ Puppet|xp👍|
 
 ## HISTORY
 
-### main v1.12.0
+### main v1.12.0 (November 22, 2022)
 
 This version starts to support WeChat v3.6.0.118
 
