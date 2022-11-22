@@ -31,11 +31,7 @@ wechaty-puppet-xp is a local puppet for Wechaty:
 
 ## QUICK START
 
-> 1.12.0+ is the latest version, only support WeChat v3.6.0.118
-
-> 1.11.14 is the last version base WeChat 3.3.0.115
-
-> Note to use the npm package that matches the WeChat version
+> 1.12.0+ is the latest version, only support WeChat v3.6.0.118, 1.11.14 is the last version base WeChat v3.3.0.115. Note to use the npm package that matches the WeChat version.
 
 ```sh
 git clone https://github.com/wechaty/wechaty-puppet-xp.git
