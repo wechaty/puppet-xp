@@ -3,8 +3,5 @@
   "compilerOptions": {
     "module": "CommonJS",
     "outDir": "dist/cjs",
-    "paths": { // 用于设置模块名到基于baseUrl的路径映射
-    "@/*": ["src/*"]
-    }
   },
 }
