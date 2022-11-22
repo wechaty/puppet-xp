@@ -27,12 +27,12 @@ import {
   ParamType,
   Ret,
   agentTarget,
-  attach,
-  detach,
+  // attach,
+  // detach,
 }                 from 'sidecar'
 
 import { codeRoot } from './cjs.js'
-import { WeChatVersion } from './agents/winapi-sidecar.js'
+// import { WeChatVersion } from './agents/winapi-sidecar.js'
 
 const supportedVersions = {
   v330115:'3.3.0.115',
@@ -49,14 +49,16 @@ const supportedVersions = {
 let initAgentScript = ''
 
 try {
-  const wechatVersion = new WeChatVersion()
-  await attach(wechatVersion)
+  // const wechatVersion = new WeChatVersion()
+  // await attach(wechatVersion)
 
-  const currentVersion = await wechatVersion.getWechatVersion()
+  // const currentVersion = await wechatVersion.getWechatVersion()
 
-  console.info('currentVersion is ............................................... ：', currentVersion)
+  // console.info('currentVersion is ............................................... ：', currentVersion)
 
-  await detach(wechatVersion)
+  // await detach(wechatVersion)
+
+  const currentVersion = '3.6.0.18'
 
   switch (currentVersion) {
     case supportedVersions.v330115:
@@ -68,11 +70,16 @@ try {
       ), 'utf-8')
       break
     case supportedVersions.v360000:
+      // initAgentScript = fs.readFileSync(path.join(
+      //   codeRoot,
+      //   'src',
+      //   'agents',
+      //   'agent-script-3.6.0.18.js',
+      // ), 'utf-8')
       initAgentScript = fs.readFileSync(path.join(
         codeRoot,
         'src',
-        'agents',
-        'agent-script-3.6.0.18.js',
+        'init-agent-script.js',
       ), 'utf-8')
       break
     default:
