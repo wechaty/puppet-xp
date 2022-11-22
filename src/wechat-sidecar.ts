@@ -49,14 +49,16 @@ const supportedVersions = {
 let initAgentScript = ''
 
 try {
-  const wechatVersion = new WeChatVersion()
-  await attach(wechatVersion)
+  // const wechatVersion = new WeChatVersion()
+  // await attach(wechatVersion)
 
-  const currentVersion = await wechatVersion.getWechatVersion()
+  // const currentVersion = await wechatVersion.getWechatVersion()
 
-  console.info('currentVersion is ............................................... ：', currentVersion)
+  // console.info('currentVersion is ............................................... ：', currentVersion)
 
-  await detach(wechatVersion)
+  // await detach(wechatVersion)
+
+  const currentVersion = '3.6.0.18'
 
   switch (currentVersion) {
     case supportedVersions.v330115:
