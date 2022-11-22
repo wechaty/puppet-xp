@@ -37,19 +37,19 @@ const winapi = fs.readFileSync(path.join(
   'winapi.js',
 ), 'utf-8')
 
- @Sidecar('WeChat.exe', winapi)
+@Sidecar('WeChat.exe', winapi)
 class WeChatVersion extends SidecarBody {
 
-   //       @Call(agentTarget('getWechatVersion'))
-   //    getWechatVersion ():Promise<string> { return Ret() }
+  //       @Call(agentTarget('getWechatVersion'))
+  //    getWechatVersion ():Promise<string> { return Ret() }
 
-         @Call(agentTarget('getWechatVersionStringFunction'))
-   getWechatVersion ():Promise<string> { return Ret() }
+  @Call(agentTarget('getWechatVersionStringFunction'))
+  getWechatVersion ():Promise<string> { return Ret() }
 
-   @Hook(agentTarget('agentReadyCallback'))
-         agentReady (
-         ) { return Ret() }
+  @Hook(agentTarget('agentReadyCallback'))
+  agentReady (
+  ) { return Ret() }
 
- }
+}
 
 export { WeChatVersion }
