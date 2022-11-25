@@ -82,7 +82,8 @@ Puppet|xp👍|
 
 ### main v1.12.0 (November 22, 2022)
 
-This version start to support WeChat v3.6.0.18,need to update WeChat on your pc to 3.6.0.18
+1. This version start to support WeChat v3.6.0.18,need to update WeChat on your pc to 3.6.0.18
+2. [WeChatSetup-v3.6.0.18.exe](https://github.com/tom-snow/wechat-windows-versions/releases/tag/v3.6.0.18)
 
 ### v1.11.14
 
