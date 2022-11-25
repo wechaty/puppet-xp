@@ -824,7 +824,7 @@ const getContactNativeFunction = (() => {
 
   //console.log(ret)
 
-  console.log(ret.length)
+  console.log('getContactNativeFunction:',ret.length)
   /*for (let item of ret){
     console.log(JSON.stringify(item))
   }*/

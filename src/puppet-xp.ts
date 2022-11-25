@@ -503,8 +503,13 @@ class PuppetXp extends PUPPET.Puppet {
    }
 
    private async loadRoomList () {
-     const ChatroomMemberInfo = await this.sidecar.getChatroomMemberInfo()
-     const roomList = JSON.parse(ChatroomMemberInfo)
+     let roomList:any[] = []
+     try {
+       const ChatroomMemberInfo = await this.sidecar.getChatroomMemberInfo()
+       roomList = JSON.parse(ChatroomMemberInfo)
+     } catch (err) {
+       console.error('loadRoomList fail:', err)
+     }
 
      for (const roomKey in roomList) {
        const roomInfo = roomList[roomKey]
