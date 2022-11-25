@@ -24,7 +24,7 @@ const offset = {
   handle_offset: 0x4c,
   send_txt_call_offset: 0x4BE7B0,//0x3e3b80
   hook_point: 0x4E94F2,//0x4E9464,//3.3.0.115 = 0x40d3b1
-  chatroom_node_offset: 0xb08,
+  chatroom_node_offset: 0xad8,
   nickname_offset: 0x222EBB4,
   wxid_offset: 0x222F020,
   head_img_url_offset: 0x222EE94,
@@ -292,26 +292,22 @@ const getOldTest = ( (wxid) => {//personal detail
 
 })
 
-const writeLogNativeCallback = (() => {
-   
-  const nativeCallback = new NativeCallback(() => { }, 'void', [])
-  const nativeCallFunction = new NativeFunction(nativeCallback, 'void', [])
+// const writeLogNativeCallback = (() => {
+//   const nativeCallback = new NativeCallback(() => { }, 'void', [])
+//   const nativeCallFunction = new NativeFunction(nativeCallback, 'void', [])
 
-  Interceptor.attach(
-    moduleBaseAddress.add(0x7008A4),
-    {
-      onEnter() {
-        const addr = this.context.eax//.sub(0x114)//0xc30-0x08
-        if(addr >0){
-
-          const log = ptr(addr).readAnsiString()
-          //console.log(log)
-        }
-        //setImmediate(() => nativeativeFunction())
-      }
-    })
-  return nativeCallback
-})()
+//   Interceptor.attach(
+//     moduleBaseAddress.add(0x7008A4),
+//     {
+//       onEnter() {
+//         const addr = this.context.eax//.sub(0x114)//0xc30-0x08
+//         if(addr >0){
+//           const log = ptr(addr).readAnsiString()
+//         }
+//       }
+//     })
+//   return nativeCallback
+// })()
 
 /**
  * test call
@@ -496,7 +492,7 @@ const getHeaderNodeAddress = (() => {
 
 // 005
 const getChatroomNodeAddress = (() => {
-  const baseAddress = getBaseNodeAddress()
+  const baseAddress= moduleBaseAddress.add(0x222f3fc).readPointer()
   if (baseAddress.isNull()) {
     return baseAddress
   }
