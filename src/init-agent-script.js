@@ -1309,7 +1309,7 @@ const getChatroomMemberNickInfoFunction = ((memberId, roomId) => {
   nativeativeFunction()
 
   const nickname = readWideString(nickBuff);
-  console.log('--------nickname',nickname)
+  // console.log('--------nickname',nickname)
   return readWideString(nickBuff);
   //return readWideString(nickRetAddr.readPointer())
 

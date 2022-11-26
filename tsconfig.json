@@ -15,6 +15,7 @@
     "examples/**/*.ts",
     "scripts/**/*.ts",
     "src/**/*.ts",
+    "src/**/*.d.ts",
     "tests/**/*.spec.ts",
   ],
 }

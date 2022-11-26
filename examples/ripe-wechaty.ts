@@ -53,18 +53,30 @@ async function onMessage (msg: Message) {
     const thumbFile = await img.thumbnail()
     log.info('thumbFile', thumbFile.name)
     await thumbFile.toFile(`${process.cwd()}/cache/${thumbFile.name}`, true)
-    await timersPromise.setTimeout(1000)
 
+    // await timersPromise.setTimeout(3000)
     // console.info(img)
     const hdFile = await img.hd()
     log.info('hdFile', hdFile.name)
     await hdFile.toFile(`${process.cwd()}/cache/${hdFile.name}`, true)
-    setTimeout(msg.wechaty.wrapAsync(
-      async function () {
-        const imginfo = await msg.toFileBox()
-        console.info(imginfo)
-      },
-    ), 500)
+    // setTimeout(msg.wechaty.wrapAsync(
+    //   async function () {
+    //     const imginfo = await msg.toFileBox()
+    //     console.info(imginfo)
+    //   },
+    // ), 500)
+  }
+  if (msg.type() === types.Message.Emoticon) {
+    const emoticon = await msg.toFileBox()
+    await emoticon.toFile(`${process.cwd()}/cache/${emoticon.name}`, true)
+    await timersPromise.setTimeout(1000)
+    console.info(emoticon)
+    // setTimeout(msg.wechaty.wrapAsync(
+    //   async function () {
+    //     const imginfo = await msg.toFileBox()
+    //     console.info(imginfo)
+    //   },
+    // ), 500)
   }
   if (msg.text() === 'file') {
     const newpath = 'C:\\Users\\wechaty\\Documents\\GitHub\\wechat-openai-qa-bot\\cache\\data1652178575294.xls'
