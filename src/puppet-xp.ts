@@ -242,6 +242,12 @@ class PuppetXp extends PUPPET.Puppet {
       case 3:
         type = PUPPET.types.Message.Image
         break
+      case 4:
+        type = PUPPET.types.Message.Video
+        break
+      case '5':
+        type = PUPPET.types.Message.Url
+        break
       case 34:
         type = PUPPET.types.Message.Audio
         break
@@ -307,6 +313,9 @@ class PuppetXp extends PUPPET.Puppet {
               case '2001':
                 type = PUPPET.types.Message.RedEnvelope
                 break
+              case '10002':
+                type = PUPPET.types.Message.Recalled
+                break
               default:
             }
           })
@@ -321,6 +330,7 @@ class PuppetXp extends PUPPET.Puppet {
       case 52:
         break
       case 53:
+        type = PUPPET.types.Message.GroupNote
         break
       case 62:
         break
@@ -331,6 +341,10 @@ class PuppetXp extends PUPPET.Puppet {
         //  type = PUPPET.types.Message.Unknown
         break
       case 10002:
+        type = PUPPET.types.Message.Recalled
+        break
+      case 1000000000:
+        type = PUPPET.types.Message.Post
         break
       default:
     }
