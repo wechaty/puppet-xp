@@ -46,8 +46,13 @@ import {
 
 import { WeChatSidecar } from './wechat-sidecar.js'
 import { ImageDecrypt } from './pure-functions/image-decrypt.js'
+import { XmlDecrypt } from './pure-functions/xml-msgpayload.js'
 // import type { Contact } from 'wechaty'
-import timersPromise from 'timers/promises'
+
+// 定义一个延时方法
+async function wait (ms:number) {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
 
 const userInfo = os.userInfo()
 const rootPath = `${userInfo.homedir}\\Documents\\WeChat Files\\`
@@ -697,18 +702,15 @@ class PuppetXp extends PUPPET.Puppet {
     messageId: string,
   ): Promise<string> {
     log.verbose('PuppetXp', 'messageContact(%s)', messageId)
-    const parser = new xml2js.Parser(/* options */)
-    const messageJson = await parser.parseStringPromise(this.messageStore[messageId]?.text || '')
-
-    // log.info(JSON.stringify(messageJson))
-
-    return messageJson.msg['$'].username
+    const message = this.messageStore[messageId]
+    return await XmlDecrypt(message?.text || '', message?.type || PUPPET.types.Message.Unknown)
   }
 
   override async messageImage (
     messageId: string,
     imageType: PUPPET.types.Image,
   ): Promise<FileBoxInterface> {
+
     log.info('PuppetXp', 'messageImage(%s, %s[%s])',
       messageId,
       imageType,
@@ -718,19 +720,21 @@ class PuppetXp extends PUPPET.Puppet {
     const message = this.messageStore[messageId]
     let base64 = ''
     let fileName = ''
+    let imagePath = ''
+    let file:FileBoxInterface
+
     try {
       if (message?.text) {
         const picData = JSON.parse(message.text)
         const filePath = picData[imageType]
         const dataPath = rootPath + filePath    // 要解密的文件路径
+        log.info(dataPath, true)
 
         //  如果请求的是大图等待2s
         if (imageType === PUPPET.types.Image.HD) {
-          await timersPromise.setTimeout(1000)
-          if (fs.existsSync(dataPath)) {
-            log.info(dataPath, true)
-          } else {
-            await timersPromise.setTimeout(1000)
+          await wait(1500)
+          if (!fs.existsSync(dataPath)) {
+            await wait(1500)
           }
         }
 
@@ -742,11 +746,19 @@ class PuppetXp extends PUPPET.Puppet {
         console.info(dataPath, imageInfo.fileName, imageInfo.extension)
         base64 = imageInfo.base64
         fileName = `message-${messageId}-url-${imageType}.${imageInfo.extension}`
+        file = FileBox.fromBase64(
+          base64,
+          fileName,
+        )
+        const paths = dataPath.split('\\')
+        paths[paths.length - 1] = fileName
+        imagePath = paths.join('\\')
+        // console.debug(imagePath)
+        await file.toFile(imagePath)
       }
     } catch (err) {
       console.error(err)
     }
-
     return FileBox.fromBase64(
       base64,
       fileName,
@@ -827,77 +839,20 @@ class PuppetXp extends PUPPET.Puppet {
 
   override async messageUrl (messageId: string): Promise<PUPPET.payloads.UrlLink> {
     log.verbose('PuppetXp', 'messageUrl(%s)', messageId)
-    // const attachment = this.mocker.MockMessage.loadAttachment(messageId)
-    // if (attachment instanceof UrlLink) {
-    //   return attachment.payload
-    // }
-
-    // log.info('PuppetXp', 'message(%s)',this.messageStore[messageId]?.text)
-
-    const parser = new xml2js.Parser(/* options */)
-    const messageJson = await parser.parseStringPromise(this.messageStore[messageId]?.text || '')
-
-    // log.info(JSON.stringify(messageJson))
-    const appmsg = messageJson.msg.appmsg[0]
-
-    const UrlLinkPayload: PUPPET.payloads.UrlLink = {
-      description: appmsg.des[0],
-      thumbnailUrl: appmsg.appattach[0].cdnthumburl,
-      title: appmsg.title[0],
-      url: appmsg.url[0],
-    }
-
-    return UrlLinkPayload
-
+    const message = this.messageStore[messageId]
+    return await XmlDecrypt(message?.text || '', message?.type || PUPPET.types.Message.Unknown)
   }
 
   override async messageMiniProgram (messageId: string): Promise<PUPPET.payloads.MiniProgram> {
     log.verbose('PuppetXp', 'messageMiniProgram(%s)', messageId)
-    // const attachment = this.mocker.MockMessage.loadAttachment(messageId)
-    // if (attachment instanceof MiniProgram) {
-    //   return attachment.payload
-    // }
-    // log.verbose('PuppetXp', 'message(%s)', this.messageStore[messageId]?.text)
-
-    const parser = new xml2js.Parser(/* options */)
-    const messageJson = await parser.parseStringPromise(this.messageStore[messageId]?.text || '')
-
-    // log.info(JSON.stringify(messageJson))
-
-    const appmsg = messageJson.msg.appmsg[0]
-
-    const MiniProgramPayload: PUPPET.payloads.MiniProgram = {
-      appid: appmsg.weappinfo[0].appid[0],   // optional, appid, get from wechat (mp.weixin.qq.com)
-      description: appmsg.des[0],   // optional, mini program title
-      iconUrl: appmsg.weappinfo[0].weappiconurl[0],   // optional, mini program icon url
-      pagePath: appmsg.weappinfo[0].pagepath[0],   // optional, mini program page path
-      shareId: appmsg.weappinfo[0].shareId[0],   // optional, the unique userId for who share this mini program
-      thumbKey: appmsg.appattach[0].cdnthumbaeskey[0],   // original, thumbnailurl and thumbkey will make the headphoto of mini-program better
-      thumbUrl: appmsg.appattach[0].cdnthumburl[0],   // optional, default picture, convert to thumbnail
-      title: appmsg.title[0],   // optional, mini program title
-      username: appmsg.weappinfo[0].username[0],   // original ID, get from wechat (mp.weixin.qq.com)
-    }
-    return MiniProgramPayload
+    const message = this.messageStore[messageId]
+    return await XmlDecrypt(message?.text || '', message?.type || PUPPET.types.Message.Unknown)
   }
 
   override async messageLocation (messageId: string): Promise<PUPPET.payloads.Location> {
     log.verbose('PuppetXp', 'messageLocation(%s)', messageId)
-    const parser = new xml2js.Parser(/* options */)
-    const messageJson = await parser.parseStringPromise(this.messageStore[messageId]?.text || '')
-
-    log.info(JSON.stringify(messageJson))
-
-    const location = messageJson.msg.location[0]['$']
-
-    const LocationPayload: PUPPET.payloads.Location = {
-      accuracy: location.scale, // Estimated horizontal accuracy of this location, radial, in meters. (same as Android & iOS API)
-      address: location.label, // "北京市北京市海淀区45 Chengfu Rd"
-      latitude: location.x, // 39.995120999999997
-      longitude: location.y, // 116.334154
-      name: location.poiname, // "东升乡人民政府(海淀区成府路45号)"
-    }
-
-    return LocationPayload
+    const message = this.messageStore[messageId]
+    return await XmlDecrypt(message?.text || '', message?.type || PUPPET.types.Message.Unknown)
   }
 
   override async messageRawPayloadParser (payload: PUPPET.payloads.Message) {

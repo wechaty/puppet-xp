@@ -1006,24 +1006,17 @@ const recvMsgNativeCallback = (() => {
     moduleBaseAddress.add(offset.hook_point),
     {
       onEnter() {
-        const addr = this.context.eax//0xc30-0x08
+        let addr
         let msgType = 0
         let isMyMsg = 0
-
+        let curTime = new Date()
         try {
+          addr = this.context.eax//0xc30-0x08
           msgType = addr.add(0x38).readU32()
-
-        } catch (err) {
-          console.error('line at msgType = addr.add(0x38).readU32():', err)
-        }
-
-        try {
           isMyMsg = addr.add(0x3C).readU32()//add isMyMsg
-
         } catch (err) {
-          console.error('line at isMyMsg = addr.add(0x3C).readU32():', err)
+          console.error(curTime,'recvMsgNativeCallback at onEnter err:', err)
         }
-
 
         if (msgType > 0) {
 
