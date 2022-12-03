@@ -380,6 +380,15 @@ class PuppetXp extends PUPPET.Puppet {
     }
     //  console.info('payloadType----------', PUPPET.types.Message[type])
     //  console.info('payload----------', payload)
+
+    if (talkerId && (!this.contactStore[talkerId] || !this.contactStore[talkerId]?.name)) {
+      void this.loadContactList()
+    }
+
+    if (roomId && (!this.roomStore[roomId] || !this.roomStore[roomId]?.topic)) {
+      void this.loadRoomList()
+    }
+
     try {
       if (code === 10000) {
         // 你邀请"瓦力"加入了群聊
@@ -428,8 +437,6 @@ class PuppetXp extends PUPPET.Puppet {
 
         }
         if (text.indexOf('加入了群聊') !== -1) {
-          void this.loadRoomList()
-          void this.loadContactList()
           const inviteeList = []
           let inviter = this.selfInfo
           const arrInfo = text.split(/邀请|加入了群聊/)
