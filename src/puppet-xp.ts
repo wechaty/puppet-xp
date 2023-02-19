@@ -811,6 +811,12 @@ class PuppetXp extends PUPPET.Puppet {
         const filePath = `${this.selfInfo.id}\\FileStorage\\File\\${year}-${month}`
         dataPath = rootPath + filePath + fileName  // 要解密的文件路径
         // console.info(dataPath)
+
+        await wait(1500)
+        if (!fs.existsSync(dataPath)) {
+          await wait(1500)
+        }
+        
         return FileBox.fromFile(
           dataPath,
           fileName,
