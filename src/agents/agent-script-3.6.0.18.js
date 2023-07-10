@@ -17,8 +17,8 @@
 
 const offset = {
   /**---nick call */
-  chatroom_member_nick_call_offset_v6:0x3E47B0,//3.6.0.18
-  chatroom_member_nick_esi_offset_v6:0x22553D4,
+  chatroom_member_nick_call_offset_v6: 0x3E47B0,//3.6.0.18
+  chatroom_member_nick_esi_offset_v6: 0x22553D4,
   /**-- nick call */
   node_offset: 0x222f3bc,//0x1db9728 -- 3.3.0.155
   handle_offset: 0x4c,
@@ -38,13 +38,13 @@ const offset = {
   get_qr_login_data_offset: 0x282160,
   get_qr_login_call_offset: 0x286930,
   //-------3.6.0.18  send pic
-  send_picmsg_call_offset0:0x9A1C0,//assign value to ecx
+  send_picmsg_call_offset0: 0x9A1C0,//assign value to ecx
   send_picmsg_call_offset1: 0x4BE160,//0x5ccb50,
-  send_picmsg_call_ecx:0x222F0F0,
+  send_picmsg_call_ecx: 0x222F0F0,
   //-------3.6.0.18  send pic
   /*send_picmsg_call_offset2: 0x6f5c0,
   send_picmsg_call_offset3: 0x3e3490,*/
-  send_attatch_ecx_offset:0x1D8FA8C,
+  send_attatch_ecx_offset: 0x1D8FA8C,
   send_attatch_call_offset0: 0x9A1C0,
   send_attatch_call_offset1: 0x701DC0,//0x701CD0,//701CD0
   send_attatch_call_offset2: 0x4BA5F0,//4B A5F0
@@ -63,13 +63,13 @@ const offset = {
 
 
 /*------------------global-------------------------------------------*/
-const availableVersion =  1661337618////3.3.0.115  ==1661141107
+const availableVersion = 1661337618////3.3.0.115  ==1661141107
 
 const moduleBaseAddress = Module.getBaseAddress('WeChatWin.dll')
 const moduleLoad = Module.load('WeChatWin.dll')
 //1575CF98
-const g_EDIPtr      = moduleBaseAddress.add(0x222f38c).readPointer().add(0xD70).readPointer()//
-const g_EDIU32      = moduleBaseAddress.add(0x222f38c).readPointer().add(0xD70).readU32()
+const g_EDIPtr = moduleBaseAddress.add(0x222f38c).readPointer().add(0xD70).readPointer()//
+const g_EDIU32 = moduleBaseAddress.add(0x222f38c).readPointer().add(0xD70).readU32()
 let currentVersion = 0
 
 let nodeList = []  //for contact
@@ -88,46 +88,46 @@ let loggedIn = false
 
 let g_initTestAsm = null
 let g_BufferEbp2C = null
-let g_initECXU32     = null
-let g_initECXPtr     = null
-let g_initEBXPtr     = null
-let g_initEBX        = null 
+let g_initECXU32 = null
+let g_initECXPtr = null
+let g_initEBXPtr = null
+let g_initEBX = null
 
 let g_attatchEBP210Buffer = null
-let g_attatchPathPtr         = null
-let g_attatchPath         = null
-let g_attatchEBPAc        = null
-let g_attatchEBPAcBufPtr  = null
+let g_attatchPathPtr = null
+let g_attatchPath = null
+let g_attatchEBPAc = null
+let g_attatchEBPAcBufPtr = null
 
-let g_attatchContactIdPtr = null  
+let g_attatchContactIdPtr = null
 //let g_attatchECXBuffer    = null
-let g_attatchESIU32       = null
+let g_attatchESIU32 = null
 
-let g_initECXTempPtr     = null
-const initGlobal = ( (contactId,attatchFile)=> {
+let g_initECXTempPtr = null
+const initGlobal = ((contactId, attatchFile) => {
 
   //const base = moduleBaseAddress.add(0x222f38c).readPointer()
   //g_EDI = base.add(0xD70).readPointer()//0x438+0x938
-  console.log('------------g_attatchEBPAc',g_attatchEBPAc)
-  console.log('------------g_EDIU32',g_EDIU32)
+  console.log('------------g_attatchEBPAc', g_attatchEBPAc)
+  console.log('------------g_EDIU32', g_EDIU32)
   g_initTestAsm = Memory.alloc(Process.pageSize)
-  console.log('------------address',g_initTestAsm)
-  
+  console.log('------------address', g_initTestAsm)
+
   g_initECXPtr = g_EDIPtr.add(0xB80).readPointer().add(0x1640)
   g_initECXTempPtr = g_EDIPtr.add(0xB88).readPointer()
   g_initECXU32 = g_initECXPtr.toInt32()
-  g_attatchESIU32       = g_EDIU32
+  g_attatchESIU32 = g_EDIU32
 
-  console.log('------------g_initECXU32',g_initECXU32)
-  console.log('------------g_initESIU32',g_attatchESIU32)
-  
+  console.log('------------g_initECXU32', g_initECXU32)
+  console.log('------------g_initESIU32', g_attatchESIU32)
+
 
   //console.log('==========g_initECXPtr',g_initECXPtr)
   //console.log('==========g_EDIU32',g_EDIU32)
-  
+
   //g_attatchECXBuffer = Memory.alloc(0x1024)
   //Memory.copy(g_attatchECXBuffer, g_initECXPtr, 0x1024)
-  
+
   g_BufferEbp2C = Memory.alloc(0x48)
 
   //g_initEBX        = moduleBaseAddress.add(0x2251724).readPointer().readPointer()
@@ -150,7 +150,7 @@ const initGlobal = ( (contactId,attatchFile)=> {
   g_attatchEBP210Buffer.add(0x2C).writeU32(moduleBaseAddress.add(0x2ECE87).toInt32())
   //console.log('------------g_attatchEBP210Buffer',g_attatchEBP210Buffer)
   /*---------------------------------ebp-210----------------*/
-  
+
   //g_attatchContactIdPtr = Memory.alloc(0x4)
   //g_attatchContactIdPtr.writeUtf16String(contactId)
   //console.log('------------g_attatchEBP210Buffer',g_attatchEBP210Buffer)
@@ -160,17 +160,17 @@ const initGlobal = ( (contactId,attatchFile)=> {
   //g_attatchEBPAc.add(0x4).writePointer(g_attatchEBPAcBufPtr)
   //g_attatchEBPAc.add(0x8).writePointer(g_attatchEBPAcBufPtr)
   g_attatchEBPAc.add(0x10).writeU32(g_EDIU32)
-  console.log('------------g_attatchEBPAc',g_attatchEBPAc)
-  
+  console.log('------------g_attatchEBPAc', g_attatchEBPAc)
+
   /*g_attatchECXBuffer.add(0x18).writePointer(g_attatchContactIdPtr)
   g_attatchECXBuffer.add(0x1C).writeU32(contactId.length*2)
                        .add(0x04).writeU32(contactId.length*2)*/
 
 
-  
+
   //g_attatchESIU32 = g_EDI.toInt32()
 
-  
+
   //console.log('------------g_attatchESIU32',g_attatchESIU32)
   //console.log('==========g_attatchECXBuffer',g_attatchECXBuffer)
 
@@ -188,7 +188,7 @@ const initGlobal = ( (contactId,attatchFile)=> {
     cw.putCallAddress(moduleBaseAddress.add(0x131bb0))*/
 
     //cw.putMovRegOffsetPtrU32('ebp', -20, 0)
-    
+
     /*cw.putPushU32(0)
     cw.putMovRegAddress('eax', g_attatchPathPtr)
     cw.putPushReg('eax')
@@ -241,24 +241,24 @@ const initGlobal = ( (contactId,attatchFile)=> {
 })
 
 
-let g_personal_detail_ebx =null
-let g_personal_detail_asm =null
+let g_personal_detail_ebx = null
+let g_personal_detail_asm = null
 let g_personal_wxid = null
 let g_personal_wxid_ptr = null
-const getOldTest = ( (wxid) => {//personal detail
+const getOldTest = ((wxid) => {//personal detail
 
   g_personal_detail_asm = Memory.alloc(Process.pageSize)
   g_personal_detail_ebx = moduleBaseAddress.add(0x222F38C).readPointer().add(0xFB8).toInt32()
-  
-  g_personal_wxid_ptr=Memory.alloc(wxid.length * 2 + 2)
+
+  g_personal_wxid_ptr = Memory.alloc(wxid.length * 2 + 2)
   g_personal_wxid_ptr.writeUtf16String(wxid)
 
-  g_personal_wxid=Memory.alloc(0x14)
+  g_personal_wxid = Memory.alloc(0x14)
   g_personal_wxid.writePointer(ptr(g_personal_wxid_ptr)).add(0x04)
-  .writeU32(wxid.length*2).add(0x04)
-  .writeU32(wxid.length*2).add(0x08)
+    .writeU32(wxid.length * 2).add(0x04)
+    .writeU32(wxid.length * 2).add(0x08)
 
-  console.log('-----------address----------',g_personal_detail_asm)
+  console.log('-----------address----------', g_personal_detail_asm)
 
   Memory.patchCode(g_personal_detail_asm, Process.pageSize, code => {
     var cw = new X86Writer(code, { pc: g_personal_detail_asm })
@@ -269,14 +269,14 @@ const getOldTest = ( (wxid) => {//personal detail
 
     //78BA9ACE | E8 2D05D6FF       | call wechatwin.7890A000            |
     cw.putMovRegU32('ebx', g_personal_detail_ebx)
-    cw.putMovRegReg('esi','eax')
+    cw.putMovRegReg('esi', 'eax')
     cw.putPushReg('ebx')
-    cw.putSubRegImm('esp',0x14)
+    cw.putSubRegImm('esp', 0x14)
     cw.putMovRegAddress('eax', g_personal_wxid)
-    cw.putMovRegReg('ecx','esp')
+    cw.putMovRegReg('ecx', 'esp')
     cw.putPushReg('eax')
     cw.putCallAddress(moduleBaseAddress.add(0x701DC0))
-    cw.putMovRegReg('ecx','esi')
+    cw.putMovRegReg('ecx', 'esi')
     cw.putCallAddress(moduleBaseAddress.add(0x4024A0))
 
     cw.putPopax()
@@ -313,33 +313,33 @@ const getOldTest = ( (wxid) => {//personal detail
  * test call
  */
 let attatchTestAsm = null
-let attatchTestEbp2C   = null
-let attatchGlobalEDI   = null
-let attatchGlobalEDIB88   = null
+let attatchTestEbp2C = null
+let attatchGlobalEDI = null
+let attatchGlobalEDIB88 = null
 let attatchTestEBX = null
 let g_tempEcx = null
 let attatchFirstECX = null
 //let attatchFirstECX  = null
-let gattatchFilePtr=null
+let gattatchFilePtr = null
 let gattatchFile = null
-let gattatchReceiveIdPtr=null
-let gattatchReceiveId=null
-let attatchEAX3B0Buf=null
+let gattatchReceiveIdPtr = null
+let gattatchReceiveId = null
+let attatchEAX3B0Buf = null
 
-let attatchESIbuf  = null
-const getWxTest = ( (contactId,filePath)=>{
+let attatchESIbuf = null
+const getWxTest = ((contactId, filePath) => {
   //const nativeativeFunction = new NativeFunction(ptr(addr), 'void', [])
   //nativeativeFunction()
   attatchTestAsm = Memory.alloc(Process.pageSize)
-  console.log('----------------address',attatchTestAsm)
+  console.log('----------------address', attatchTestAsm)
   attatchTestEbp2C = Memory.alloc(0xC)
   attatchGlobalEDI = moduleBaseAddress.add(0x222f38c).readPointer()
-                      .add(0x938).add(0x438).readPointer()
+    .add(0x938).add(0x438).readPointer()
   attatchGlobalEDIB88 = attatchGlobalEDI.add(0xB88).readPointer()
-  attatchTestEBX      = Memory.alloc(0x4)
+  attatchTestEBX = Memory.alloc(0x4)
   attatchTestEBX.writePointer(attatchGlobalEDI)
-  console.log('----------------attatchGlobalEDI',attatchGlobalEDI)
-  console.log('----------------attatchGlobalEDIB88',attatchGlobalEDIB88)
+  console.log('----------------attatchGlobalEDI', attatchGlobalEDI)
+  console.log('----------------attatchGlobalEDIB88', attatchGlobalEDIB88)
 
   attatchFirstECX = Memory.alloc(0x28)
   //const attatchSecondEcx = Memory.alloc(0x14)
@@ -348,13 +348,13 @@ const getWxTest = ( (contactId,filePath)=>{
   const contractIdActLength = contactId.length
 
 
-  gattatchReceiveIdPtr=Memory.alloc(contactId.length * 2 + 2)
+  gattatchReceiveIdPtr = Memory.alloc(contactId.length * 2 + 2)
   gattatchReceiveIdPtr.writeUtf16String(contactId)
 
-  gattatchReceiveId=Memory.alloc(0x14)
+  gattatchReceiveId = Memory.alloc(0x14)
   gattatchReceiveId.writePointer(ptr(gattatchReceiveIdPtr)).add(0x04)
-  .writeU32(contactId.length*2).add(0x04)
-  .writeU32(contactId.length*2).add(0x08)
+    .writeU32(contactId.length * 2).add(0x04)
+    .writeU32(contactId.length * 2).add(0x08)
   //console.log('----------------attatchGlobalEDIB88',attatchGlobalEDIB88)
   //return
   /*console.log(hexdump(attatchTestEBX, {
@@ -365,56 +365,56 @@ const getWxTest = ( (contactId,filePath)=>{
    }))
   return*/
 
-  gattatchFilePtr=Memory.alloc(filePath.length * 2 + 2)
+  gattatchFilePtr = Memory.alloc(filePath.length * 2 + 2)
   gattatchFilePtr.writeUtf16String(filePath)
 
-  gattatchFile=Memory.alloc(0x14)
+  gattatchFile = Memory.alloc(0x14)
   gattatchFile.writePointer(ptr(gattatchFilePtr)).add(0x04)
-  .writeU32(filePath.length*2).add(0x04)
-  .writeU32(filePath.length*2).add(0x08)
+    .writeU32(filePath.length * 2).add(0x04)
+    .writeU32(filePath.length * 2).add(0x08)
 
   const attatchLastECX = moduleBaseAddress.add(0x222f170).toInt32()
 
-  attatchEAX3B0Buf  = Memory.alloc(0x3B0)
+  attatchEAX3B0Buf = Memory.alloc(0x3B0)
 
-  g_tempEcx  = Memory.alloc(0x4)
+  g_tempEcx = Memory.alloc(0x4)
   //g_tempEcx1 = Memory.alloc(0x4)
 
   attatchESIbuf = Memory.alloc(0x100)
   attatchESIbuf.add(0x0).writeU32(3)
   attatchESIbuf.add(0x4).writePointer(gattatchFilePtr)
-  attatchESIbuf.add(0x8).writeU32(filePath.length*2)
-  attatchESIbuf.add(0xc).writeU32(filePath.length*2)
-  
+  attatchESIbuf.add(0x8).writeU32(filePath.length * 2)
+  attatchESIbuf.add(0xc).writeU32(filePath.length * 2)
+
   Memory.patchCode(attatchTestAsm, Process.pageSize, code => {
     var cw = new X86Writer(code, { pc: attatchTestAsm })
     cw.putPushfx()
     cw.putPushax()
     //cw.putMovRegU32('edi',attatchGlobalEDI)
 
-    
-    cw.putMovRegAddress('esi',attatchESIbuf)
-    
+
+    cw.putMovRegAddress('esi', attatchESIbuf)
+
     cw.putMovRegAddress('ecx', attatchFirstECX.add(0x14))
     cw.putMovRegAddress('eax', gattatchFile)
     cw.putPushReg('eax')
     cw.putCallAddress(moduleBaseAddress.add(0x701DC0))
 
-    
+
     cw.putMovRegAddress('ecx', attatchFirstECX)
     cw.putMovRegU32('eax', contactIdLength)
     cw.putPushReg('eax')
     cw.putPushU32(0)
     cw.putCallAddress(moduleBaseAddress.add(0x1a11c83))
     cw.putAddRegImm('esp', 0x8)
-    
-    cw.putMovRegReg('edx','eax')
-    cw.putMovNearPtrReg(attatchFirstECX,'edx')
+
+    cw.putMovRegReg('edx', 'eax')
+    cw.putMovNearPtrReg(attatchFirstECX, 'edx')
     cw.putMovRegU32('edi', contactIdLength)
     cw.putPushReg('edi')
     cw.putMovRegAddress('eax', gattatchReceiveIdPtr)//ebp-58
     cw.putPushReg('eax')
-    cw.putMovRegNearPtr('eax',attatchFirstECX)
+    cw.putMovRegNearPtr('eax', attatchFirstECX)
     cw.putPushReg('eax')
     cw.putCallAddress(moduleBaseAddress.add(0x1a1047a))
     cw.putAddRegImm('esp', 0x0c)
@@ -424,7 +424,7 @@ const getWxTest = ( (contactId,filePath)=>{
     //cw.putMovRegU32('edx', 0)
     //cw.putMovRegRegPtr('eax', 'ecx')
     //cw.putMovNearPtrReg(attatchFirstECX.add(0x04),'edi')
-    cw.putMovRegU32('edi',contactId.length * 2)
+    cw.putMovRegU32('edi', contactId.length * 2)
     cw.putMovRegU32('ecx', attatchLastECX)
     cw.putMovRegAddress('eax', attatchEAX3B0Buf)
     cw.putPushReg('eax')
@@ -451,8 +451,8 @@ const getTestInfoFunction = ((addr) => {
   nativeativeFunction()
 
   //00CFE484
-  
-  
+
+
   /*MemoryAccessMonitor.enable({base:ptr(addr),size:0x01}, {
     onAccess(details){
       console.log('============')
@@ -492,7 +492,7 @@ const getHeaderNodeAddress = (() => {
 
 // 005
 const getChatroomNodeAddress = (() => {
-  const baseAddress= moduleBaseAddress.add(0x222f3fc).readPointer()
+  const baseAddress = moduleBaseAddress.add(0x222f3fc).readPointer()
   if (baseAddress.isNull()) {
     return baseAddress
   }
@@ -530,7 +530,7 @@ const getMyselfInfoFunction = (() => {
 const getMyselfIdFunction = (() => {
 
   let wx_id = readString(moduleBaseAddress.add(offset.wxid_offset))
-  
+
   return wx_id
 
 })
@@ -668,9 +668,9 @@ const recurseNew = ((node) => {
   //const gender = node.add(0x18C).readU32()
 
   const contactJson = {
-    id1:id,
+    id1: id,
     id: wxid,
-    name:name,
+    name: name,
     /*code: wx_code,
     name: name,
     alias: alias,
@@ -812,7 +812,7 @@ if (!isSupported) {
 const getContactNativeFunction = (() => {
   const headerNodeAddress = getHeaderNodeAddress()
   //console.log('headerNodeAddress',headerNodeAddress)
-  
+
   if (headerNodeAddress.isNull()) { return '[]' }
 
   const node = headerNodeAddress.add(0x0).readPointer()
@@ -820,7 +820,7 @@ const getContactNativeFunction = (() => {
 
   //console.log(ret)
 
-  console.log('getContactNativeFunction:',ret.length)
+  // console.log('getContactNativeFunction:',ret.length)
   /*for (let item of ret){
     console.log(JSON.stringify(item))
   }*/
@@ -998,7 +998,7 @@ const getQrcodeLoginData = () => {
 // 019
 const recvMsgNativeCallback = (() => {
 
-  
+
   const nativeCallback = new NativeCallback(() => { }, 'void', ['int32', 'pointer', 'pointer', 'pointer', 'pointer', 'int32'])
   const nativeativeFunction = new NativeFunction(nativeCallback, 'void', ['int32', 'pointer', 'pointer', 'pointer', 'pointer', 'int32'])
 
@@ -1006,79 +1006,85 @@ const recvMsgNativeCallback = (() => {
     moduleBaseAddress.add(offset.hook_point),
     {
       onEnter() {
-        const addr = this.context.eax//0xc30-0x08
-        const msgType = addr.add(0x38).readU32()
-        const isMyMsg = addr.add(0x3C).readU32()//add isMyMsg
-
-        if (msgType > 0) {
-
-          const talkerIdPtr = addr.add(0x48).readPointer()
-          //console.log('txt msg',talkerIdPtr.readUtf16String())
-          const talkerIdLen = addr.add(0x48 + 0x04).readU32() * 2 + 2
-
-          const myTalkerIdPtr = Memory.alloc(talkerIdLen)
-          Memory.copy(myTalkerIdPtr, talkerIdPtr, talkerIdLen)
-
-
-          let contentPtr = null
-          let contentLen = 0
-          let myContentPtr = null
-          if (msgType == 3) {// pic path
-            let thumbPtr = addr.add(0x198).readPointer();
-            let hdPtr = addr.add(0x1ac).readPointer();
-            let thumbPath = thumbPtr.readUtf16String();
-            let hdPath = hdPtr.readUtf16String();
-            let picData = [
-              thumbPath,//  PUPPET.types.Image.Unknown
-              thumbPath,//  PUPPET.types.Image.Thumbnail
-              hdPath,//  PUPPET.types.Image.HD
-              hdPath//  PUPPET.types.Image.Artwork
-            ]
-            let content = JSON.stringify(picData);
-            myContentPtr = Memory.allocUtf16String(content);
-          } else {
-            contentPtr = addr.add(0x70).readPointer()
-            contentLen = addr.add(0x70 + 0x04).readU32() * 2 + 2
-            myContentPtr = Memory.alloc(contentLen)
-            Memory.copy(myContentPtr, contentPtr, contentLen)
+        let addr
+        let msgType = 0
+        let isMyMsg = 0
+        let curTime = new Date()
+        try {
+          addr = this.context.eax//0xc30-0x08
+          msgType = addr.add(0x38).readU32()
+          isMyMsg = addr.add(0x3C).readU32()//add isMyMsg
+          if (msgType > 0) {
+            const talkerIdPtr = addr.add(0x48).readPointer()
+            //console.log('txt msg',talkerIdPtr.readUtf16String())
+            const talkerIdLen = addr.add(0x48 + 0x04).readU32() * 2 + 2
+  
+            const myTalkerIdPtr = Memory.alloc(talkerIdLen)
+            Memory.copy(myTalkerIdPtr, talkerIdPtr, talkerIdLen)
+  
+  
+            let contentPtr = null
+            let contentLen = 0
+            let myContentPtr = null
+            if (msgType == 3) {// pic path
+              let thumbPtr = addr.add(0x198).readPointer();
+              let hdPtr = addr.add(0x1ac).readPointer();
+              let thumbPath = thumbPtr.readUtf16String();
+              let hdPath = hdPtr.readUtf16String();
+              let picData = [
+                thumbPath,//  PUPPET.types.Image.Unknown
+                thumbPath,//  PUPPET.types.Image.Thumbnail
+                hdPath,//  PUPPET.types.Image.HD
+                hdPath//  PUPPET.types.Image.Artwork
+              ]
+              let content = JSON.stringify(picData);
+              myContentPtr = Memory.allocUtf16String(content);
+            } else {
+              contentPtr = addr.add(0x70).readPointer()
+              contentLen = addr.add(0x70 + 0x04).readU32() * 2 + 2
+              myContentPtr = Memory.alloc(contentLen)
+              Memory.copy(myContentPtr, contentPtr, contentLen)
+            }
+  
+            //  console.log('----------------------------------------')
+            //  console.log(msgType)
+            //  console.log(contentPtr.readUtf16String())
+            //  console.log('----------------------------------------')
+            const groupMsgAddr = addr.add(0x170).readU32() //* 2 + 2
+            let myGroupMsgSenderIdPtr = null
+            if (groupMsgAddr == 0) {//weChatPublic is zero，type is 49
+  
+              myGroupMsgSenderIdPtr = Memory.alloc(0x10)
+              myGroupMsgSenderIdPtr.writeUtf16String("null")
+  
+            } else {
+  
+              const groupMsgSenderIdPtr = addr.add(0x170).readPointer()
+              const groupMsgSenderIdLen = addr.add(0x170 + 0x04).readU32() * 2 + 2
+              myGroupMsgSenderIdPtr = Memory.alloc(groupMsgSenderIdLen)
+              Memory.copy(myGroupMsgSenderIdPtr, groupMsgSenderIdPtr, groupMsgSenderIdLen)
+  
+            }
+  
+            const xmlNullPtr = addr.add(0x1ec).readU32()
+            let myXmlContentPtr = null
+            if (xmlNullPtr == 0) {
+  
+              myXmlContentPtr = Memory.alloc(0x10)
+              myXmlContentPtr.writeUtf16String("null")
+  
+            } else {
+              const xmlContentPtr = addr.add(0x1ec).readPointer()
+  
+              const xmlContentLen = addr.add(0x1ec + 0x04).readU32() * 2 + 2
+              myXmlContentPtr = Memory.alloc(xmlContentLen)
+              Memory.copy(myXmlContentPtr, xmlContentPtr, xmlContentLen)
+            }
+  
+            setImmediate(() => nativeativeFunction(msgType, myTalkerIdPtr, myContentPtr, myGroupMsgSenderIdPtr, myXmlContentPtr, isMyMsg))
           }
-
-          //  console.log('----------------------------------------')
-          //  console.log(msgType)
-          //  console.log(contentPtr.readUtf16String())
-          //  console.log('----------------------------------------')
-          const groupMsgAddr = addr.add(0x170).readU32() //* 2 + 2
-          let myGroupMsgSenderIdPtr = null
-          if (groupMsgAddr == 0) {//weChatPublic is zero，type is 49
-
-            myGroupMsgSenderIdPtr = Memory.alloc(0x10)
-            myGroupMsgSenderIdPtr.writeUtf16String("null")
-
-          } else {
-
-            const groupMsgSenderIdPtr = addr.add(0x170).readPointer()
-            const groupMsgSenderIdLen = addr.add(0x170 + 0x04).readU32() * 2 + 2
-            myGroupMsgSenderIdPtr = Memory.alloc(groupMsgSenderIdLen)
-            Memory.copy(myGroupMsgSenderIdPtr, groupMsgSenderIdPtr, groupMsgSenderIdLen)
-
-          }
-
-          const xmlNullPtr = addr.add(0x1ec).readU32()
-          let myXmlContentPtr = null
-          if (xmlNullPtr == 0) {
-
-            myXmlContentPtr = Memory.alloc(0x10)
-            myXmlContentPtr.writeUtf16String("null")
-
-          } else {
-            const xmlContentPtr = addr.add(0x1ec).readPointer()
-
-            const xmlContentLen = addr.add(0x1ec + 0x04).readU32() * 2 + 2
-            myXmlContentPtr = Memory.alloc(xmlContentLen)
-            Memory.copy(myXmlContentPtr, xmlContentPtr, xmlContentLen)
-          }
-
-          setImmediate(() => nativeativeFunction(msgType, myTalkerIdPtr, myContentPtr, myGroupMsgSenderIdPtr, myXmlContentPtr, isMyMsg))
+        } catch (err) {
+          console.error(curTime,'recvMsgNativeCallback at onEnter err:', err)
         }
       }
     })
@@ -1182,17 +1188,17 @@ let nickMemberIdStructV6 = null
 let memberNickBuffAsmV6 = null
 let nickResultEdiV6 = null
 
-const getChatroomMemberNickInfoV1Function=((memberId, roomId)=>{
+const getChatroomMemberNickInfoV1Function = ((memberId, roomId) => {
   nickRoomIdV6 = initidStruct(roomId)
   nullEdiWxidStructV6 = initNullIdStruct('')
   nickMemberIdStructV6 = initStruct(memberId)
   memberNickBuffAsmV6 = Memory.alloc(Process.pageSize)
-  console.log('-----',memberNickBuffAsmV6)
+  console.log('-----', memberNickBuffAsmV6)
 
   const tmp = (moduleBaseAddress.add(
     offset.chatroom_member_nick_esi_offset_v6
   )).readU32()
-  console.log('=======tmp',tmp)
+  console.log('=======tmp', tmp)
   Memory.patchCode(memberNickBuffAsmV6, Process.pageSize, code => {
     var cw = new X86Writer(code, { pc: memberNickBuffAsmV6 })
     cw.putPushfx();
@@ -1202,19 +1208,19 @@ const getChatroomMemberNickInfoV1Function=((memberId, roomId)=>{
     cw.putMovRegAddress('eax', nickMemberIdStructV6)
     cw.putMovRegAddress('ebx', nickRoomIdV6)
 
-  
+
     cw.putMovRegAddress('esi', ptr(tmp))
     cw.putPushReg('edi')
     cw.putPushReg('eax')
     cw.putPushReg('ebx')
-    
+
     cw.putMovRegAddress('ecx', ptr(tmp))
 
     cw.putCallAddress(moduleBaseAddress.add(
       offset.chatroom_member_nick_call_offset_v6
     ))
 
-    
+
     //cw.putMovNearPtrReg(nickResultEdiV6, 'edi')
     cw.putPopax()
     cw.putPopfx()
@@ -1226,7 +1232,7 @@ const getChatroomMemberNickInfoV1Function=((memberId, roomId)=>{
   const nativeativeFunction = new NativeFunction(ptr(memberNickBuffAsmV6), 'void', [])
   nativeativeFunction()
 
-  console.log('---------nullEdiWxidStructV6',nullEdiWxidStructV6)
+  console.log('---------nullEdiWxidStructV6', nullEdiWxidStructV6)
   const nickha = readWideString(nullEdiWxidStructV6)
 
   console.log('-----------------')
@@ -1297,7 +1303,7 @@ const getChatroomMemberNickInfoFunction = ((memberId, roomId) => {
     cw.putAddRegImm('esp', 0x04)
     //cw.putMovNearPtrReg(nickRetAddr, 'ebx')
     //lea eax, buf
-    
+
     cw.putPopax()
     cw.putPopfx()
     cw.putRet()
@@ -1324,7 +1330,7 @@ let attatchPathPtr = null
 let attatchAsm = null
 let attatchBuf = null
 
-let attatchReceiveIdPtr=null
+let attatchReceiveIdPtr = null
 let attatchReceiveId = null
 
 let attatchSendId = null
@@ -1340,15 +1346,15 @@ let attatchEbp210 = null
 let attatchEbpAc  = null*/
 
 let attatchEbp11E8 = null
-let attatchEbpCC   = null
-let attatchEbp368  = null
-let attatchEAX     = null
+let attatchEbpCC = null
+let attatchEbp368 = null
+let attatchEAX = null
 
 let sFileName = null
 let fileNamePtr = null
 
 let attatchEbp84 = null
-let attatchECX   = null
+let attatchECX = null
 
 
 /**
@@ -1358,37 +1364,37 @@ param {78EDBC86 | 8B80 38040000            | mov eax,dword ptr ds:[eax+438]     
 */
 
 // 021
-const sendAttatchMsgNativeFunction = ((contactId, senderId,path,filename,size) => {
+const sendAttatchMsgNativeFunction = ((contactId, senderId, path, filename, size) => {
 
   attatchAsm = Memory.alloc(Process.pageSize)
-  console.log('--------------address',attatchAsm)
+  console.log('--------------address', attatchAsm)
 
-  fileNamePtr=Memory.alloc(filename.length * 2 + 2)
+  fileNamePtr = Memory.alloc(filename.length * 2 + 2)
   fileNamePtr.writeUtf16String(filename)
 
-  sFileName=Memory.alloc(0x14)
+  sFileName = Memory.alloc(0x14)
   sFileName.writePointer(ptr(fileNamePtr)).add(0x04)
-  .writeU32(fileNamePtr.length*2).add(0x04)
-  .writeU32(fileNamePtr.length*2).add(0x08)
+    .writeU32(fileNamePtr.length * 2).add(0x04)
+    .writeU32(fileNamePtr.length * 2).add(0x08)
 
   //const fileSize = size.toInt32()
 
 
-  attatchReceiveIdPtr=Memory.alloc(contactId.length * 2 + 2)
+  attatchReceiveIdPtr = Memory.alloc(contactId.length * 2 + 2)
   attatchReceiveIdPtr.writeUtf16String(contactId)
 
-  attatchReceiveId=Memory.alloc(0x14)
+  attatchReceiveId = Memory.alloc(0x14)
   attatchReceiveId.writePointer(ptr(attatchReceiveIdPtr)).add(0x04)
-  .writeU32(contactId.length*2).add(0x04)
-  .writeU32(contactId.length*2).add(0x08)
+    .writeU32(contactId.length * 2).add(0x04)
+    .writeU32(contactId.length * 2).add(0x08)
 
-  attatchSendIdPtr=Memory.alloc(senderId.length * 2 + 2)
+  attatchSendIdPtr = Memory.alloc(senderId.length * 2 + 2)
   attatchSendIdPtr.writeUtf16String(senderId)
 
-  attatchSendId=Memory.alloc(0x14)
+  attatchSendId = Memory.alloc(0x14)
   attatchSendId.writePointer(ptr(attatchSendIdPtr)).add(0x04)
-  .writeU32(senderId.length*2).add(0x04)
-  .writeU32(senderId.length*2).add(0x08)
+    .writeU32(senderId.length * 2).add(0x04)
+    .writeU32(senderId.length * 2).add(0x08)
 
   attatchPathPtr = Memory.alloc(path.length * 2 + 2)
   attatchPathPtr.writeUtf16String(path)
@@ -1399,16 +1405,16 @@ const sendAttatchMsgNativeFunction = ((contactId, senderId,path,filename,size) =
     .writeU32(path.length * 2).add(0x04)
 
   attatchEbp11E8 = Memory.alloc(0xBE4)
-  attatchEbpCC   = Memory.alloc(0x14)
+  attatchEbpCC = Memory.alloc(0x14)
   attatchEbp368 = Memory.alloc(0x290)
-  attatchEbp84  = Memory.alloc(0x18)
-  attatchEAX    = Memory.alloc(0x18)
+  attatchEbp84 = Memory.alloc(0x18)
+  attatchEAX = Memory.alloc(0x18)
 
   attatchECX = moduleBaseAddress.add(0x222f178).toInt32()
 
   //console.log('basename',path.basename(path))
   //return
-  
+
   /**
    * -------------buffer-------------------------------
    */
@@ -1425,23 +1431,23 @@ const sendAttatchMsgNativeFunction = ((contactId, senderId,path,filename,size) =
     cw.putPushU32(moduleBaseAddress.add(0x1E1B3C0).toInt32())
     cw.putMovRegAddress('ecx', attatchEbp11E8.add(0x4))//11e4
     cw.putCallAddress(moduleBaseAddress.add(0x702410))//write appid
-   // cw.putCallAddress(moduleBaseAddress.add(0x702410))//write appid
+    // cw.putCallAddress(moduleBaseAddress.add(0x702410))//write appid
 
-   /**
-    * 78482B8D | 6A FF             | push FFFFFFFF                     |
-      78482B8F | 68 B895E979       | push wechatwin.79E995B8           | 79E995B8:L"0"
-      78482B94 | 8D8D 48EEFFFF     | lea ecx,dword ptr ss:[ebp-11B8]   |
-      78482B9A | E8 71F83600       | call wechatwin.787F2410           | 此处继续写ebp-11b8
-    */
+    /**
+     * 78482B8D | 6A FF             | push FFFFFFFF                     |
+       78482B8F | 68 B895E979       | push wechatwin.79E995B8           | 79E995B8:L"0"
+       78482B94 | 8D8D 48EEFFFF     | lea ecx,dword ptr ss:[ebp-11B8]   |
+       78482B9A | E8 71F83600       | call wechatwin.787F2410           | 此处继续写ebp-11b8
+     */
     cw.putPushU32(-1)
     cw.putPushU32(moduleBaseAddress.add(0x1DA95B8).toInt32())
     cw.putMovRegAddress('ecx', attatchEbp11E8.add(0x30))//11B8
     cw.putCallAddress(moduleBaseAddress.add(0x702410))
 
-   cw.putMovRegU32('eax',0x6)
-   cw.putMovNearPtrReg(attatchEbp11E8.add(0x80), 'eax')//1168
-   cw.putMovRegU32('eax',size)//file size
-   cw.putMovNearPtrReg(attatchEbp11E8.add(0x108), 'eax')//10e0
+    cw.putMovRegU32('eax', 0x6)
+    cw.putMovNearPtrReg(attatchEbp11E8.add(0x80), 'eax')//1168
+    cw.putMovRegU32('eax', size)//file size
+    cw.putMovNearPtrReg(attatchEbp11E8.add(0x108), 'eax')//10e0
 
 
     cw.putMovRegAddress('eax', sFileName)
@@ -1453,8 +1459,8 @@ const sendAttatchMsgNativeFunction = ((contactId, senderId,path,filename,size) =
     cw.putPushReg('eax')
     cw.putMovRegAddress('ecx', attatchEbp11E8.add(0x160))//1088=0x11e8-0x160
     cw.putCallAddress(moduleBaseAddress.add(0x702980))
-    
-    
+
+
     cw.putMovRegAddress('eax', attatchEbpCC)
     cw.putPushReg('eax')
     cw.putMovRegAddress('ecx', attatchEbp11E8)
@@ -1475,10 +1481,10 @@ const sendAttatchMsgNativeFunction = ((contactId, senderId,path,filename,size) =
     cw.putPushReg('ecx')
     cw.putPushReg('eax')
 
-    cw.putMovRegAddress('eax',attatchEbpCC)
+    cw.putMovRegAddress('eax', attatchEbpCC)
     cw.putPushReg('eax')
 
-    cw.putMovRegAddress('eax',attatchReceiveId)
+    cw.putMovRegAddress('eax', attatchReceiveId)
     cw.putPushReg('eax')
 
     cw.putMovRegAddress('ecx', attatchEbp368)
@@ -1503,7 +1509,7 @@ const sendAttatchMsgNativeFunction = ((contactId, senderId,path,filename,size) =
     //cw.putMovNearPtrReg(attatchEbpCC.add(0x64), 'eax')//ebp-68
     //cw.putAddRegImm('ecx', 0x8)
     //cw.putMovRegAddress('eax', attatchEbp368.add(0x64))//ebp-68
-    
+
     //cw.putMovRegU32('ecx',attatchECX)
     //cw.putPushReg('eax')
     //cw.putMovRegAddress('eax', attatchEbpCC.add(0x40))//ebp-8c
@@ -1518,8 +1524,8 @@ const sendAttatchMsgNativeFunction = ((contactId, senderId,path,filename,size) =
     //cw.putMovRegAddress('ecx', attatchEbp368)
     //cw.putCallAddress(moduleBaseAddress.add(0x63B4F0))
 
-  //  78F33099 | 8D8D 34FFFFFF     | lea ecx,dword ptr ss:[ebp-CC]  |
-//78F3309F | E8 AC0FD0FF       | call wechatwin.78C34050        |
+    //  78F33099 | 8D8D 34FFFFFF     | lea ecx,dword ptr ss:[ebp-CC]  |
+    //78F3309F | E8 AC0FD0FF       | call wechatwin.78C34050        |
 
     //cw.putMovRegAddress('ecx',attatchEbpCC)
     //cw.putCallAddress(moduleBaseAddress.add(0x94050))
@@ -1607,7 +1613,7 @@ const sendPicMsgNativeFunction = ((contactId, path) => {
       offset.send_picmsg_call_offset0
     ))
     cw.putMovRegReg('edx', 'eax')//缓存
-    
+
     cw.putSubRegImm('esp', 0x14)
     cw.putMovRegAddress('eax', buffwxid)
     cw.putMovRegReg('ecx', 'esp')
@@ -1681,7 +1687,7 @@ const sendPicMsgNativeFunction = ((contactId, path) => {
 
   })
 
-  console.log('----------picAsm',picAsm)
+  console.log('----------picAsm', picAsm)
   const nativeativeFunction = new NativeFunction(ptr(picAsm), 'void', [])
   nativeativeFunction()
 
@@ -1950,18 +1956,18 @@ const agentReadyCallback = (() => {
 })()
 
 // 027
-const SendMiniProgramNativeFunction = ((bg_path_str,send_wxid_str,recv_wxid_str,xmlstr) => {
+const SendMiniProgramNativeFunction = ((bg_path_str, send_wxid_str, recv_wxid_str, xmlstr) => {
   console.log("------------------------------------------------------");
-  var asmCode=Memory.alloc(Process.pageSize);
+  var asmCode = Memory.alloc(Process.pageSize);
 
-  var ECX_buf=Memory.alloc(0x300);
-  var Buf_EAX=Memory.alloc(0x300);
-  var buf_1=Memory.alloc(0x300);
-  var ptr_to_buf_1=Memory.alloc(0x4).writePointer(buf_1);
-  var buf_2=Memory.alloc(0x300);
+  var ECX_buf = Memory.alloc(0x300);
+  var Buf_EAX = Memory.alloc(0x300);
+  var buf_1 = Memory.alloc(0x300);
+  var ptr_to_buf_1 = Memory.alloc(0x4).writePointer(buf_1);
+  var buf_2 = Memory.alloc(0x300);
 
-//  var bg_path_str="C:/aaaa.jpg";
-  var bg_path_Ptr=Memory.alloc(bg_path_str.length * 2 + 1)
+  //  var bg_path_str="C:/aaaa.jpg";
+  var bg_path_Ptr = Memory.alloc(bg_path_str.length * 2 + 1)
   bg_path_Ptr.writeUtf16String(bg_path_str);
   var bg_path_Struct = Memory.alloc(0x14) // returns a NativePointer
   bg_path_Struct.writePointer(bg_path_Ptr).add(0x04)
@@ -1970,8 +1976,8 @@ const SendMiniProgramNativeFunction = ((bg_path_str,send_wxid_str,recv_wxid_str,
     .writeU32(0).add(0x04)
     .writeU32(0);
 
- // var send_wxid_str="wxid_4zr616ir6fi122";
-  var send_wxid_Ptr=Memory.alloc(send_wxid_str.length * 2 + 1)
+  // var send_wxid_str="wxid_4zr616ir6fi122";
+  var send_wxid_Ptr = Memory.alloc(send_wxid_str.length * 2 + 1)
   send_wxid_Ptr.writeUtf16String(send_wxid_str);
   var send_wxid_Struct = Memory.alloc(0x14) // returns a NativePointer
   send_wxid_Struct.writePointer(send_wxid_Ptr).add(0x04)
@@ -1980,8 +1986,8 @@ const SendMiniProgramNativeFunction = ((bg_path_str,send_wxid_str,recv_wxid_str,
     .writeU32(0).add(0x04)
     .writeU32(0);
 
- // var recv_wxid_str="filehelper";
-  var recv_wxid_Ptr=Memory.alloc(recv_wxid_str.length * 2 + 1)
+  // var recv_wxid_str="filehelper";
+  var recv_wxid_Ptr = Memory.alloc(recv_wxid_str.length * 2 + 1)
   recv_wxid_Ptr.writeUtf16String(recv_wxid_str);
   var recv_wxid_Struct = Memory.alloc(0x14) // returns a NativePointer
   recv_wxid_Struct.writePointer(recv_wxid_Ptr).add(0x04)
@@ -1990,9 +1996,9 @@ const SendMiniProgramNativeFunction = ((bg_path_str,send_wxid_str,recv_wxid_str,
     .writeU32(0).add(0x04)
     .writeU32(0);
 
- // vvar pXml=initidStruct('<msg><fromusername>wxid_4zr616ir6fi122</fromusername><scene>0</scene><commenturl></commenturl><appmsg appid="wx65cc950f42e8fff1" sdkver=""><title>腾讯出行服务｜加油代驾公交</title><des></des><action>view</action><type>33</type><showtype>0</showtype><content></content><url>https://mp.weixin.qq.com/mp/waerrpage?appid=wx65cc950f42e8fff1&amp;amp;type=upgrade&amp;amp;upgradetype=3#wechat_redirect</url><dataurl></dataurl><lowurl></lowurl><lowdataurl></lowdataurl><recorditem><![CDATA[]]></recorditem><thumburl>http://mmbiz.qpic.cn/mmbiz_png/NM1fK7leWGPaFnMAe95jbg4sZAI3fkEZWHq69CIk6zA00SGARbmsGTbgLnZUXFoRwjROelKicbSp9K34MaZBuuA/640?wx_fmt=png&amp;wxfrom=200</thumburl><messageaction></messageaction><extinfo></extinfo><sourceusername></sourceusername><sourcedisplayname>腾讯出行服务｜加油代驾公交</sourcedisplayname><commenturl></commenturl><appattach><totallen>0</totallen><attachid></attachid><emoticonmd5></emoticonmd5><fileext></fileext><aeskey></aeskey></appattach><weappinfo><pagepath></pagepath><username>gh_ad64296dc8bd@app</username><appid>wx65cc950f42e8fff1</appid><type>1</type><weappiconurl>http://mmbiz.qpic.cn/mmbiz_png/NM1fK7leWGPaFnMAe95jbg4sZAI3fkEZWHq69CIk6zA00SGARbmsGTbgLnZUXFoRwjROelKicbSp9K34MaZBuuA/640?wx_fmt=png&amp;wxfrom=200</weappiconurl><appservicetype>0</appservicetype><shareId>2_wx65cc950f42e8fff1_875237370_1644979747_1</shareId></weappinfo><websearch /></appmsg><appinfo><version>1</version><appname>Window wechat</appname></appinfo></msg>');
+  // vvar pXml=initidStruct('<msg><fromusername>wxid_4zr616ir6fi122</fromusername><scene>0</scene><commenturl></commenturl><appmsg appid="wx65cc950f42e8fff1" sdkver=""><title>腾讯出行服务｜加油代驾公交</title><des></des><action>view</action><type>33</type><showtype>0</showtype><content></content><url>https://mp.weixin.qq.com/mp/waerrpage?appid=wx65cc950f42e8fff1&amp;amp;type=upgrade&amp;amp;upgradetype=3#wechat_redirect</url><dataurl></dataurl><lowurl></lowurl><lowdataurl></lowdataurl><recorditem><![CDATA[]]></recorditem><thumburl>http://mmbiz.qpic.cn/mmbiz_png/NM1fK7leWGPaFnMAe95jbg4sZAI3fkEZWHq69CIk6zA00SGARbmsGTbgLnZUXFoRwjROelKicbSp9K34MaZBuuA/640?wx_fmt=png&amp;wxfrom=200</thumburl><messageaction></messageaction><extinfo></extinfo><sourceusername></sourceusername><sourcedisplayname>腾讯出行服务｜加油代驾公交</sourcedisplayname><commenturl></commenturl><appattach><totallen>0</totallen><attachid></attachid><emoticonmd5></emoticonmd5><fileext></fileext><aeskey></aeskey></appattach><weappinfo><pagepath></pagepath><username>gh_ad64296dc8bd@app</username><appid>wx65cc950f42e8fff1</appid><type>1</type><weappiconurl>http://mmbiz.qpic.cn/mmbiz_png/NM1fK7leWGPaFnMAe95jbg4sZAI3fkEZWHq69CIk6zA00SGARbmsGTbgLnZUXFoRwjROelKicbSp9K34MaZBuuA/640?wx_fmt=png&amp;wxfrom=200</weappiconurl><appservicetype>0</appservicetype><shareId>2_wx65cc950f42e8fff1_875237370_1644979747_1</shareId></weappinfo><websearch /></appmsg><appinfo><version>1</version><appname>Window wechat</appname></appinfo></msg>');
 
-  var pXml=initidStruct(xmlstr)
+  var pXml = initidStruct(xmlstr)
 
   console.log(send_wxid_Struct);
   console.log(recv_wxid_Struct);

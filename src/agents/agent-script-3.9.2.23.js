@@ -797,3 +797,5 @@ const getChatroomMemberNickInfoFunction = ((memberId, roomId) => {
   console.log('----nickname', nickname)
   return readWideString(nickBuff)
 })
+
+
