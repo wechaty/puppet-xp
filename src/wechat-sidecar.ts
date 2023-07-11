@@ -37,6 +37,7 @@ import { codeRoot } from './cjs.js'
 const supportedVersions = {
   v330115:'3.3.0.115',
   v360000:'3.6.0.18',
+  v39223:'3.9.2.23',
 }
 
 // let initAgentScript = fs.readFileSync(path.join(
@@ -58,7 +59,7 @@ try {
 
   // await detach(wechatVersion)
 
-  const currentVersion = '3.6.0.18'
+  const currentVersion = '3.9.2.23'
 
   switch (currentVersion) {
     case supportedVersions.v330115:
@@ -70,6 +71,19 @@ try {
       ), 'utf-8')
       break
     case supportedVersions.v360000:
+      // initAgentScript = fs.readFileSync(path.join(
+      //   codeRoot,
+      //   'src',
+      //   'agents',
+      //   'agent-script-3.6.0.18.js',
+      // ), 'utf-8')
+      initAgentScript = fs.readFileSync(path.join(
+        codeRoot,
+        'src',
+        'init-agent-script.js',
+      ), 'utf-8')
+      break
+    case supportedVersions.v39223:
       // initAgentScript = fs.readFileSync(path.join(
       //   codeRoot,
       //   'src',
