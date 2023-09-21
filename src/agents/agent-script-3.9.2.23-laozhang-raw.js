@@ -798,8 +798,4 @@ const getChatroomMemberNickInfoFunction = ((memberId, roomId) => {
   return readWideString(nickBuff)
 })
 
-const isLoggedInFunction = (() => {
-  // loggedIn = moduleBaseAddress.add(offset.is_logged_in_offset).readU32()
-  // return !!loggedIn
-  return true
-})
+
