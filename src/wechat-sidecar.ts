@@ -47,7 +47,11 @@ const supportedVersions = {
 //   'agent-script-3.3.0.115.js',
 // ), 'utf-8')
 
-let initAgentScript = ''
+let initAgentScript = fs.readFileSync(path.join(
+  codeRoot,
+  'src',
+  'init-agent-script.js',
+), 'utf-8')
 
 try {
   // const wechatVersion = new WeChatVersion()
@@ -104,8 +108,8 @@ try {
 @Sidecar('WeChat.exe', initAgentScript)
 class WeChatSidecar extends SidecarBody {
 
-  @Call(agentTarget('getTestInfoFunction'))
-  getTestInfo ():Promise<string> { return Ret() }
+  // @Call(agentTarget('getTestInfoFunction'))
+  // getTestInfo ():Promise<string> { return Ret() }
 
   @Call(agentTarget('getChatroomMemberNickInfoFunction'))
   getChatroomMemberNickInfo (
@@ -131,10 +135,10 @@ class WeChatSidecar extends SidecarBody {
   @Call(agentTarget('checkSupportedFunction'))
   checkSupported ():Promise<Boolean> { return Ret() }
 
-  @Call(agentTarget('callLoginQrcodeFunction'))
-  callLoginQrcode (
-    forceRefresh: boolean,
-  ):Promise<null> { return Ret(forceRefresh) }
+  // @Call(agentTarget('callLoginQrcodeFunction'))
+  // callLoginQrcode (
+  //   forceRefresh: boolean,
+  // ):Promise<null> { return Ret(forceRefresh) }
 
   @Call(agentTarget('getContactNativeFunction'))
   getContact ():Promise<string> { return Ret() }
@@ -181,30 +185,30 @@ class WeChatSidecar extends SidecarBody {
     @ParamType('int32', 'U32') isMyMsg: number, // add isMyMsg type
   ) { return Ret(msgType, contactId, text, groupMsgSenderId, xmlContent, isMyMsg) }
 
-  @Hook(agentTarget('checkQRLoginNativeCallback'))
-  checkQRLogin (
-    @ParamType('int32', 'U32') status: number,
-    @ParamType('pointer', 'Utf8String') qrcodeUrl: string,
-    @ParamType('pointer', 'Utf8String') wxid: string,
-    @ParamType('pointer', 'Utf8String') avatarUrl: string,
-    @ParamType('pointer', 'Utf8String') nickname: string,
-    @ParamType('pointer', 'Utf8String') phoneType: string,
-    @ParamType('int32', 'U32') phoneClientVer: number,
-    @ParamType('pointer', 'Utf8String') pairWaitTip: string,
-  ) { return Ret(status, qrcodeUrl, wxid, avatarUrl, nickname, phoneType, phoneClientVer, pairWaitTip) }
+  // @Hook(agentTarget('checkQRLoginNativeCallback'))
+  // checkQRLogin (
+  //   @ParamType('int32', 'U32') status: number,
+  //   @ParamType('pointer', 'Utf8String') qrcodeUrl: string,
+  //   @ParamType('pointer', 'Utf8String') wxid: string,
+  //   @ParamType('pointer', 'Utf8String') avatarUrl: string,
+  //   @ParamType('pointer', 'Utf8String') nickname: string,
+  //   @ParamType('pointer', 'Utf8String') phoneType: string,
+  //   @ParamType('int32', 'U32') phoneClientVer: number,
+  //   @ParamType('pointer', 'Utf8String') pairWaitTip: string,
+  // ) { return Ret(status, qrcodeUrl, wxid, avatarUrl, nickname, phoneType, phoneClientVer, pairWaitTip) }
 
-  @Hook(agentTarget('hookLogoutEventCallback'))
-  logoutEvent (
-    @ParamType('int32', 'U32') bySrv: number,
-  ) { return Ret(bySrv) }
+  // @Hook(agentTarget('hookLogoutEventCallback'))
+  // logoutEvent (
+  //   @ParamType('int32', 'U32') bySrv: number,
+  // ) { return Ret(bySrv) }
 
-  @Hook(agentTarget('hookLoginEventCallback'))
-  loginEvent (
-  ) { return Ret() }
+  // @Hook(agentTarget('hookLoginEventCallback'))
+  // loginEvent (
+  // ) { return Ret() }
 
-  @Hook(agentTarget('agentReadyCallback'))
-  agentReady (
-  ) { return Ret() }
+  // @Hook(agentTarget('agentReadyCallback'))
+  // agentReady (
+  // ) { return Ret() }
 
 }
 
