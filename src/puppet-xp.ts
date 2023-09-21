@@ -108,6 +108,7 @@ class PuppetXp extends PUPPET.Puppet {
     this.#sidecar = new WeChatSidecar()
 
     await attach(this.sidecar)
+    void this.onLogin()
 
     this.sidecar.on('hook', ({ method, args }) => {
       log.verbose('PuppetXp', 'onHook(%s, %s)', method, JSON.stringify(args))
@@ -141,15 +142,16 @@ class PuppetXp extends PUPPET.Puppet {
 
   private async onAgentReady () {
     log.verbose('PuppetXp', 'onAgentReady()')
-    const isLoggedIn = await this.sidecar.isLoggedIn()
-    if (!isLoggedIn) {
-      await this.sidecar.callLoginQrcode(false)
-    }
+    // const isLoggedIn = await this.sidecar.isLoggedIn()
+    // if (!isLoggedIn) {
+    //   await this.sidecar.callLoginQrcode(false)
+    // }
   }
 
   private async onLogin () {
 
     const selfInfoRaw = JSON.parse(await this.sidecar.getMyselfInfo())
+    // console.debug('selfInfoRaw:\n\n\n', selfInfoRaw)
     const selfInfo: PUPPET.payloads.Contact = {
       alias: '',
       avatar: selfInfoRaw.head_img_url,
@@ -567,7 +569,7 @@ class PuppetXp extends PUPPET.Puppet {
           id: roomId,
           memberIdList: roomMember,
           ownerId: '',
-          topic: topic,
+          topic,
         }
         this.roomStore[roomId] = room
         delete this.contactStore[roomId]
@@ -834,7 +836,7 @@ class PuppetXp extends PUPPET.Puppet {
       }
     }
 
-    if ([PUPPET.types.Message.Video, PUPPET.types.Message.Audio].includes(message?.type || PUPPET.types.Message.Unknown)) {
+    if ([ PUPPET.types.Message.Video, PUPPET.types.Message.Audio ].includes(message?.type || PUPPET.types.Message.Unknown)) {
       this.notSupported('Video/`Audio')
     }
     return FileBox.fromFile(
