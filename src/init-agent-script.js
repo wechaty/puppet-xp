@@ -458,7 +458,7 @@ const getContactNativeFunction = (() => {
 
   //console.log(ret)
 
-  console.log('getContactNativeFunction:', ret.length)
+  // console.log('getContactNativeFunction:', ret.length)
   /*for (let item of ret){
     console.log(JSON.stringify(item))
   }*/
@@ -794,7 +794,7 @@ const getChatroomMemberNickInfoFunction = ((memberId, roomId) => {
   nativeativeFunction()
 
   const nickname = readWideString(nickBuff)
-  console.log('----nickname', nickname)
+  // console.log('----nickname', nickname)
   return readWideString(nickBuff)
 })
 
