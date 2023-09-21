@@ -81,9 +81,22 @@ Puppet|xp👍|
 登录事件|✅
 依赖协议|Windows
 
+## VERSION SUPPORT
+
+puppet-xp|wechat|
+:---|:---|
+>1.11.14|[WeChat-v3.3.0.115](https://github.com/wechaty/wechaty-puppet-xp/releases/download/v0.5/WeChatSetup-v3.3.0.115.exe)|
+1.12.x|[WeChat-v3.6.0.18](https://github.com/tom-snow/wechat-windows-versions/releases/download/v3.6.0.18/WeChatSetup-3.6.0.18.exe)|
+1.3.x|[WeChat-v3.2.2.23](https://github.com/tom-snow/wechat-windows-versions/releases/download/v3.9.2.23/WeChatSetup-3.9.2.23.exe)|
+
 ## HISTORY
 
-### main v1.12.0 (November 22, 2022)
+### next v1.13.0 (September 21, 2023)
+
+1. This version start to support WeChat v3.9.2.23,need to update WeChat on your pc to 3.9.2.23
+2. [WeChatSetup-v3.2.2.23.exe](https://github.com/tom-snow/wechat-windows-versions/releases/download/v3.9.2.23/WeChatSetup-3.9.2.23.exe)
+
+### main v1.12.7 (November 22, 2022)
 
 1. This version start to support WeChat v3.6.0.18,need to update WeChat on your pc to 3.6.0.18
 2. [WeChatSetup-v3.6.0.18.exe](https://github.com/tom-snow/wechat-windows-versions/releases/download/v3.6.0.18/WeChatSetup-3.6.0.18.exe)
