@@ -26,6 +26,7 @@
     "quick-start": "cross-env NODE_OPTIONS=\"--no-warnings --loader=ts-node/esm\" node examples/quick-start.ts",
     "start:raw": "cross-env BROLOG_LEVEL=silly NODE_OPTIONS=\"--no-warnings --loader=ts-node/esm\" node examples/raw-sidecar.ts",
     "start:ripe": "cross-env WECHATY_LOG=verbose NODE_OPTIONS=\"--no-warnings --loader=ts-node/esm\" node examples/ripe-wechaty.ts",
+    "start:ripe:info": "cross-env WECHATY_LOG=info NODE_OPTIONS=\"--no-warnings --loader=ts-node/esm\" node examples/ripe-wechaty.ts",
     "lint": "npm run lint:es && npm run lint:ts && npm run lint:md",
     "lint:md": "markdownlint README.md",
     "lint:ts": "tsc --isolatedModules --noEmit",

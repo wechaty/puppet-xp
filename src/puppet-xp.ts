@@ -108,7 +108,7 @@ class PuppetXp extends PUPPET.Puppet {
     this.#sidecar = new WeChatSidecar()
 
     await attach(this.sidecar)
-    void this.onLogin()
+    await this.onLogin()
 
     this.sidecar.on('hook', ({ method, args }) => {
       log.verbose('PuppetXp', 'onHook(%s, %s)', method, JSON.stringify(args))
