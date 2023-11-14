@@ -286,7 +286,7 @@ const recvMsgNativeCallback = (() => {
           //  console.log(msgType)
           //  console.log(contentPtr.readUtf16String())
           //  console.log('----------------------------------------')
-          const groupMsgAddr = addr.add(0x170).readU32() //* 2 + 2
+          const groupMsgAddr = addr.add(0x174).readU32() //* 2 + 2
           let myGroupMsgSenderIdPtr = null
           if (groupMsgAddr == 0) { //weChatPublic is zero，type is 49
 
@@ -295,8 +295,8 @@ const recvMsgNativeCallback = (() => {
 
           } else {
 
-            const groupMsgSenderIdPtr = addr.add(0x170).readPointer()
-            const groupMsgSenderIdLen = addr.add(0x170 + 0x04).readU32() * 2 + 2
+            const groupMsgSenderIdPtr = addr.add(0x174).readPointer()
+            const groupMsgSenderIdLen = addr.add(0x174 + 0x04).readU32() * 2 + 2
             myGroupMsgSenderIdPtr = Memory.alloc(groupMsgSenderIdLen)
             Memory.copy(myGroupMsgSenderIdPtr, groupMsgSenderIdPtr, groupMsgSenderIdLen)
 
@@ -458,7 +458,7 @@ const getContactNativeFunction = (() => {
 
   //console.log(ret)
 
-  console.log('getContactNativeFunction:', ret.length)
+  // console.log('getContactNativeFunction:', ret.length)
   /*for (let item of ret){
     console.log(JSON.stringify(item))
   }*/
@@ -794,7 +794,7 @@ const getChatroomMemberNickInfoFunction = ((memberId, roomId) => {
   nativeativeFunction()
 
   const nickname = readWideString(nickBuff)
-  console.log('----nickname', nickname)
+  // console.log('----nickname', nickname)
   return readWideString(nickBuff)
 })
 
