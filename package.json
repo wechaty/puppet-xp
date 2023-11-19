@@ -1,6 +1,6 @@
 {
   "name": "wechaty-puppet-xp",
-  "version": "1.13.1",
+  "version": "1.13.2",
   "description": "Puppet XP for Wechaty",
   "type": "module",
   "exports": {
@@ -38,7 +38,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/wechaty/wechaty-puppet-mock.git"
+    "url": "git+https://github.com/wechaty/puppet-xp.git"
   },
   "keywords": [
     "chatie",
@@ -53,9 +53,9 @@
   "author": "Huan LI <zixia@zixia.net>",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/wechaty/wechaty-puppet-mock/issues"
+    "url": "https://github.com/wechaty/puppet-xp/issues"
   },
-  "homepage": "https://github.com/wechaty/wechaty-puppet-mock#readme",
+  "homepage": "https://github.com/wechaty/puppet-xp#readme",
   "devDependencies": {
     "@chatie/eslint-config": "^1.0.4",
     "@chatie/git-scripts": "^0.7.7",
@@ -63,13 +63,13 @@
     "@chatie/tsconfig": "^4.5.3",
     "@types/cuid": "^2.0.1",
     "@types/faker": "^5.5.9",
-    "@types/qrcode-terminal": "^0.12.0",
+    "@types/qrcode-terminal": "^0.12.2",
     "@types/xml2js": "^0.4.9",
     "husky": "^7.0.4",
     "qrcode-terminal": "^0.12.0",
     "tstest": "^1.0.1",
     "typed-emitter": "^1.4.0",
-    "wechaty": "^1.7.21"
+    "wechaty": "^1.20.2"
   },
   "peerDependencies": {
     "wechaty-puppet": "^1.10.2"
@@ -91,10 +91,5 @@
   "publishConfig": {
     "access": "public",
     "tag": "next"
-  },
-  "git": {
-    "scripts": {
-      "pre-push": "npx git-scripts-pre-push"
-    }
   }
 }

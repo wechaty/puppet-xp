@@ -109,8 +109,7 @@ class PuppetXp extends PUPPET.Puppet {
 
     await attach(this.sidecar)
     await this.onLogin()
-
-    await this.onLogin()
+    await this.onAgentReady()
 
     this.sidecar.on('hook', ({ method, args }) => {
       log.verbose('PuppetXp', 'onHook(%s, %s)', method, JSON.stringify(args))
@@ -148,6 +147,7 @@ class PuppetXp extends PUPPET.Puppet {
     // if (!isLoggedIn) {
     //   await this.sidecar.callLoginQrcode(false)
     // }
+
   }
 
   private async onLogin () {

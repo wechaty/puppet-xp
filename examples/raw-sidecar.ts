@@ -41,6 +41,12 @@ async function main() {
   const myselfInfo = await sidecar.getMyselfInfo()
   console.info(`myInfo: ${myselfInfo}`)
 
+  // const contactList = await sidecar.getContact()
+  // console.info(`contactList: ${contactList}`)
+
+  // const roomList = await sidecar.getChatroomMemberInfo()
+  // console.info(`contactList: ${roomList}`)
+
   sidecar.on('hook', ({ method, args }) => {
 
     switch (method) {
@@ -64,8 +70,10 @@ async function main() {
 
   })
 
-  const onLogin = () => {
+  const onLogin = async () => {
     console.info('You are logged in.')
+    await sidecar.sendMsg('filehelper', 'Sidecar is ready!')
+
   }
 
   const onLogout = (bySrv: number) => {
@@ -107,9 +115,6 @@ async function main() {
     const toId = String(args[1])
     const text = String(args[2])
     const talkerId = String(args[3])
-
-    console.info('recvMsg: talkerId =', talkerId)
-    console.info('recvMsg: text =', text)
 
     if (talkerId && text === 'ding') {
       console.info('recvMsg: ding found, reply dong')

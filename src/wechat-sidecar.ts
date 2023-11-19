@@ -111,6 +111,9 @@ class WeChatSidecar extends SidecarBody {
   // @Call(agentTarget('getTestInfoFunction'))
   // getTestInfo ():Promise<string> { return Ret() }
 
+  // @Call(agentTarget('getLoginUrlFunction'))
+  // getLoginUrl ():Promise<string> { return Ret() }
+
   @Call(agentTarget('getChatroomMemberNickInfoFunction'))
   getChatroomMemberNickInfo (
     memberId: string,
