@@ -14,7 +14,7 @@ import { FileBox } from 'file-box'
 
 import { PuppetXp } from '../src/puppet-xp.js'
 import qrcodeTerminal from 'qrcode-terminal'
-import fs from 'fs'
+import * as fs from 'fs'
 
 function onScan (qrcode: string, status: ScanStatus) {
   if (qrcode) {
@@ -100,8 +100,10 @@ async function onMessage (msg: Message) {
         text: msg.text(),
         type: msg.type(),
       }
-      const logPath = 'examples/log/message.log'
+
+      const logPath = 'examples/file/message.log'
       fs.appendFileSync(logPath, JSON.stringify(logData, null, 2) + '\n')
+
       log.info(`Logged message data to ${logPath}`)
     }
   } catch (e) {
