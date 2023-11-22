@@ -122,6 +122,9 @@ bot.on('scan', onScan)
 bot.on('login', onLogin)
 bot.on('logout', onLogout)
 bot.on('message', onMessage)
+bot.on('heartbeat', (data)=>{
+  console.info(data)
+})
 bot.on('room-join', async (room, inviteeList, inviter) => {
   const nameList = inviteeList.map(c => c.name()).join(',')
   log.info(`Room ${await room.topic()} got new member ${nameList}, invited by ${inviter}`)

@@ -36,8 +36,12 @@ async function main() {
   const isSupported = await sidecar.checkSupported()
   console.info(`\nWeChat Version: ${ver} -> ${verStr} , Supported: ${isSupported}\n`)
 
-  const isLoggedIn = await sidecar.isLoggedIn()
+  const url = await sidecar.getLoginUrl()
+  console.info('url...\n', url)
+
+  let isLoggedIn = false
   console.info(`has Logged In: ${isLoggedIn}`)
+
   const myselfInfo = await sidecar.getMyselfInfo()
   console.info(`myInfo: ${myselfInfo}`)
 
@@ -47,7 +51,7 @@ async function main() {
   // const roomList = await sidecar.getChatroomMemberInfo()
   // console.info(`contactList: ${roomList}`)
 
-  sidecar.on('hook', ({ method, args }) => {
+  sidecar.on('hook', async ({ method, args }) => {
 
     switch (method) {
       case 'recvMsg':
@@ -57,7 +61,7 @@ async function main() {
         onScan(args)
         break
       case 'loginEvent':
-        onLogin()
+        if(!isLoggedIn && (await sidecar.isLoggedIn())) onLogin()
         break
       case 'logoutEvent':
         onLogout(args[0] as number)
@@ -71,8 +75,9 @@ async function main() {
   })
 
   const onLogin = async () => {
+    isLoggedIn = true
     console.info('You are logged in.')
-    await sidecar.sendMsg('filehelper', 'Sidecar is ready!')
+    // await sidecar.sendMsg('filehelper', 'Sidecar is ready!')
 
   }
 

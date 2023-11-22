@@ -73,6 +73,10 @@ class PuppetXp extends PUPPET.Puppet {
 
   private selfInfo: any
 
+  private qrcodeUrl: string
+
+  private lastHeartBeatTime: number
+
   #sidecar?: WeChatSidecar
   protected get sidecar (): WeChatSidecar {
     return this.#sidecar!
@@ -89,6 +93,8 @@ class PuppetXp extends PUPPET.Puppet {
     this.roomStore = {}
     this.contactStore = {}
     this.selfInfo = {}
+    this.qrcodeUrl = ''
+    this.lastHeartBeatTime = 0
   }
 
   override version () {
@@ -108,12 +114,10 @@ class PuppetXp extends PUPPET.Puppet {
     this.#sidecar = new WeChatSidecar()
 
     await attach(this.sidecar)
-    await this.onLogin()
     await this.onAgentReady()
-
-    this.sidecar.on('hook', ({ method, args }) => {
-      log.verbose('PuppetXp', 'onHook(%s, %s)', method, JSON.stringify(args))
-
+    this.sidecar.on('hook', ({ method, args }) =>  {
+      // log.verbose('PuppetXp', 'onHook(%s, %s)', method, JSON.stringify(args))
+      const now = new Date().getTime()
       switch (method) {
         case 'recvMsg':
           this.onHookRecvMsg(args)
@@ -121,9 +125,44 @@ class PuppetXp extends PUPPET.Puppet {
         case 'checkQRLogin':
           this.onScan(args)
           break
-        case 'loginEvent':
-          void this.onLogin()
+        case 'loginEvent':{
+          this.sidecar.isLoggedIn()
+            .then((isLoggedIn) => {
+            // 如果没有登录，就调用登录二维码事件
+              if (!this.isLoggedIn && !isLoggedIn) {
+                this.onScan()
+              }
+
+              // 如果是首次获得登录状态，就调用登录事件
+              if (!this.isLoggedIn && isLoggedIn) {
+                if (now - this.lastHeartBeatTime > 30000) {
+                  this.lastHeartBeatTime = now
+                  void this.onLogin()
+                }
+              }
+
+              // 如果是首次获得登出状态，就调用登出事件
+              if (this.isLoggedIn && !isLoggedIn) {
+                if (now - this.lastHeartBeatTime > 30000) {
+                  this.lastHeartBeatTime = now
+                  void this.onLogout()
+                }
+              }
+
+              // 如果是登录状态，就调用心跳事件
+              if (this.isLoggedIn) {
+                if (now - this.lastHeartBeatTime > 30000) {
+                  this.lastHeartBeatTime = now
+                  this.emit('heartbeat', { data: 'heartbeat' })
+                }
+              }
+              return null
+            })
+            .catch((err) => {
+              console.error(err)
+            })
           break
+        }
         case 'agentReady':
           void this.onAgentReady()
           break
@@ -151,6 +190,7 @@ class PuppetXp extends PUPPET.Puppet {
   }
 
   private async onLogin () {
+    log.verbose('PuppetXp', 'onLogin()')
 
     const selfInfoRaw = JSON.parse(await this.sidecar.getMyselfInfo())
     // console.debug('selfInfoRaw:\n\n\n', selfInfoRaw)
@@ -168,59 +208,85 @@ class PuppetXp extends PUPPET.Puppet {
     this.selfInfo = selfInfo
     await this.loadContactList()
     await this.loadRoomList()
-
     await super.login(this.selfInfo.id)
 
     // console.debug(this.roomStore)
     // console.debug(this.contactStore)
   }
 
-  private async onLogout (reasonNum: number) {
+  private async onLogout (reasonNum?: number) {
     await super.logout(reasonNum ? 'Kicked by server' : 'logout')
   }
 
-  private onScan (args: any) {
-    const statusMap = [
-      PUPPET.types.ScanStatus.Waiting,
-      PUPPET.types.ScanStatus.Scanned,
-      PUPPET.types.ScanStatus.Confirmed,
-      PUPPET.types.ScanStatus.Timeout,
-      PUPPET.types.ScanStatus.Cancel,
-    ]
+  private onScan (args?: any) {
+    if (args) {
+      const statusMap = [
+        PUPPET.types.ScanStatus.Waiting,
+        PUPPET.types.ScanStatus.Scanned,
+        PUPPET.types.ScanStatus.Confirmed,
+        PUPPET.types.ScanStatus.Timeout,
+        PUPPET.types.ScanStatus.Cancel,
+      ]
 
-    const status: number = args[0]
-    const qrcodeUrl: string = args[1]
-    const wxid: string = args[2]
-    const avatarUrl: string = args[3]
-    const nickname: string = args[4]
-    const phoneType: string = args[5]
-    const phoneClientVer: number = args[6]
-    const pairWaitTip: string = args[7]
+      const status: number = args[0]
+      const qrcodeUrl: string = args[1]
+      const wxid: string = args[2]
+      const avatarUrl: string = args[3]
+      const nickname: string = args[4]
+      const phoneType: string = args[5]
+      const phoneClientVer: number = args[6]
+      const pairWaitTip: string = args[7]
 
-    log.info(
-      'PuppetXp',
-      'onScan() data: %s',
-      JSON.stringify(
-        {
-          avatarUrl,
-          nickname,
-          pairWaitTip,
-          phoneClientVer: phoneClientVer.toString(16),
-          phoneType,
-          qrcodeUrl,
-          status,
-          wxid,
-        }, null, 2))
+      log.info(
+        'PuppetXp',
+        'onScan() data: %s',
+        JSON.stringify(
+          {
+            avatarUrl,
+            nickname,
+            pairWaitTip,
+            phoneClientVer: phoneClientVer.toString(16),
+            phoneType,
+            qrcodeUrl,
+            status,
+            wxid,
+          }, null, 2))
 
-    if (pairWaitTip) {
-      log.warn('PuppetXp', 'onScan() pairWaitTip: "%s"', pairWaitTip)
+      if (pairWaitTip) {
+        log.warn('PuppetXp', 'onScan() pairWaitTip: "%s"', pairWaitTip)
+      }
+
+      this.scanEventData = {
+        qrcode: qrcodeUrl,
+        status: statusMap[args[0]] ?? PUPPET.types.ScanStatus.Unknown,
+      }
+      if (this.scanEventData.qrcode && this.qrcodeUrl !== this.scanEventData.qrcode && this.scanEventData.qrcode !== 'http://weixin.qq.com/x/null') {
+        console.info('scanEventData', this.scanEventData)
+
+        this.qrcodeUrl = this.scanEventData.qrcode
+        this.emit('scan', this.scanEventData)
+      } else if (this.scanEventData.qrcode === 'http://weixin.qq.com/x/null') {
+        console.info('操作提示：', '请在微信客户端点击【进入微信】登录')
+      }
+    } else {
+      this.sidecar.getLoginUrl().then((qrcodeUrl) => {
+        this.scanEventData = {
+          qrcode: qrcodeUrl,
+          status: PUPPET.types.ScanStatus.Waiting,
+        }
+        if (this.scanEventData.qrcode && this.qrcodeUrl !== this.scanEventData.qrcode && this.scanEventData.qrcode !== 'http://weixin.qq.com/x/null') {
+          console.info('scanEventData', this.scanEventData)
+
+          this.qrcodeUrl = this.scanEventData.qrcode
+          this.emit('scan', this.scanEventData)
+        } else if (this.scanEventData.qrcode === 'http://weixin.qq.com/x/null') {
+          console.info('操作提示：', '请在微信客户端点击【进入微信】登录')
+        }
+        return null
+      }).catch((err) => {
+        console.error('getLoginUrl fail:', err)
+      })
     }
-
-    this.scanEventData = {
-      qrcode: qrcodeUrl,
-      status: statusMap[args[0]] ?? PUPPET.types.ScanStatus.Unknown,
-    }
-    this.emit('scan', this.scanEventData)
   }
 
   private onHookRecvMsg (args: any) {
