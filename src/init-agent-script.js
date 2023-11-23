@@ -54,6 +54,9 @@ const wxOffsets = {
     WX_SNS_GET_FIRST_PAGE_OFFSET: 0x14e2140,
     WX_SNS_GET_NEXT_PAGE_OFFSET: 0x14e21e0,
   },
+  shareRecordMgr:{
+    WX_SHARE_RECORD_MGR_OFFSET: 0x78cb40,
+  },
   chatRoom: {
     WX_GET_CHAT_ROOM_DETAIL_INFO_OFFSET: 0xbde090,
     WX_NEW_CHAT_ROOM_INFO_OFFSET: 0xe99c40,
@@ -413,7 +416,7 @@ const checkSupportedFunction = (() => {
 })
 
 // 检测是否已经登录
-const CheckLogin = () => {
+const checkLogin = () => {
   let success = -1
   const accout_service_addr = moduleBaseAddress.add(offset.WX_ACCOUNT_SERVICE_OFFSET)
   const callFunction = new NativeFunction(accout_service_addr, 'pointer', [])
@@ -643,16 +646,27 @@ const getLoginUrlFunction = (() => {
   return loginUrl
 })
 
-// 登出——未实现
-const Logout = () => {
-  let success = -1
-  if (!CheckLogin()) {
-    return success
+// 登出——未验证
+function logout() {
+  var success = -1;
+  if (!checkLogin()) {
+    return success;
   }
-  const account_service_addr = moduleBaseAddress.add(offset.WX_ACCOUNT_SERVICE_OFFSET).readPointer()
-  const logout_addr = moduleBaseAddress.add(offset.WX_LOGOUT_OFFSET).readPointer()
-  success = logout_addr.call(account_service_addr, 0x0)
-  return success
+
+  // 这里需要替换为具体的基地址和偏移量
+  var base_addr = moduleBaseAddress; 
+  var account_service_addr = base_addr.add(wxOffsets.login.WX_ACCOUNT_SERVICE_OFFSET);
+  var logout_addr = base_addr.add(wxOffsets.login.WX_LOGOUT_OFFSET);
+
+  // 创建对应的NativeFunction
+  var account_service = new NativeFunction(account_service_addr, 'uint', []);
+  var logout = new NativeFunction(logout_addr, 'uint', ['uint']);
+
+  // 调用函数
+  var ecx = account_service();
+  success = logout(ecx);
+
+  return success;
 }
 
 // 获取自己的信息
@@ -735,6 +749,95 @@ const getContactNativeFunction = (() => {
   return JSON.stringify(contactList);
 });
 
+// 删除联系人——待验证
+function delContact(wxid) {
+  var success = -1;
+
+  var base_addr = moduleBaseAddress; // 替换为具体的基地址值
+  var sync_mgr_addr = base_addr.add(wxOffsets.contact.WX_SYNC_MGR_OFFSET);
+  var del_contact_addr = base_addr.add(wxOffsets.contact.WX_DO_DEL_CONTACT_OFFSET);
+
+  // 假设Utils.WstringToUTF8已经在JavaScript中实现
+  var id_cstr = WstringToUTF8(wxid);
+  var id_ = Memory.allocUtf8String(id_cstr);
+  var buff = Memory.alloc(0x10);
+
+  // 创建对应的NativeFunction
+  var sync_mgr = new NativeFunction(sync_mgr_addr, 'pointer', []);
+  var del_contact = new NativeFunction(del_contact_addr, 'int', ['pointer']);
+
+  // 调用函数
+  var ecx = sync_mgr();
+  Memory.writePointer(buff.add(4), id_);
+  success = del_contact(ecx);
+
+  return success;
+}
+
+// 添加好友——待验证
+function ddFriendByWxid(wxid, msg) {
+  var success = -1;
+
+  var base_addr = moduleBaseAddress; // 替换为具体的基地址值
+  var contact_mgr_addr = base_addr.add(wxOffsets.contactMgr.WX_CONTACT_MGR_OFFSET );
+  var verify_msg_addr = base_addr.add(wxOffsets.contact.WX_VERIFY_MSG_OFFSET);
+  var set_value_addr = base_addr.add(wxOffsets.setChatMsgValue.WX_INIT_CHAT_MSG_OFFSET);
+  var do_verify_user_addr = base_addr.add(wxOffsets.contact.WX_DO_VERIFY_USER_OFFSET);
+  var fn1_addr = base_addr.add(0x7591b0);
+
+  // 创建对应的NativeFunction
+  var contact_mgr = new NativeFunction(contact_mgr_addr, 'uint', []);
+  var verify_msg = new NativeFunction(verify_msg_addr, 'void', ['pointer', 'int', 'pointer']);
+  var set_value = new NativeFunction(set_value_addr, 'void', ['pointer', 'int']);
+  var do_verify_user = new NativeFunction(do_verify_user_addr, 'int', ['uint']);
+
+  var user_id = Memory.allocUtf16String(wxid);
+  var w_msg = Memory.allocUtf16String(msg);
+  var instance = contact_mgr();
+
+  var null_obj = Memory.alloc(0x18);
+  Memory.writeU8(null_obj, 0);
+  Memory.writeU8(null_obj.add(0x14), 0xF);
+  Memory.writeU8(null_obj.add(0x10), 0);
+
+  verify_msg(w_msg, -1, null_obj);
+  set_value(user_id, 2);
+  success = do_verify_user(instance);
+
+  return success;
+}
+
+// 好有验证信息
+function verifyApply(v3, v4, permission) {
+  var success = -1;
+
+  var base_addr = moduleBaseAddress; // 替换为具体的基地址值
+  var set_value_addr = base_addr.add(wxOffsets.setChatMsgValue.WX_INIT_CHAT_MSG_OFFSET);
+  var verify_addr = base_addr.add(wxOffsets.contact.WX_VERIFY_OK_OFFSET);
+  var new_helper_addr = base_addr.add(wxOffsets.contact.WX_NEW_ADD_FRIEND_HELPER_OFFSET);
+  var free_helper_addr = base_addr.add(wxOffsets.contact.WX_FREE_ADD_FRIEND_HELPER_OFFSET);
+
+  // 创建对应的NativeFunction
+  var set_value = new NativeFunction(set_value_addr, 'void', ['pointer', 'int']);
+  var verify = new NativeFunction(verify_addr, 'int', ['pointer', 'pointer', 'pointer', 'int', 'int']);
+  var new_helper = new NativeFunction(new_helper_addr, 'void', ['pointer']);
+  var free_helper = new NativeFunction(free_helper_addr, 'void', ['pointer']);
+
+  var v4_str = Memory.allocUtf16String(v4);
+  var v3_str = Memory.allocUtf16String(v3);
+  var helper_obj = Memory.alloc(0x40);
+  var nullbuffer = Memory.alloc(0x3CC);
+  var flag = permission < 0 ? 0 : permission;
+
+  // 调用函数
+  new_helper(helper_obj);
+  set_value(v4_str, 0x6);
+  success = verify(helper_obj, nullbuffer, v3_str, flag, 0x6);
+  free_helper(helper_obj);
+
+  return success;
+}
+
 // 获取群组列表
 const getChatroomMemberInfoFunction = (() => {
   // 获取群组列表地址
@@ -788,7 +891,7 @@ const getChatroomMemberInfoFunction = (() => {
 });
 
 // 获取群成员昵称
-const getChatroomMemberNickInfoFunction = ((memberId, roomId) => {
+const getChatroomMemberNickInfoFunction2 = ((memberId, roomId) => {
   let memberNickBuffAsm = null
   let nickRoomId = null
   let nickMemberId = null
@@ -832,6 +935,191 @@ const getChatroomMemberNickInfoFunction = ((memberId, roomId) => {
   // console.log('----nickname', nickname)
   return readWideString(nickBuff)
 })
+
+const getChatroomMemberNickInfoFunction = ((memberId, roomId) => {
+  // 分配内存用于存放结果字符串
+  const nickBuffSize = 0x7e4; // 根据需要调整大小
+  let nickBuff = Memory.alloc(nickBuffSize);
+
+  // 初始化ID结构
+  let nickRoomId = initidStruct(roomId);
+  let nickMemberId = initStruct(memberId);
+
+  // 分配内存用于汇编代码
+  let memberNickBuffAsm = Memory.alloc(Process.pageSize);
+
+  // 构建汇编代码
+  Memory.patchCode(memberNickBuffAsm, Process.pageSize, code => {
+    const cw = new X86Writer(code, { pc: memberNickBuffAsm });
+    cw.putPushfx();
+    cw.putPushax();
+    cw.putMovRegAddress('edi', nickRoomId);
+    cw.putMovRegAddress('eax', nickBuff);
+    cw.putMovRegReg('edx', 'edi');
+    cw.putPushReg('eax');
+    cw.putMovRegAddress('ecx', nickMemberId);
+    cw.putCallAddress(moduleBaseAddress.add(0xC06F10));
+    cw.putAddRegImm('esp', 0x04);
+    cw.putPopax();
+    cw.putPopfx();
+    cw.putRet();
+    cw.flush();
+  });
+
+  // 调用汇编代码
+  const nativeFunction = new NativeFunction(ptr(memberNickBuffAsm), 'void', []);
+  try {
+    nativeFunction();
+  } catch (e) {
+    console.error('Error during native function execution:', e);
+    return null;
+  }
+
+  // 读取结果字符串
+  try {
+    return readWideString(nickBuff);
+  } catch (e) {
+    console.error('Error getChatroomMemberNickInfoFunction reading wide string:', e);
+    return null;
+  }
+});
+
+const getChatroomMemberNickInfoFunction1 = ((memberId, roomId) => {
+  var base_addr = moduleBaseAddress; // 替换为具体的基地址值
+  var getChatRoomMgrAddr = base_addr.add(wxOffsets.chatRoomMgr.WX_CHAT_ROOM_MGR_OFFSET);
+  var getNicknameAddr = base_addr.add(wxOffsets.chatRoom.WX_GET_MEMBER_NICKNAME_OFFSET);
+  var contactMgrAddr = base_addr.add(wxOffsets.contactMgr.WX_CONTACT_MGR_OFFSET);
+  var getContactAddr = base_addr.add(wxOffsets.contact.WX_GET_CONTACT_OFFSET);
+  var freeContactAddr = base_addr.add(wxOffsets.chatRoom.WX_FREE_CONTACT_OFFSET);
+
+  var chatRoom = Memory.allocUtf16String(roomId);
+  var member = Memory.allocUtf16String(memberId);
+  var nickname = Memory.alloc(0x7e4); // 确认这是 WeChatString 对象的正确大小
+
+  // 创建对应的 NativeFunction
+  var getChatRoomMgr = new NativeFunction(getChatRoomMgrAddr, 'pointer', []);
+  var getNickname = new NativeFunction(getNicknameAddr, 'void', ['pointer', 'pointer', 'pointer', 'pointer']);
+  var getContact = new NativeFunction(getContactAddr, 'void', ['pointer', 'pointer']);
+  var freeContact = new NativeFunction(freeContactAddr, 'void', ['pointer']);
+
+  // 获取昵称
+  var mgr = getChatRoomMgr();
+  getNickname(nickname, member, chatRoom, mgr);
+
+  var name = '';
+  if (Memory.readPointer(nickname) !== NULL) {
+    name = Memory.readUtf16String(Memory.readPointer(nickname));
+  } else {
+    var buff = Memory.alloc(0x440);
+    var contactMgr = contactMgrAddr();
+    getContact(buff, member, contactMgr);
+    name = readWideString(buff.add(0x6C)); // 假设 READ_WSTRING 是一个有效的读取宽字符串的函数
+
+    freeContact(buff);
+  }
+
+  console.log('Nickname:', name);
+  return name;
+});
+
+// 删除群成员——待验证
+function delMemberFromChatRoom(chat_room_id, wxids) {
+  var success = 0;
+
+  // 假设 'base_addr_', 'WX_CHAT_ROOM_MGR_OFFSET', 
+  // 'WX_DEL_CHAT_ROOM_MEMBER_OFFSET', 和 'WX_INIT_CHAT_MSG_OFFSET' 已经定义
+
+  // 调用微信的内部函数需要获取相应的地址
+  var getChatRoomMgrAddr = moduleBaseAddress.add(wxOffsets.chatRoomMgr.WX_CHAT_ROOM_MGR_OFFSET);
+  var delMemberAddr = moduleBaseAddressadd(wxOffsets.chatRoom.WX_DEL_CHAT_ROOM_MEMBER_OFFSET);
+  var initChatMsgAddr = moduleBaseAddress.add(wxOffsets.setChatMsgValue.WX_INIT_CHAT_MSG_OFFSET);
+
+  // 使用 Frida 的 Interceptor API 来调用函数
+  // 注意：这里的调用方式需要根据实际函数的签名来调整
+  var chatRoomMgr = new NativeFunction(getChatRoomMgrAddr, 'pointer', []);
+  var delMember = new NativeFunction(delMemberAddr, 'int', ['pointer', 'pointer']);
+  var initChatMsg = new NativeFunction(initChatMsgAddr, 'void', ['pointer']);
+
+  // 逻辑实现
+  var chatRoom = Memory.allocUtf16String(chat_room_id);
+  initChatMsg(chatRoom);
+  
+  wxids.forEach(wxid => {
+    var pwxid = Memory.allocUtf16String(wxid);
+    var result = delMember(chatRoomMgr(), pwxid);
+    if (result === 1) {
+      success++;
+    }
+  });
+
+  return success;
+}
+
+// 添加群成员——待验证
+function addMemberToChatRoom(chat_room_id, wxids) {
+  var success = -1;
+
+  // 假设 'base_addr_', 'WX_CHAT_ROOM_MGR_OFFSET', 
+  // 'WX_ADD_MEMBER_TO_CHAT_ROOM_OFFSET', 和 'WX_INIT_CHAT_MSG_OFFSET' 已经定义
+
+  var getChatRoomMgrAddr = moduleBaseAddress.add(wxOffsets.chatRoomMgr.WX_CHAT_ROOM_MGR_OFFSET);
+  var addMemberAddr = moduleBaseAddress.add(wxOffsets.chatRoom.WX_ADD_MEMBER_TO_CHAT_ROOM_OFFSET);
+  var initChatMsgAddr = moduleBaseAddress.add(wxOffsets.setChatMsgValue.WX_INIT_CHAT_MSG_OFFSET);
+
+  // 创建 NativeFunction 实例
+  var chatRoomMgr = new NativeFunction(getChatRoomMgrAddr, 'pointer', []);
+  var addMember = new NativeFunction(addMemberAddr, 'int', ['pointer', 'pointer']);
+  var initChatMsg = new NativeFunction(initChatMsgAddr, 'void', ['pointer']);
+
+  var chatRoom = Memory.allocUtf16String(chat_room_id);
+  initChatMsg(chatRoom);
+
+  var temp = chatRoomMgr();
+  var membersPtr = Memory.alloc(Process.pointerSize * wxids.length);
+
+  wxids.forEach((wxid, index) => {
+    var pwxid = Memory.allocUtf16String(wxid);
+    membersPtr.add(Process.pointerSize * index).writePointer(pwxid);
+  });
+
+  success = addMember(temp, membersPtr);
+
+  return success;
+}
+
+// 邀请群成员——待验证
+function inviteMemberToChatRoom(roomId, wxids) {
+  let success = -1;
+  let chatRoom = Memory.allocUtf16String(roomId);
+  let members = new Array(wxids.length);
+  for (let i = 0; i < wxids.length; i++) {
+      members[i] = Memory.allocUtf16String(wxids[i]);
+  }
+
+  const baseAddr = moduleBaseAddress; // Replace with actual base address
+  const getChatRoomMgrAddr = baseAddr.add(wxOffsets.chatRoomMgr.WX_CHAT_ROOM_MGR_OFFSET);
+  const addMemberAddr = baseAddr.add(wxOffsets.chatRoom.WX_ADD_MEMBER_TO_CHAT_ROOM_OFFSET);
+  const initChatMsgAddr = baseAddr.add(wxOffsets.setChatMsgValue.WX_INIT_CHAT_MSG_OFFSET);
+  const getShareRecordMgrAddr = baseAddr.add(wxOffsets.shareRecordMgr.WX_SHARE_RECORD_MGR_OFFSET);
+
+  const fn1Addr = baseAddr.add(ptr('0x7f99d0'));
+  const fn2Addr = baseAddr.add(ptr('0x78cef0'));
+  const fn3Addr = baseAddr.add(ptr('0x7fa980'));
+  const fn4Addr = baseAddr.add(ptr('0x755060'));
+  const inviteAddr = baseAddr.add(ptr('0xbd1a00'));
+
+  const sysAddr = Module.findExportByName("win32u.dll", "YOUR_EXPORTED_FUNCTION"); // Replace with actual function name
+  const addrArray = [sysAddr, ptr('0')];
+
+  // Define native functions using Frida's NativeFunction
+  // Example: const yourFunction = new NativeFunction(fn1Addr, 'return_type', ['arg1_type', 'arg2_type', ...]);
+
+  // Perform the necessary calls and operations as in the original C/C++ code
+  // Example: yourFunction(arg1, arg2, ...);
+
+  success = 1;
+  return success;
+}
 
 // 发送文本消息
 const sendMsgNativeFunction = ((talkerId, content) => {
@@ -1124,6 +1412,41 @@ const SendMiniProgramNativeFunction = ((bg_path_str,contactId,xmlstr) => {
 
 
 })
+
+// 转发消息
+// function forwardMsg(wxid, msgid) {
+//   var success = 0;
+
+//   // 假设DB.GetInstance().GetLocalIdByMsgId是一个已经在JavaScript中实现的函数
+//   var db_index = 0;
+//   var localid = GetLocalIdByMsgId(msgid, db_index);
+
+//   if (localid === 0) return 0;
+
+//   var base_addr = ptr('基地址值'); // 替换为具体的基地址值
+//   var forward_msg_addr = base_addr.add('WX_FORWARD_MSG_OFFSET的值');
+//   var init_chat_msg_addr = base_addr.add('WX_INIT_CHAT_MSG_OFFSET的值');
+
+//   // 创建对应的NativeFunction
+//   var init_chat_msg = new NativeFunction(init_chat_msg_addr, 'void', ['pointer', 'int', 'pointer']);
+//   var forward_msg = new NativeFunction(forward_msg_addr, 'uchar', ['int']);
+
+//   // 构造WeChatString对象
+//   var WeChatString = Memory.allocUtf16String(wxid);
+
+//   // 准备参数并调用函数
+//   var stack = Memory.alloc(0x1c);
+//   var edx = db_index;
+//   var esi = WeChatString;
+
+//   Memory.writePointer(stack, ptr(localid));
+//   Memory.writePointer(stack.add(4), esi);
+//   init_chat_msg(stack, edx, stack);
+
+//   success = forward_msg(0);
+
+//   return success;
+// }
 
 // 接收消息回调
 const recvMsgNativeCallback = (() => {

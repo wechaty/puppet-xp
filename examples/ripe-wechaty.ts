@@ -33,10 +33,18 @@ function onScan (qrcode: string, status: ScanStatus) {
 
 async function onLogin (user: Contact) {
   log.info('StarterBot', '%s login', user)
-  const roomList = await bot.Room.findAll()
-  console.info(roomList.length)
+  // const contactList = await bot.Contact.findAll()
+  // console.info('contactList.length', contactList.length)
+  // const roomList = await bot.Room.findAll()
+  // console.info('roomList.length', roomList.length)
+}
+
+async function onReady () {
+  log.info('StarterBot', '%s onReady')
   const contactList = await bot.Contact.findAll()
-  console.info(contactList.length)
+  console.info('contactList.length', contactList.length)
+  const roomList = await bot.Room.findAll()
+  console.info('roomList.length', roomList.length)
 }
 
 function onLogout (user: Contact) {
@@ -120,6 +128,7 @@ const bot = WechatyBuilder.build({
 
 bot.on('scan', onScan)
 bot.on('login', onLogin)
+bot.on('ready', onReady)
 bot.on('logout', onLogout)
 bot.on('message', onMessage)
 bot.on('heartbeat', (data)=>{

@@ -77,6 +77,8 @@ class PuppetXp extends PUPPET.Puppet {
 
   private lastHeartBeatTime: number
 
+  private isLogging: boolean
+
   #sidecar?: WeChatSidecar
   protected get sidecar (): WeChatSidecar {
     return this.#sidecar!
@@ -95,6 +97,7 @@ class PuppetXp extends PUPPET.Puppet {
     this.selfInfo = {}
     this.qrcodeUrl = ''
     this.lastHeartBeatTime = 0
+    this.isLogging = false
   }
 
   override version () {
@@ -128,22 +131,21 @@ class PuppetXp extends PUPPET.Puppet {
         case 'loginEvent':{
           this.sidecar.isLoggedIn()
             .then((isLoggedIn) => {
+              // console.info('isLoggedIn', isLoggedIn)
+              // console.info('this.isLoggedIn', this.isLoggedIn)
             // 如果没有登录，就调用登录二维码事件
               if (!this.isLoggedIn && !isLoggedIn) {
                 this.onScan()
               }
 
               // 如果是首次获得登录状态，就调用登录事件
-              if (!this.isLoggedIn && isLoggedIn) {
-                if (now - this.lastHeartBeatTime > 30000) {
-                  this.lastHeartBeatTime = now
-                  void this.onLogin()
-                }
+              if (!this.isLoggedIn && isLoggedIn && !this.isLogging) {
+                void this.onLogin()
               }
 
               // 如果是首次获得登出状态，就调用登出事件
               if (this.isLoggedIn && !isLoggedIn) {
-                if (now - this.lastHeartBeatTime > 30000) {
+                if (now - this.lastHeartBeatTime > 3000) {
                   this.lastHeartBeatTime = now
                   void this.onLogout()
                 }
@@ -191,9 +193,9 @@ class PuppetXp extends PUPPET.Puppet {
 
   private async onLogin () {
     log.verbose('PuppetXp', 'onLogin()')
-
+    this.isLogging = true
     const selfInfoRaw = JSON.parse(await this.sidecar.getMyselfInfo())
-    // console.debug('selfInfoRaw:\n\n\n', selfInfoRaw)
+    // log.info('selfInfoRaw:\n', selfInfoRaw)
     const selfInfo: PUPPET.payloads.Contact = {
       alias: '',
       avatar: selfInfoRaw.head_img_url,
@@ -206,16 +208,23 @@ class PuppetXp extends PUPPET.Puppet {
     }
 
     this.selfInfo = selfInfo
-    await this.loadContactList()
-    await this.loadRoomList()
-    await super.login(this.selfInfo.id)
-
+    if (this.selfInfo.id) {
+      await super.login(this.selfInfo.id)
+      this.isLogging = false
+      log.verbose('PuppetXp', 'login success')
+      await this.loadContactList()
+      await this.loadRoomList()
+    } else {
+      throw new Error('login fail')
+    }
     // console.debug(this.roomStore)
     // console.debug(this.contactStore)
   }
 
   private async onLogout (reasonNum?: number) {
+    log.verbose('PuppetXp', 'onLogout()')
     await super.logout(reasonNum ? 'Kicked by server' : 'logout')
+    log.info('PuppetXp', 'logout...')
   }
 
   private onScan (args?: any) {
@@ -607,6 +616,7 @@ class PuppetXp extends PUPPET.Puppet {
         phone: [],
         type: contactType,
       }
+      // console.info('contact', contact)
       this.contactStore[contactInfo.id] = contact
 
     }
@@ -617,53 +627,56 @@ class PuppetXp extends PUPPET.Puppet {
     try {
       const ChatroomMemberInfo = await this.sidecar.getChatroomMemberInfo()
       roomList = JSON.parse(ChatroomMemberInfo)
-    } catch (err) {
-      console.error('loadRoomList fail:', err)
-    }
+      for (const roomKey in roomList) {
+        const roomInfo = roomList[roomKey]
 
-    for (const roomKey in roomList) {
-      const roomInfo = roomList[roomKey]
+        // log.info(JSON.stringify(Object.keys(roomInfo)))
 
-      // log.info(JSON.stringify(Object.keys(roomInfo)))
+        const roomId = roomInfo.roomid
+        if (roomId.indexOf('@chatroom') !== -1) {
+          const roomMember = roomInfo.roomMember || []
+          const topic = this.contactStore[roomId]?.name || ''
+          const room = {
+            adminIdList: [],
+            avatar: '',
+            external: false,
+            id: roomId,
+            memberIdList: roomMember,
+            ownerId: '',
+            topic,
+          }
+          this.roomStore[roomId] = room
+          // console.info('room', room)
 
-      const roomId = roomInfo.roomid
-      if (roomId.indexOf('@chatroom') !== -1) {
-        const roomMember = roomInfo.roomMember || []
-        const topic = this.contactStore[roomId]?.name || ''
-        const room = {
-          adminIdList: [],
-          avatar: '',
-          external: false,
-          id: roomId,
-          memberIdList: roomMember,
-          ownerId: '',
-          topic,
-        }
-        this.roomStore[roomId] = room
-        delete this.contactStore[roomId]
-        for (const memberKey in roomMember) {
-          const memberId = roomMember[memberKey]
-          if (!this.contactStore[memberId]) {
-            try {
-              const memberNickName = await this.sidecar.getChatroomMemberNickInfo(memberId, roomId)
-              const contact = {
-                alias: '',
-                avatar: '',
-                friend: false,
-                gender: PUPPET.types.ContactGender.Unknown,
-                id: memberId,
-                name: memberNickName || 'Unknown',
-                phone: [],
-                type: PUPPET.types.Contact.Individual,
+          delete this.contactStore[roomId]
+          for (const memberKey in roomMember) {
+            const memberId = roomMember[memberKey]
+            if (!this.contactStore[memberId]) {
+              try {
+                const memberNickName = await this.sidecar.getChatroomMemberNickInfo(memberId, roomId)
+                const contact = {
+                  alias: '',
+                  avatar: '',
+                  friend: false,
+                  gender: PUPPET.types.ContactGender.Unknown,
+                  id: memberId,
+                  name: memberNickName || 'Unknown',
+                  phone: [],
+                  type: PUPPET.types.Contact.Individual,
+                }
+                this.contactStore[memberId] = contact
+              } catch (err) {
+                console.error('getChatroomMemberNickInfo fail:', err)
               }
-              this.contactStore[memberId] = contact
-            } catch (err) {
-              console.error(err)
             }
           }
         }
-      }
 
+      }
+      this.emit('ready', { data: 'ready' })
+
+    } catch (err) {
+      console.error('loadRoomList fail:', err)
     }
 
   }
