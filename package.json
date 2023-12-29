@@ -17,6 +17,7 @@
   "scripts": {
     "clean": "shx rm -fr dist/*",
     "dist": "npm-run-all clean build dist:copy dist:commonjs",
+    "build:agent": "frida-compile src/init-agent-script.ts -o _agent.js -c",
     "build": "tsc && tsc -p tsconfig.cjs.json",
     "dist:commonjs": "jq -n \"{ type: \\\"commonjs\\\" }\" > dist/cjs/package.json",
     "dist:copy": "npm-run-all copy:esm copy:cjs",
@@ -63,8 +64,11 @@
     "@chatie/tsconfig": "^4.5.3",
     "@types/cuid": "^2.0.1",
     "@types/faker": "^5.5.9",
+    "@types/frida-gum": "^18.5.1",
+    "@types/node": "^20.10.5",
     "@types/qrcode-terminal": "^0.12.2",
     "@types/xml2js": "^0.4.9",
+    "frida-compile": "^16.4.1",
     "husky": "^7.0.4",
     "qrcode-terminal": "^0.12.0",
     "tstest": "^1.0.1",
@@ -91,5 +95,10 @@
   "publishConfig": {
     "access": "public",
     "tag": "next"
+  },
+  "git": {
+    "scripts": {
+      "pre-push": "npx git-scripts-pre-push"
+    }
   }
 }
