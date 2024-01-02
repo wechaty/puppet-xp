@@ -457,7 +457,7 @@ const isLoggedInFunction = () => {
     }
     // console.log('isLoggedInFunction:', success)
     // 813746031、813746031、813746031
-
+    console.log('isLoggedInFunction:\n\n', success)
     return success
 }
 
@@ -708,46 +708,50 @@ const getMyselfInfoFunction = (() => {
 })
 
 // 获取联系人列表
-const getContactNativeFunction = (() => {
+let memberNickBuffAsm:any = null
+let nickRoomId:any = null
+let nickMemberId:any = null
+let nickBuff:any = null
+const getChatroomMemberNickInfoFunction = ((memberId:string, roomId:string) => {
 
-    // 内部函数：递归遍历节点
-    function recurse(node: NativePointer, contactList: any[], nodeList: any[], headerNodeAddress: NativePointer) {
-        if (node.isNull() || node.equals(headerNodeAddress)) {
-            return;
-        }
+  nickBuff = Memory.alloc(0x7e4)
+  //const nickRetAddr = Memory.alloc(0x04)
+  memberNickBuffAsm = Memory.alloc(Process.pageSize)
+  //console.log('asm address----------',memberNickBuffAsm)
+  nickRoomId = initidStruct(roomId)
+  //console.log('nick room id',nickRoomId)
+  nickMemberId = initStruct(memberId)
 
-        for (const item of nodeList) {
-            if (node.equals(item)) {
-                return;
-            }
-        }
+  //console.log('nick nickMemberId id',nickMemberId)
+  //const nickStructPtr = initmsgStruct('')
 
-        nodeList.push(node);
-        const wxid = readWideString(node.add(0x30));
-        const name = readWideString(node.add(0x8c));
-        const contactJson = {
-            id: wxid,
-            name: name,
-        };
-        contactList.push(contactJson);
+  Memory.patchCode(memberNickBuffAsm, Process.pageSize, code => {
+    var cw = new X86Writer(code, {
+      pc: memberNickBuffAsm
+    })
+    cw.putPushfx()
+    cw.putPushax()
+    cw.putMovRegAddress('edi', nickRoomId)
+    cw.putMovRegAddress('eax', nickBuff)
+    cw.putMovRegReg('edx', 'edi')
+    cw.putPushReg('eax')
+    cw.putMovRegAddress('ecx', nickMemberId)
+    cw.putCallAddress(moduleBaseAddress.add(0xC06F10))
+    cw.putAddRegImm('esp', 0x04)
+    cw.putPopax()
+    cw.putPopfx()
+    cw.putRet()
+    cw.flush()
 
-        recurse(node.add(0x0).readPointer(), contactList, nodeList, headerNodeAddress);
-        recurse(node.add(0x04).readPointer(), contactList, nodeList, headerNodeAddress);
-    }
+  })
 
-    // 获取头结点地址
-    const baseAddress = moduleBaseAddress.add(offset.contactInfo.nodeOffset).readPointer();
-    if (baseAddress.isNull()) {
-        return '[]';
-    }
-    const headerNodeAddress = baseAddress.add(offset.contactInfo.nodeRootOffset).readPointer();
+  const nativeativeFunction = new NativeFunction(ptr(memberNickBuffAsm), 'void', [])
+  nativeativeFunction()
 
-    const contactList: never[] = [];
-    const nodeList: never[] = [];
-    recurse(headerNodeAddress.add(0x0).readPointer(), contactList, nodeList, headerNodeAddress);
-
-    return JSON.stringify(contactList);
-});
+  const nickname = readWideString(nickBuff)
+  console.log('----nickname', nickname)
+  return readWideString(nickBuff)
+})
 
 // 删除联系人——待验证
 function delContact(wxid: any) {
@@ -984,65 +988,6 @@ const getChatroomMemberNickInfoFunction1 = ((memberId: string, roomId: string) =
     console.log('----nickname', nickname)
     return readWideString(nickBuff)
   })
-
-  const getChatroomMemberNickInfoFunction = ((memberId: any, roomId: any)=> {
-    // 分配字符串内存
-    let chatRoomIdPtr = Memory.allocUtf16String(roomId);
-    let wxidPtr = Memory.allocUtf16String(memberId);
-    let nicknamePtr = Memory.allocUtf16String("");
-  
-    // 基址与偏移
-    const baseAddr = moduleBaseAddress; // 这里的基址需要根据实际情况填写
-    const WX_CHAT_ROOM_MGR_OFFSET = wxOffsets.chatRoomMgr.WX_CHAT_ROOM_MGR_OFFSET; // 实际偏移量
-    const WX_GET_MEMBER_NICKNAME_OFFSET = wxOffsets.chatRoom.WX_GET_MEMBER_NICKNAME_OFFSET;
-    const WX_CONTACT_MGR_OFFSET = wxOffsets.contactMgr.WX_CONTACT_MGR_OFFSET;
-    const WX_GET_CONTACT_OFFSET = wxOffsets.contact.WX_GET_CONTACT_OFFSET;
-    const WX_FREE_CONTACT_OFFSET = wxOffsets.chatRoom.WX_FREE_CONTACT_OFFSET;
-  
-    // 获取函数地址
-    let getChatRoomMgrAddr = baseAddr.add(WX_CHAT_ROOM_MGR_OFFSET);
-    let getNicknameAddr = baseAddr.add(WX_GET_MEMBER_NICKNAME_OFFSET);
-    let contactMgrAddr = baseAddr.add(WX_CONTACT_MGR_OFFSET);
-    let getContactAddr = baseAddr.add(WX_GET_CONTACT_OFFSET);
-    let freeContactAddr = baseAddr.add(WX_FREE_CONTACT_OFFSET);
-  
-    // 创建NativeFunction
-    let getNickname = new NativeFunction(getNicknameAddr, 'void', ['pointer', 'pointer', 'pointer']);
-    let getContact = new NativeFunction(getContactAddr, 'void', ['pointer', 'pointer', 'pointer']);
-    let freeContact = new NativeFunction(freeContactAddr, 'void', ['pointer']);
-  
-    // 调用NativeFunction
-    getNickname(nicknamePtr, wxidPtr, chatRoomIdPtr);
-    function byteArrayToUtf16String(bytes) {
-        if (!bytes) return null;
-      
-        // 将字节数组转换为 Uint16Array
-        const uint16Array = new Uint16Array(bytes.buffer, bytes.byteOffset, bytes.byteLength / 2);
-        
-        // 使用 String.fromCharCode 来将 Uint16Array 转换为字符串
-        return String.fromCharCode.apply(null, uint16Array);
-      }
-      
-      let name = "";
-      if (!nicknamePtr.isNull()) {
-        // 假设昵称长度不超过 200 个字符，因此需要 400 个字节来存储（每个 UTF-16 字符 2 字节）
-        const nicknameBytes = Memory.readByteArray(nicknamePtr, 400);
-        name = byteArrayToUtf16String(new Uint8Array(nicknameBytes));
-      } else {
-        let buff = Memory.alloc(0x440);
-        getContact(buff, wxidPtr, chatRoomIdPtr);
-        
-        // 同样地读取并转换 UTF-16 字符串
-        const buffBytes = Memory.readByteArray(buff.add(0x6C), 400);
-        name = byteArrayToUtf16String(new Uint8Array(buffBytes));
-      
-        freeContact(buff);
-      }
-      
-    
-  
-    return name;
-  } )
 
 // 添加群成员——待验证
 function addMemberToChatRoom(chat_room_id: string, wxids: any[]) {

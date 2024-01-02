@@ -52,7 +52,7 @@ async function main() {
   // console.info(`contactList: ${roomList}`)
 
   sidecar.on('hook', async ({ method, args }) => {
-
+    console.log('onhook...\n\n', method, args)
     switch (method) {
       case 'recvMsg':
         void onRecvMsg(args)
@@ -60,9 +60,15 @@ async function main() {
       case 'checkQRLogin':
         onScan(args)
         break
-      case 'loginEvent':
-        if(!isLoggedIn && (await sidecar.isLoggedIn())) onLogin()
+      case 'loginEvent':{
+        if(!isLoggedIn){
+          const loginRes = await sidecar.isLoggedIn()
+          if(loginRes){
+            onLogin()
+          }
+        } 
         break
+      }
       case 'logoutEvent':
         onLogout(args[0] as number)
         break
@@ -110,7 +116,7 @@ async function main() {
   }
 
   const onRecvMsg = async (args: any) => {
-    console.info('recvMsg:', args)
+    console.info('recvMsg:\n\n', args)
 
     if (args instanceof Error) {
       console.error(args)
