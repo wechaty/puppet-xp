@@ -1,3 +1,5 @@
+/* eslint-disable no-console */
+
 /**
  *   Wechaty - https://github.com/wechaty/wechaty
  *
@@ -21,10 +23,14 @@ import {
   detach,
 } from 'sidecar'
 
-import { WeChatSidecar } from '../src/wechat-sidecar.js'
+import { 
+  WeChatSidecar, 
+  // XpSidecar 
+} from '../src/wechat-sidecar.js'
 
 async function main() {
   console.info('WeChat Sidecar starting...')
+  // new XpSidecar({ wechatVersion: '3.9.2.23' })
 
   const sidecar = new WeChatSidecar()
   await attach(sidecar)
@@ -36,23 +42,16 @@ async function main() {
   const isSupported = await sidecar.checkSupported()
   console.info(`\nWeChat Version: ${ver} -> ${verStr} , Supported: ${isSupported}\n`)
 
-  const url = await sidecar.getLoginUrl()
-  console.info('url...\n', url)
-
-  let isLoggedIn = false
-  console.info(`has Logged In: ${isLoggedIn}`)
-
+  const isLoggedIn = false
   const myselfInfo = await sidecar.getMyselfInfo()
-  console.info(`myInfo: ${myselfInfo}`)
+  console.info(`当前登陆账号信息: ${myselfInfo}`)
 
-  // const contactList = await sidecar.getContact()
-  // console.info(`contactList: ${contactList}`)
-
-  // const roomList = await sidecar.getChatroomMemberInfo()
-  // console.info(`contactList: ${roomList}`)
+  const loginUrl = await sidecar.getLoginUrl()
+  console.info(`登陆二维码地址loginUrl: ${loginUrl}`)
 
   sidecar.on('hook', async ({ method, args }) => {
-    console.log('onhook...\n\n', method, args)
+    // console.log(`onhook事件消息：${new Date().toLocaleString()}\n`, method, JSON.stringify(args))
+    console.log(`onhook事件消息：${new Date().toLocaleString()}`, method)
     switch (method) {
       case 'recvMsg':
         void onRecvMsg(args)
@@ -69,25 +68,43 @@ async function main() {
         } 
         break
       }
+      case 'agentReady':
+        console.log('agentReady...')
+        break
       case 'logoutEvent':
         onLogout(args[0] as number)
         break
-
       default:
-        console.info('onHook', method, JSON.stringify(args))
+        console.info('onHook没有匹配到处理方法:', method, JSON.stringify(args))
         break
     }
 
   })
 
   const onLogin = async () => {
-    isLoggedIn = true
-    console.info('You are logged in.')
+    console.info('登陆事件触发')
+    console.info(`登陆状态: ${isLoggedIn}`)
     // await sidecar.sendMsg('filehelper', 'Sidecar is ready!')
+    const contacts = await sidecar.getContact()
+    // console.log(`contacts: ${contacts}`)
+    const contactsJSON = JSON.parse(contacts)
+    console.log('contacts列表:', contactsJSON.length)
 
+    // for (const contact of contactsJSON) {
+    //     console.info('好友:', contact)
+    // }
+
+    const roomList = await sidecar.getChatroomMemberInfo()
+    // console.log(`roomList: ${roomList}`)
+    const roomListJSON = JSON.parse(roomList)
+    console.log('roomList列表:', roomListJSON.length)
+    // for (const room of roomListJSON) {
+    //   console.info('room:', room)
+    // }
   }
 
   const onLogout = (bySrv: number) => {
+    console.info('登出事件触发:', bySrv)
     console.info(`You are logged out${bySrv ? ' because you were kicked by server.' : ''}.`)
   }
 
@@ -116,10 +133,10 @@ async function main() {
   }
 
   const onRecvMsg = async (args: any) => {
-    console.info('recvMsg:\n\n', args)
+    console.info('onRecvMsg事件触发:', JSON.stringify(args))
 
     if (args instanceof Error) {
-      console.error(args)
+      console.error('onRecvMsg: 参数错误 Error', args)
       return
     }
 
@@ -127,8 +144,13 @@ async function main() {
     const text = String(args[2])
     const talkerId = String(args[3])
 
+    // const nickname = await sidecar.GetContactOrChatRoomNickname(talkerId)
+    // console.log('发言人昵称：', nickname)
+
+    const talker = await sidecar.getChatroomMemberNickInfo(talkerId,toId)
+    console.log('发言人：', talker)
     if (talkerId && text === 'ding') {
-      console.info('recvMsg: ding found, reply dong')
+      console.info('叮咚测试: ding found, reply dong')
       await sidecar.sendMsg(toId, 'dong')
       // await sidecar.sendAtMsg(toId, 'dong',talkerId)
     }
@@ -144,4 +166,6 @@ async function main() {
 }
 
 main()
-  .catch(console.error)
+  .catch(e=>{
+    console.error('主函数运行失败:', e)
+  })

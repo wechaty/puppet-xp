@@ -22,37 +22,39 @@ function onScan (qrcode: string, status: ScanStatus) {
       'https://wechaty.js.org/qrcode/',
       encodeURIComponent(qrcode),
     ].join('')
-    console.info('StarterBot', 'onScan: %s(%s) - %s', status, qrcodeImageUrl)
+    log.info('onScan', '%s(%s) - %s', status, qrcodeImageUrl)
 
     qrcodeTerminal.generate(qrcode, { small: true })  // show qrcode on console
-    console.info(`[${status}] ${qrcode}\nScan QR Code above to log in: `)
+    log.info(`[${status}] ${qrcode}\nScan QR Code above to log in: `)
   } else {
-    console.info(`[${status}]`)
+    log.info(`[${status}]`)
   }
 }
 
 async function onLogin (user: Contact) {
-  log.info('StarterBot', '%s login', user)
-  // const contactList = await bot.Contact.findAll()
-  // console.info('contactList.length', contactList.length)
-  // const roomList = await bot.Room.findAll()
-  // console.info('roomList.length', roomList.length)
-}
-
-async function onReady () {
-  log.info('StarterBot', '%s onReady')
-  const contactList = await bot.Contact.findAll()
-  console.info('contactList.length', contactList.length)
+  log.info('onLogin', '%s login', user)
   const roomList = await bot.Room.findAll()
-  console.info('roomList.length', roomList.length)
+  log.info('群数量：', roomList.length)
+  const contactList = await bot.Contact.findAll()
+  log.info('联系人数量：', contactList.length)
+  const friends = contactList.filter(c => c.friend())
+  log.info('好友数量：', friends.length)
 }
 
 function onLogout (user: Contact) {
-  log.info('StarterBot', '%s logout', user)
+  log.info('onLogout', '%s logout', user)
 }
 
 async function onMessage (msg: Message) {
-  log.info('StarterBot', msg.toString())
+  // log.info('onMessage', msg.toString())
+  const contact = msg.talker()
+  log.info('当前联系人信息：', JSON.stringify(contact))
+  const room = msg.room()
+  if(room){
+    log.info('当前群信息：', await room.topic())
+    log.info('当前群群主：', JSON.stringify(room.owner()))
+  }
+
   if (msg.text() === 'ding') {
     await msg.say('dong')
   }
@@ -104,7 +106,9 @@ async function onMessage (msg: Message) {
       // Log other non-text messages
       const logData = {
         date: new Date(),
-        from: msg.talker().name(),
+        talker: msg.talker(),
+        listener: msg.listener(),
+        room:await msg.room(),
         text: msg.text(),
         type: msg.type(),
       }
@@ -112,15 +116,15 @@ async function onMessage (msg: Message) {
       const logPath = 'examples/file/message.log'
       fs.appendFileSync(logPath, JSON.stringify(logData, null, 2) + '\n')
 
-      log.info(`Logged message data to ${logPath}`)
+      log.info(`日志查看路径： ${logPath}`)
     }
   } catch (e) {
-    console.error(`Error handling message: ${e}`)
+    log.error(`Error handling message: ${e}`)
   }
 
 }
 
-const puppet = new PuppetXp()
+const puppet = new PuppetXp({wechatVersion:'5.0.0.0'})
 const bot = WechatyBuilder.build({
   name: 'ding-dong-bot',
   puppet,
@@ -128,12 +132,8 @@ const bot = WechatyBuilder.build({
 
 bot.on('scan', onScan)
 bot.on('login', onLogin)
-bot.on('ready', onReady)
 bot.on('logout', onLogout)
 bot.on('message', onMessage)
-bot.on('heartbeat', (data)=>{
-  console.info(data)
-})
 bot.on('room-join', async (room, inviteeList, inviter) => {
   const nameList = inviteeList.map(c => c.name()).join(',')
   log.info(`Room ${await room.topic()} got new member ${nameList}, invited by ${inviter}`)
@@ -151,7 +151,7 @@ bot.on('room-invite', async roomInvitation => {
     log.info('received room-invite event.')
     await roomInvitation.accept()
   } catch (e) {
-    console.error(e)
+    log.error('处理进群申请信息错误：', e)
   }
 })
 
@@ -159,4 +159,4 @@ bot.start()
   .then(() => {
     return log.info('StarterBot', 'Starter Bot Started.')
   })
-  .catch(console.error)
+  .catch(log.error)

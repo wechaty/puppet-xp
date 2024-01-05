@@ -73,20 +73,15 @@ class PuppetXp extends PUPPET.Puppet {
 
   private selfInfo: any
 
-  private qrcodeUrl: string
-
-  private lastHeartBeatTime: number
-
-  private isLogging: boolean
-
   #sidecar?: WeChatSidecar
   protected get sidecar (): WeChatSidecar {
     return this.#sidecar!
   }
 
   constructor (
-    public override options: PuppetXpOptions = {},
+    public override options: PuppetXpOptions = { wechatVersion:'3.9.2.23' },
   ) {
+    log.info('options...', JSON.stringify(options))
     super(options)
     log.verbose('PuppetXp', 'constructor(%s)', JSON.stringify(options))
 
@@ -95,9 +90,6 @@ class PuppetXp extends PUPPET.Puppet {
     this.roomStore = {}
     this.contactStore = {}
     this.selfInfo = {}
-    this.qrcodeUrl = ''
-    this.lastHeartBeatTime = 0
-    this.isLogging = false
   }
 
   override version () {
@@ -117,10 +109,12 @@ class PuppetXp extends PUPPET.Puppet {
     this.#sidecar = new WeChatSidecar()
 
     await attach(this.sidecar)
+    // await this.onLogin()
     await this.onAgentReady()
-    this.sidecar.on('hook', ({ method, args }) =>  {
-      // log.verbose('PuppetXp', 'onHook(%s, %s)', method, JSON.stringify(args))
-      const now = new Date().getTime()
+
+    this.sidecar.on('hook', ({ method, args }) => {
+      log.verbose('PuppetXp', 'onHook(%s, %s)', method, JSON.stringify(args))
+
       switch (method) {
         case 'recvMsg':
           this.onHookRecvMsg(args)
@@ -128,43 +122,9 @@ class PuppetXp extends PUPPET.Puppet {
         case 'checkQRLogin':
           this.onScan(args)
           break
-        case 'loginEvent':{
-          this.sidecar.isLoggedIn()
-            .then((isLoggedIn) => {
-              // console.info('isLoggedIn', isLoggedIn)
-              // console.info('this.isLoggedIn', this.isLoggedIn)
-            // 如果没有登录，就调用登录二维码事件
-              if (!this.isLoggedIn && !isLoggedIn) {
-                this.onScan()
-              }
-
-              // 如果是首次获得登录状态，就调用登录事件
-              if (!this.isLoggedIn && isLoggedIn && !this.isLogging) {
-                void this.onLogin()
-              }
-
-              // 如果是首次获得登出状态，就调用登出事件
-              if (this.isLoggedIn && !isLoggedIn) {
-                if (now - this.lastHeartBeatTime > 3000) {
-                  this.lastHeartBeatTime = now
-                  void this.onLogout()
-                }
-              }
-
-              // 如果是登录状态，就调用心跳事件
-              if (this.isLoggedIn) {
-                if (now - this.lastHeartBeatTime > 30000) {
-                  this.lastHeartBeatTime = now
-                  this.emit('heartbeat', { data: 'heartbeat' })
-                }
-              }
-              return null
-            })
-            .catch((err) => {
-              console.error(err)
-            })
+        case 'loginEvent':
+          void this.onLogin()
           break
-        }
         case 'agentReady':
           void this.onAgentReady()
           break
@@ -178,7 +138,13 @@ class PuppetXp extends PUPPET.Puppet {
       }
     })
 
-    this.sidecar.on('error', e => this.emit('error', { data: JSON.stringify(e as any) }))
+    this.sidecar.on('error', e => {
+      try {
+        this.emit('error', { data: JSON.stringify(e as any) })
+      } catch (e) {
+        log.error('emit error fail:', e)
+      }
+    })
 
   }
 
@@ -192,114 +158,83 @@ class PuppetXp extends PUPPET.Puppet {
   }
 
   private async onLogin () {
-    log.verbose('PuppetXp', 'onLogin()')
-    this.isLogging = true
-    const selfInfoRaw = JSON.parse(await this.sidecar.getMyselfInfo())
-    // log.info('selfInfoRaw:\n', selfInfoRaw)
-    const selfInfo: PUPPET.payloads.Contact = {
-      alias: '',
-      avatar: selfInfoRaw.head_img_url,
-      friend: false,
-      gender: PUPPET.types.ContactGender.Unknown,
-      id: selfInfoRaw.id,
-      name: selfInfoRaw.name,
-      phone: [],
-      type: PUPPET.types.Contact.Individual,
-    }
-
-    this.selfInfo = selfInfo
-    if (this.selfInfo.id) {
-      await super.login(this.selfInfo.id)
-      this.isLogging = false
-      log.verbose('PuppetXp', 'login success')
+    // log.info('onLogin：', this.isLoggedIn)
+    if (!this.isLoggedIn) {
+      const selfInfoRaw = JSON.parse(await this.sidecar.getMyselfInfo())
+      // log.debug('selfInfoRaw:\n\n\n', selfInfoRaw)
+      const selfInfo: PUPPET.payloads.Contact = {
+        alias: '',
+        avatar: selfInfoRaw.head_img_url,
+        friend: false,
+        gender: PUPPET.types.ContactGender.Unknown,
+        id: selfInfoRaw.id,
+        name: selfInfoRaw.name,
+        phone: [],
+        type: PUPPET.types.Contact.Individual,
+      }
+      this.selfInfo = selfInfo
+      this.contactStore[selfInfo.id] = selfInfo
+      // 初始化联系人列表
       await this.loadContactList()
+      // 初始化群列表
       await this.loadRoomList()
+      // 初始化机器人信息
+      await super.login(this.selfInfo.id)
     } else {
-      throw new Error('login fail')
+      log.info('已处于登录状态，无需再次登录')
     }
-    // console.debug(this.roomStore)
-    // console.debug(this.contactStore)
   }
 
-  private async onLogout (reasonNum?: number) {
-    log.verbose('PuppetXp', 'onLogout()')
+  private async onLogout (reasonNum: number) {
     await super.logout(reasonNum ? 'Kicked by server' : 'logout')
-    log.info('PuppetXp', 'logout...')
   }
 
-  private onScan (args?: any) {
-    if (args) {
-      const statusMap = [
-        PUPPET.types.ScanStatus.Waiting,
-        PUPPET.types.ScanStatus.Scanned,
-        PUPPET.types.ScanStatus.Confirmed,
-        PUPPET.types.ScanStatus.Timeout,
-        PUPPET.types.ScanStatus.Cancel,
-      ]
+  private onScan (args: any) {
+    const statusMap = [
+      PUPPET.types.ScanStatus.Waiting,
+      PUPPET.types.ScanStatus.Scanned,
+      PUPPET.types.ScanStatus.Confirmed,
+      PUPPET.types.ScanStatus.Timeout,
+      PUPPET.types.ScanStatus.Cancel,
+    ]
 
-      const status: number = args[0]
-      const qrcodeUrl: string = args[1]
-      const wxid: string = args[2]
-      const avatarUrl: string = args[3]
-      const nickname: string = args[4]
-      const phoneType: string = args[5]
-      const phoneClientVer: number = args[6]
-      const pairWaitTip: string = args[7]
+    const status: number = args[0]
+    const qrcodeUrl: string = args[1]
+    const wxid: string = args[2]
+    const avatarUrl: string = args[3]
+    const nickname: string = args[4]
+    const phoneType: string = args[5]
+    const phoneClientVer: number = args[6]
+    const pairWaitTip: string = args[7]
 
-      log.info(
-        'PuppetXp',
-        'onScan() data: %s',
-        JSON.stringify(
-          {
-            avatarUrl,
-            nickname,
-            pairWaitTip,
-            phoneClientVer: phoneClientVer.toString(16),
-            phoneType,
-            qrcodeUrl,
-            status,
-            wxid,
-          }, null, 2))
+    log.info(
+      'PuppetXp',
+      'onScan() data: %s',
+      JSON.stringify(
+        {
+          avatarUrl,
+          nickname,
+          pairWaitTip,
+          phoneClientVer: phoneClientVer.toString(16),
+          phoneType,
+          qrcodeUrl,
+          status,
+          wxid,
+        }, null, 2))
 
-      if (pairWaitTip) {
-        log.warn('PuppetXp', 'onScan() pairWaitTip: "%s"', pairWaitTip)
-      }
-
-      this.scanEventData = {
-        qrcode: qrcodeUrl,
-        status: statusMap[args[0]] ?? PUPPET.types.ScanStatus.Unknown,
-      }
-      if (this.scanEventData.qrcode && this.qrcodeUrl !== this.scanEventData.qrcode && this.scanEventData.qrcode !== 'http://weixin.qq.com/x/null') {
-        console.info('scanEventData', this.scanEventData)
-
-        this.qrcodeUrl = this.scanEventData.qrcode
-        this.emit('scan', this.scanEventData)
-      } else if (this.scanEventData.qrcode === 'http://weixin.qq.com/x/null') {
-        console.info('操作提示：', '请在微信客户端点击【进入微信】登录')
-      }
-    } else {
-      this.sidecar.getLoginUrl().then((qrcodeUrl) => {
-        this.scanEventData = {
-          qrcode: qrcodeUrl,
-          status: PUPPET.types.ScanStatus.Waiting,
-        }
-        if (this.scanEventData.qrcode && this.qrcodeUrl !== this.scanEventData.qrcode && this.scanEventData.qrcode !== 'http://weixin.qq.com/x/null') {
-          console.info('scanEventData', this.scanEventData)
-
-          this.qrcodeUrl = this.scanEventData.qrcode
-          this.emit('scan', this.scanEventData)
-        } else if (this.scanEventData.qrcode === 'http://weixin.qq.com/x/null') {
-          console.info('操作提示：', '请在微信客户端点击【进入微信】登录')
-        }
-        return null
-      }).catch((err) => {
-        console.error('getLoginUrl fail:', err)
-      })
+    if (pairWaitTip) {
+      log.warn('PuppetXp', 'onScan() pairWaitTip: "%s"', pairWaitTip)
     }
+
+    this.scanEventData = {
+      qrcode: qrcodeUrl,
+      status: statusMap[args[0]] ?? PUPPET.types.ScanStatus.Unknown,
+    }
+    this.emit('scan', this.scanEventData)
   }
 
   private onHookRecvMsg (args: any) {
-    //  console.info('onHookRecvMsg', args)
+    log.info('onHookRecvMsg', JSON.stringify(args))
     let type = PUPPET.types.Message.Unknown
     let roomId = ''
     let toId = ''
@@ -320,7 +255,7 @@ class PuppetXp extends PUPPET.Puppet {
             }
           })
         } catch (err) {
-          console.error(err)
+          log.error('xml2js.parseString fail:', err)
         }
         break
       case 3:
@@ -359,7 +294,7 @@ class PuppetXp extends PUPPET.Puppet {
           })
 
         } catch (err) {
-          console.error(err)
+          log.error('xml2js.parseString fail:', err)
         }
         break
       case 48:
@@ -368,8 +303,8 @@ class PuppetXp extends PUPPET.Puppet {
       case 49:
         try {
           xml2js.parseString(text, { explicitArray: false, ignoreAttrs: true }, function (err: any, json: { msg: { appmsg: { type: String } } }) {
-            // console.info(err)
-            // console.info(JSON.stringify(json))
+            // log.info(err)
+            // log.info(JSON.stringify(json))
             log.verbose('PuppetXp', 'xml2json err:%s', err)
             log.verbose('PuppetXp', 'json content:%s', JSON.stringify(json))
             switch (json.msg.appmsg.type) {
@@ -404,7 +339,7 @@ class PuppetXp extends PUPPET.Puppet {
             }
           })
         } catch (err) {
-          console.error(err)
+          log.error('xml2js.parseString fail:', err)
         }
         break
       case 50:
@@ -457,8 +392,8 @@ class PuppetXp extends PUPPET.Puppet {
       toId,
       type,
     }
-    //  console.info('payloadType----------', PUPPET.types.Message[type])
-    //  console.info('payload----------', payload)
+    //  log.info('payloadType----------', PUPPET.types.Message[type])
+    //  log.info('payload----------', payload)
 
     if (talkerId && (!this.contactStore[talkerId] || !this.contactStore[talkerId]?.name)) {
       void this.loadContactList()
@@ -483,7 +418,7 @@ class PuppetXp extends PUPPET.Puppet {
         // "luyuchao"修改群名为“北辰香麓欣麓园抗疫”
 
         const room = this.roomStore[roomId]
-        //  console.info('room=========================', room)
+        //  log.info('room=========================', room)
         let topic = ''
         const oldTopic = room ? room.topic : ''
 
@@ -507,10 +442,10 @@ class PuppetXp extends PUPPET.Puppet {
 
             }
           }
-          //  console.info(room)
-          //  console.info(changer)
-          //  console.info(oldTopic)
-          //  console.info(topic)
+          //  log.info(room)
+          //  log.info(changer)
+          //  log.info(oldTopic)
+          //  log.info(topic)
           const changerId = changer.id
           this.emit('room-topic', { changerId, newTopic: topic, oldTopic, roomId })
 
@@ -550,9 +485,9 @@ class PuppetXp extends PUPPET.Puppet {
 
             }
           }
-          //  console.info(inviteeList)
-          //  console.info(inviter)
-          //  console.info(room)
+          //  log.info(inviteeList)
+          //  log.info(inviter)
+          //  log.info(room)
 
           this.emit('room-join', { inviteeIdList: inviteeList, inviterId: inviter.id, roomId })
         }
@@ -561,7 +496,7 @@ class PuppetXp extends PUPPET.Puppet {
         this.emit('message', { messageId: payload.id })
       }
     } catch (e) {
-      console.error(e)
+      log.error('emit message fail:', e)
     }
 
   }
@@ -616,7 +551,6 @@ class PuppetXp extends PUPPET.Puppet {
         phone: [],
         type: contactType,
       }
-      // console.info('contact', contact)
       this.contactStore[contactInfo.id] = contact
 
     }
@@ -627,56 +561,53 @@ class PuppetXp extends PUPPET.Puppet {
     try {
       const ChatroomMemberInfo = await this.sidecar.getChatroomMemberInfo()
       roomList = JSON.parse(ChatroomMemberInfo)
-      for (const roomKey in roomList) {
-        const roomInfo = roomList[roomKey]
+    } catch (err) {
+      log.error('loadRoomList fail:', err)
+    }
 
-        // log.info(JSON.stringify(Object.keys(roomInfo)))
+    for (const roomKey in roomList) {
+      const roomInfo = roomList[roomKey]
 
-        const roomId = roomInfo.roomid
-        if (roomId.indexOf('@chatroom') !== -1) {
-          const roomMember = roomInfo.roomMember || []
-          const topic = this.contactStore[roomId]?.name || ''
-          const room = {
-            adminIdList: [],
-            avatar: '',
-            external: false,
-            id: roomId,
-            memberIdList: roomMember,
-            ownerId: '',
-            topic,
-          }
-          this.roomStore[roomId] = room
-          // console.info('room', room)
+      // log.info(JSON.stringify(Object.keys(roomInfo)))
 
-          delete this.contactStore[roomId]
-          for (const memberKey in roomMember) {
-            const memberId = roomMember[memberKey]
-            if (!this.contactStore[memberId]) {
-              try {
-                const memberNickName = await this.sidecar.getChatroomMemberNickInfo(memberId, roomId)
-                const contact = {
-                  alias: '',
-                  avatar: '',
-                  friend: false,
-                  gender: PUPPET.types.ContactGender.Unknown,
-                  id: memberId,
-                  name: memberNickName || 'Unknown',
-                  phone: [],
-                  type: PUPPET.types.Contact.Individual,
-                }
-                this.contactStore[memberId] = contact
-              } catch (err) {
-                console.error('getChatroomMemberNickInfo fail:', err)
+      const roomId = roomInfo.roomid
+      if (roomId.indexOf('@chatroom') !== -1) {
+        const roomMember = roomInfo.roomMember || []
+        const topic = this.contactStore[roomId]?.name || ''
+        const room = {
+          adminIdList: [ roomInfo.admin || '' ],
+          avatar: '',
+          external: false,
+          id: roomId,
+          memberIdList: roomMember,
+          ownerId: roomInfo.admin || '',
+          topic,
+        }
+        this.roomStore[roomId] = room
+        delete this.contactStore[roomId]
+        for (const memberKey in roomMember) {
+          const memberId = roomMember[memberKey]
+          if (!this.contactStore[memberId]) {
+            try {
+              const memberNickName = await this.sidecar.getChatroomMemberNickInfo(memberId, roomId)
+              const contact = {
+                alias: '',
+                avatar: '',
+                friend: false,
+                gender: PUPPET.types.ContactGender.Unknown,
+                id: memberId,
+                name: memberNickName || 'Unknown',
+                phone: [],
+                type: PUPPET.types.Contact.Individual,
               }
+              this.contactStore[memberId] = contact
+            } catch (err) {
+              log.error('loadRoomList fail:', err)
             }
           }
         }
-
       }
-      this.emit('ready', { data: 'ready' })
 
-    } catch (err) {
-      console.error('loadRoomList fail:', err)
     }
 
   }
@@ -833,7 +764,7 @@ class PuppetXp extends PUPPET.Puppet {
         const imageInfo = ImageDecrypt(dataPath, messageId)
         // const imageInfo = ImageDecrypt('C:\\Users\\choogoo\\Documents\\WeChat Files\\wxid_pnza7m7kf9tq12\\FileStorage\\Image\\Thumb\\2022-05\\e83b2aea275460cd50352559e040a2f8_t.dat','cl34vez850000gkmw2macd3dw')
 
-        console.info(dataPath, imageInfo.fileName, imageInfo.extension)
+        log.info(dataPath, imageInfo.fileName, imageInfo.extension)
         base64 = imageInfo.base64
         fileName = `message-${messageId}-url-${imageType}.${imageInfo.extension}`
         file = FileBox.fromBase64(
@@ -843,11 +774,11 @@ class PuppetXp extends PUPPET.Puppet {
         const paths = dataPath.split('\\')
         paths[paths.length - 1] = fileName
         imagePath = paths.join('\\')
-        // console.debug(imagePath)
+        // log.debug(imagePath)
         await file.toFile(imagePath)
       }
     } catch (err) {
-      console.error(err)
+      log.error('messageImage fail:', err)
     }
     return FileBox.fromBase64(
       base64,
@@ -893,13 +824,13 @@ class PuppetXp extends PUPPET.Puppet {
         fileName = '\\' + messageJson.msg.appmsg[0].title[0]
         const filePath = `${this.selfInfo.id}\\FileStorage\\File\\${year}-${month}`
         dataPath = rootPath + filePath + fileName  // 要解密的文件路径
-        // console.info(dataPath)
+        // log.info(dataPath)
         return FileBox.fromFile(
           dataPath,
           fileName,
         )
       } catch (err) {
-        console.error(err)
+        log.error('messageFile fail:', err)
       }
     }
 
@@ -910,10 +841,10 @@ class PuppetXp extends PUPPET.Puppet {
           fileName = text.md5 + '.png'
           return FileBox.fromUrl(text.cdnurl, { name: fileName })
         } catch (err) {
-          console.error(err)
+          log.error('messageFile fail:', err)
         }
       } catch (err) {
-        console.error(err)
+        log.error('messageFile fail:', err)
       }
     }
 
@@ -946,7 +877,7 @@ class PuppetXp extends PUPPET.Puppet {
   }
 
   override async messageRawPayloadParser (payload: PUPPET.payloads.Message) {
-    // console.info(payload)
+    // log.info(payload)
     return payload
   }
 
@@ -1199,7 +1130,7 @@ class PuppetXp extends PUPPET.Puppet {
         name: contact?.name || 'Unknow',
         roomAlias: contact?.name || '',
       }
-      // console.info(MemberRawPayload)
+      // log.info(MemberRawPayload)
       return MemberRawPayload
     } catch (e) {
       log.error('roomMemberRawPayload()', e)

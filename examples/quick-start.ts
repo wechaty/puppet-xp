@@ -21,7 +21,7 @@ function onScan(qrcode: string, status: ScanStatus) {
       'https://wechaty.js.org/qrcode/',
       encodeURIComponent(qrcode),
     ].join('')
-    console.info('StarterBot', 'onScan: %s(%s) - %s', status, qrcodeImageUrl)
+    console.info('onScan: %s(%s) - %s', status, qrcodeImageUrl)
 
     qrcodeTerminal.generate(qrcode, { small: true })  // show qrcode on console
     console.info(`[${status}] ${qrcode}\nScan QR Code above to log in: `)
@@ -31,7 +31,7 @@ function onScan(qrcode: string, status: ScanStatus) {
 }
 
 async function onLogin(user: Contact) {
-  log.info('StarterBot', '%s login', user)
+  log.info('onLogin', '%s login', user)
   const roomList = await bot.Room.findAll()
   console.info('room count:', roomList.length)
 
