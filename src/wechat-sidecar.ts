@@ -34,85 +34,94 @@ import {
 import { codeRoot } from './cjs.js'
 // import { WeChatVersion } from './agents/winapi-sidecar.js'
 
-const supportedVersions = {
-  v330115:'3.3.0.115',
-  v360000:'3.6.0.18',
-  v39223:'3.9.2.23',
+type WeChatVersion = {
+  wechatVersion: string,
 }
 
-// let initAgentScript = fs.readFileSync(path.join(
-//   codeRoot,
-//   'src',
-//   'agents',
-//   'agent-script-3.3.0.115.js',
-// ), 'utf-8')
+class XpSidecar {
 
-let initAgentScript = fs.readFileSync(path.join(
-  codeRoot,
-  'src',
-  'init-agent-script.js',
-), 'utf-8')
-
-try {
-  // const wechatVersion = new WeChatVersion()
-  // await attach(wechatVersion)
-
-  // const currentVersion = await wechatVersion.getWechatVersion()
-
-  // console.info('currentVersion is ............................................... ：', currentVersion)
-
-  // await detach(wechatVersion)
-
-  const currentVersion = '3.9.2.23'
-
-  switch (currentVersion) {
-    case supportedVersions.v330115:
-      initAgentScript = fs.readFileSync(path.join(
-        codeRoot,
-        'src',
-        'agents',
-        'agent-script-3.3.0.115.js',
-      ), 'utf-8')
-      break
-    case supportedVersions.v360000:
-      // initAgentScript = fs.readFileSync(path.join(
-      //   codeRoot,
-      //   'src',
-      //   'agents',
-      //   'agent-script-3.6.0.18.js',
-      // ), 'utf-8')
-      initAgentScript = fs.readFileSync(path.join(
-        codeRoot,
-        'src',
-        'init-agent-script.js',
-      ), 'utf-8')
-      break
-    case supportedVersions.v39223:
-      // initAgentScript = fs.readFileSync(path.join(
-      //   codeRoot,
-      //   'src',
-      //   'agents',
-      //   'agent-script-3.6.0.18.js',
-      // ), 'utf-8')
-      initAgentScript = fs.readFileSync(path.join(
-        codeRoot,
-        'src',
-        'init-agent-script.js',
-      ), 'utf-8')
-      break
-    default:
-      throw new Error(`Wechat version not supported. \nWechat version: ${currentVersion}, supported version: ${JSON.stringify(supportedVersions)}`)
+  private supportedVersions = {
+    v330115:'3.3.0.115',
+    v360000:'3.6.0.18',
+    v39223:'3.9.2.23',
   }
-} catch (e) {}
 
-@Sidecar('WeChat.exe', initAgentScript)
+  static currentVersion = '3.9.2.23'
+  static scriptPath =  path.join(
+    codeRoot,
+    'src',
+    'init-agent-script.js',
+  )
+
+  static initAgentScript = fs.readFileSync(XpSidecar.scriptPath, 'utf-8')
+
+  constructor (options?:WeChatVersion) {
+    console.info('XpSidecar constructor()', options)
+    if (options?.wechatVersion) {
+      XpSidecar.currentVersion = options.wechatVersion
+    }
+    console.info('XpSidecar currentVersion:', XpSidecar.currentVersion)
+    let scriptPath = path.join(
+      codeRoot,
+      'src',
+      'agents',
+      'agent-script-3.6.0.18.js',
+    )
+    try {
+      switch (XpSidecar.currentVersion) {
+        case this.supportedVersions.v330115:
+          scriptPath = path.join(
+            codeRoot,
+            'src',
+            'agents',
+            'agent-script-3.3.0.115.js',
+          )
+          break
+        case this.supportedVersions.v360000:
+          scriptPath = path.join(
+            codeRoot,
+            'src',
+            'agents',
+            'agent-script-3.6.0.18.js',
+          )
+          break
+        case this.supportedVersions.v39223:
+          scriptPath = path.join(
+            codeRoot,
+            'src',
+            'agents',
+            'agent-script-3.9.2.23.js',
+          )
+          break
+        default:
+          console.error(`Wechat version not supported. \nWechat version: ${XpSidecar.currentVersion}, supported version: ${JSON.stringify(this.supportedVersions)}`)
+          throw new Error(`Wechat version not supported. \nWechat version: ${XpSidecar.currentVersion}, supported version: ${JSON.stringify(this.supportedVersions)}`)
+      }
+      console.info('XpSidecar initAgentScript path:', scriptPath)
+      XpSidecar.initAgentScript = fs.readFileSync(scriptPath, 'utf-8')
+    } catch (e) {}
+  }
+
+  setinitAgentScript () {
+    XpSidecar.initAgentScript = fs.readFileSync(path.join(
+      codeRoot,
+      'src',
+      `init-agent-script-${XpSidecar.currentVersion}.js`,
+    ), 'utf-8')
+  }
+
+}
+
+// console.info('XpSidecar initAgentScript:', XpSidecar.initAgentScript)
+
+@Sidecar('WeChat.exe', XpSidecar.initAgentScript)
 class WeChatSidecar extends SidecarBody {
 
   // @Call(agentTarget('getTestInfoFunction'))
   // getTestInfo ():Promise<string> { return Ret() }
 
-  // @Call(agentTarget('getLoginUrlFunction'))
-  // getLoginUrl ():Promise<string> { return Ret() }
+  @Call(agentTarget('getLoginUrlFunction'))
+  getLoginUrl ():Promise<string> { return Ret() }
 
   @Call(agentTarget('getChatroomMemberNickInfoFunction'))
   getChatroomMemberNickInfo (
@@ -125,6 +134,11 @@ class WeChatSidecar extends SidecarBody {
 
   @Call(agentTarget('getMyselfInfoFunction'))
   getMyselfInfo ():Promise<string> { return Ret() }
+
+  @Call(agentTarget('GetContactOrChatRoomNickname'))
+  GetContactOrChatRoomNickname (
+    wxId: string,
+  ): Promise<string> { return Ret(wxId) }
 
   @Call(agentTarget('getChatroomMemberInfoFunction'))
   getChatroomMemberInfo ():Promise<string> { return Ret() }
@@ -200,19 +214,19 @@ class WeChatSidecar extends SidecarBody {
   //   @ParamType('pointer', 'Utf8String') pairWaitTip: string,
   // ) { return Ret(status, qrcodeUrl, wxid, avatarUrl, nickname, phoneType, phoneClientVer, pairWaitTip) }
 
-  // @Hook(agentTarget('hookLogoutEventCallback'))
-  // logoutEvent (
-  //   @ParamType('int32', 'U32') bySrv: number,
-  // ) { return Ret(bySrv) }
+  @Hook(agentTarget('hookLogoutEventCallback'))
+  logoutEvent (
+    @ParamType('int32', 'U32') bySrv: number,
+  ) { return Ret(bySrv) }
 
-  // @Hook(agentTarget('hookLoginEventCallback'))
-  // loginEvent (
-  // ) { return Ret() }
+  @Hook(agentTarget('hookLoginEventCallback'))
+  loginEvent (
+  ) { return Ret() }
 
-  // @Hook(agentTarget('agentReadyCallback'))
-  // agentReady (
-  // ) { return Ret() }
+  @Hook(agentTarget('agentReadyCallback'))
+  agentReady (
+  ) { return Ret() }
 
 }
 
-export { WeChatSidecar }
+export { WeChatSidecar, XpSidecar }

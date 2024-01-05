@@ -79,8 +79,9 @@ class PuppetXp extends PUPPET.Puppet {
   }
 
   constructor (
-    public override options: PuppetXpOptions = {},
+    public override options: PuppetXpOptions = { wechatVersion:'3.9.2.23' },
   ) {
+    log.info('options...', JSON.stringify(options))
     super(options)
     log.verbose('PuppetXp', 'constructor(%s)', JSON.stringify(options))
 
@@ -108,7 +109,7 @@ class PuppetXp extends PUPPET.Puppet {
     this.#sidecar = new WeChatSidecar()
 
     await attach(this.sidecar)
-    await this.onLogin()
+    // await this.onLogin()
     await this.onAgentReady()
 
     this.sidecar.on('hook', ({ method, args }) => {
@@ -137,7 +138,13 @@ class PuppetXp extends PUPPET.Puppet {
       }
     })
 
-    this.sidecar.on('error', e => this.emit('error', { data: JSON.stringify(e as any) }))
+    this.sidecar.on('error', e => {
+      try {
+        this.emit('error', { data: JSON.stringify(e as any) })
+      } catch (e) {
+        log.error('emit error fail:', e)
+      }
+    })
 
   }
 
@@ -151,28 +158,31 @@ class PuppetXp extends PUPPET.Puppet {
   }
 
   private async onLogin () {
-
-    const selfInfoRaw = JSON.parse(await this.sidecar.getMyselfInfo())
-    // console.debug('selfInfoRaw:\n\n\n', selfInfoRaw)
-    const selfInfo: PUPPET.payloads.Contact = {
-      alias: '',
-      avatar: selfInfoRaw.head_img_url,
-      friend: false,
-      gender: PUPPET.types.ContactGender.Unknown,
-      id: selfInfoRaw.id,
-      name: selfInfoRaw.name,
-      phone: [],
-      type: PUPPET.types.Contact.Individual,
+    // log.info('onLogin：', this.isLoggedIn)
+    if (!this.isLoggedIn) {
+      const selfInfoRaw = JSON.parse(await this.sidecar.getMyselfInfo())
+      // log.debug('selfInfoRaw:\n\n\n', selfInfoRaw)
+      const selfInfo: PUPPET.payloads.Contact = {
+        alias: '',
+        avatar: selfInfoRaw.head_img_url,
+        friend: false,
+        gender: PUPPET.types.ContactGender.Unknown,
+        id: selfInfoRaw.id,
+        name: selfInfoRaw.name,
+        phone: [],
+        type: PUPPET.types.Contact.Individual,
+      }
+      this.selfInfo = selfInfo
+      this.contactStore[selfInfo.id] = selfInfo
+      // 初始化联系人列表
+      await this.loadContactList()
+      // 初始化群列表
+      await this.loadRoomList()
+      // 初始化机器人信息
+      await super.login(this.selfInfo.id)
+    } else {
+      log.info('已处于登录状态，无需再次登录')
     }
-
-    this.selfInfo = selfInfo
-    await this.loadContactList()
-    await this.loadRoomList()
-
-    await super.login(this.selfInfo.id)
-
-    // console.debug(this.roomStore)
-    // console.debug(this.contactStore)
   }
 
   private async onLogout (reasonNum: number) {
@@ -224,7 +234,7 @@ class PuppetXp extends PUPPET.Puppet {
   }
 
   private onHookRecvMsg (args: any) {
-    //  console.info('onHookRecvMsg', args)
+    log.info('onHookRecvMsg', JSON.stringify(args))
     let type = PUPPET.types.Message.Unknown
     let roomId = ''
     let toId = ''
@@ -245,7 +255,7 @@ class PuppetXp extends PUPPET.Puppet {
             }
           })
         } catch (err) {
-          console.error(err)
+          log.error('xml2js.parseString fail:', err)
         }
         break
       case 3:
@@ -284,7 +294,7 @@ class PuppetXp extends PUPPET.Puppet {
           })
 
         } catch (err) {
-          console.error(err)
+          log.error('xml2js.parseString fail:', err)
         }
         break
       case 48:
@@ -293,8 +303,8 @@ class PuppetXp extends PUPPET.Puppet {
       case 49:
         try {
           xml2js.parseString(text, { explicitArray: false, ignoreAttrs: true }, function (err: any, json: { msg: { appmsg: { type: String } } }) {
-            // console.info(err)
-            // console.info(JSON.stringify(json))
+            // log.info(err)
+            // log.info(JSON.stringify(json))
             log.verbose('PuppetXp', 'xml2json err:%s', err)
             log.verbose('PuppetXp', 'json content:%s', JSON.stringify(json))
             switch (json.msg.appmsg.type) {
@@ -329,7 +339,7 @@ class PuppetXp extends PUPPET.Puppet {
             }
           })
         } catch (err) {
-          console.error(err)
+          log.error('xml2js.parseString fail:', err)
         }
         break
       case 50:
@@ -382,8 +392,8 @@ class PuppetXp extends PUPPET.Puppet {
       toId,
       type,
     }
-    //  console.info('payloadType----------', PUPPET.types.Message[type])
-    //  console.info('payload----------', payload)
+    //  log.info('payloadType----------', PUPPET.types.Message[type])
+    //  log.info('payload----------', payload)
 
     if (talkerId && (!this.contactStore[talkerId] || !this.contactStore[talkerId]?.name)) {
       void this.loadContactList()
@@ -408,7 +418,7 @@ class PuppetXp extends PUPPET.Puppet {
         // "luyuchao"修改群名为“北辰香麓欣麓园抗疫”
 
         const room = this.roomStore[roomId]
-        //  console.info('room=========================', room)
+        //  log.info('room=========================', room)
         let topic = ''
         const oldTopic = room ? room.topic : ''
 
@@ -432,10 +442,10 @@ class PuppetXp extends PUPPET.Puppet {
 
             }
           }
-          //  console.info(room)
-          //  console.info(changer)
-          //  console.info(oldTopic)
-          //  console.info(topic)
+          //  log.info(room)
+          //  log.info(changer)
+          //  log.info(oldTopic)
+          //  log.info(topic)
           const changerId = changer.id
           this.emit('room-topic', { changerId, newTopic: topic, oldTopic, roomId })
 
@@ -475,9 +485,9 @@ class PuppetXp extends PUPPET.Puppet {
 
             }
           }
-          //  console.info(inviteeList)
-          //  console.info(inviter)
-          //  console.info(room)
+          //  log.info(inviteeList)
+          //  log.info(inviter)
+          //  log.info(room)
 
           this.emit('room-join', { inviteeIdList: inviteeList, inviterId: inviter.id, roomId })
         }
@@ -486,7 +496,7 @@ class PuppetXp extends PUPPET.Puppet {
         this.emit('message', { messageId: payload.id })
       }
     } catch (e) {
-      console.error(e)
+      log.error('emit message fail:', e)
     }
 
   }
@@ -552,7 +562,7 @@ class PuppetXp extends PUPPET.Puppet {
       const ChatroomMemberInfo = await this.sidecar.getChatroomMemberInfo()
       roomList = JSON.parse(ChatroomMemberInfo)
     } catch (err) {
-      console.error('loadRoomList fail:', err)
+      log.error('loadRoomList fail:', err)
     }
 
     for (const roomKey in roomList) {
@@ -565,12 +575,12 @@ class PuppetXp extends PUPPET.Puppet {
         const roomMember = roomInfo.roomMember || []
         const topic = this.contactStore[roomId]?.name || ''
         const room = {
-          adminIdList: [],
+          adminIdList: [ roomInfo.admin || '' ],
           avatar: '',
           external: false,
           id: roomId,
           memberIdList: roomMember,
-          ownerId: '',
+          ownerId: roomInfo.admin || '',
           topic,
         }
         this.roomStore[roomId] = room
@@ -592,7 +602,7 @@ class PuppetXp extends PUPPET.Puppet {
               }
               this.contactStore[memberId] = contact
             } catch (err) {
-              console.error(err)
+              log.error('loadRoomList fail:', err)
             }
           }
         }
@@ -754,7 +764,7 @@ class PuppetXp extends PUPPET.Puppet {
         const imageInfo = ImageDecrypt(dataPath, messageId)
         // const imageInfo = ImageDecrypt('C:\\Users\\choogoo\\Documents\\WeChat Files\\wxid_pnza7m7kf9tq12\\FileStorage\\Image\\Thumb\\2022-05\\e83b2aea275460cd50352559e040a2f8_t.dat','cl34vez850000gkmw2macd3dw')
 
-        console.info(dataPath, imageInfo.fileName, imageInfo.extension)
+        log.info(dataPath, imageInfo.fileName, imageInfo.extension)
         base64 = imageInfo.base64
         fileName = `message-${messageId}-url-${imageType}.${imageInfo.extension}`
         file = FileBox.fromBase64(
@@ -764,11 +774,11 @@ class PuppetXp extends PUPPET.Puppet {
         const paths = dataPath.split('\\')
         paths[paths.length - 1] = fileName
         imagePath = paths.join('\\')
-        // console.debug(imagePath)
+        // log.debug(imagePath)
         await file.toFile(imagePath)
       }
     } catch (err) {
-      console.error(err)
+      log.error('messageImage fail:', err)
     }
     return FileBox.fromBase64(
       base64,
@@ -814,13 +824,13 @@ class PuppetXp extends PUPPET.Puppet {
         fileName = '\\' + messageJson.msg.appmsg[0].title[0]
         const filePath = `${this.selfInfo.id}\\FileStorage\\File\\${year}-${month}`
         dataPath = rootPath + filePath + fileName  // 要解密的文件路径
-        // console.info(dataPath)
+        // log.info(dataPath)
         return FileBox.fromFile(
           dataPath,
           fileName,
         )
       } catch (err) {
-        console.error(err)
+        log.error('messageFile fail:', err)
       }
     }
 
@@ -831,10 +841,10 @@ class PuppetXp extends PUPPET.Puppet {
           fileName = text.md5 + '.png'
           return FileBox.fromUrl(text.cdnurl, { name: fileName })
         } catch (err) {
-          console.error(err)
+          log.error('messageFile fail:', err)
         }
       } catch (err) {
-        console.error(err)
+        log.error('messageFile fail:', err)
       }
     }
 
@@ -867,7 +877,7 @@ class PuppetXp extends PUPPET.Puppet {
   }
 
   override async messageRawPayloadParser (payload: PUPPET.payloads.Message) {
-    // console.info(payload)
+    // log.info(payload)
     return payload
   }
 
@@ -1120,7 +1130,7 @@ class PuppetXp extends PUPPET.Puppet {
         name: contact?.name || 'Unknow',
         roomAlias: contact?.name || '',
       }
-      // console.info(MemberRawPayload)
+      // log.info(MemberRawPayload)
       return MemberRawPayload
     } catch (e) {
       log.error('roomMemberRawPayload()', e)
