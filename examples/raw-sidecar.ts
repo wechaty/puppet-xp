@@ -49,6 +49,19 @@ async function main() {
   const loginUrl = await sidecar.getLoginUrl()
   console.info(`登陆二维码地址loginUrl: ${loginUrl}`)
 
+  // const contact = await sidecar.getChatroomMemberInfo()
+  // //console.log(contact)
+  // for (const item of JSON.parse(contact)) {
+  //   for(const wxid of item.roomMember){
+  //     //console.log(wxid)
+  //     if(wxid === 'tyutluyc'){
+  //       const nick = await sidecar.getChatroomMemberNickInfo(wxid,item.roomid)
+  //       console.log('wxid:====',wxid,"==nick:===",nick)
+  //     }
+  //   }
+      
+  // }
+
   sidecar.on('hook', async ({ method, args }) => {
     // console.log(`onhook事件消息：${new Date().toLocaleString()}\n`, method, JSON.stringify(args))
     console.log(`onhook事件消息：${new Date().toLocaleString()}`, method)
@@ -90,9 +103,11 @@ async function main() {
     const contactsJSON = JSON.parse(contacts)
     console.log('contacts列表:', contactsJSON.length)
 
-    // for (const contact of contactsJSON) {
-    //     console.info('好友:', contact)
-    // }
+    for (const contact of contactsJSON) {
+      if(!contact.name) {
+        console.info('好友:', JSON.stringify(contact))
+      }
+    }
 
     const roomList = await sidecar.getChatroomMemberInfo()
     // console.log(`roomList: ${roomList}`)
