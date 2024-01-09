@@ -66,3 +66,5 @@ t/
 t.*
 cache/*
 src/init-agent-script.js
+examples/file/*
+examples/media/*
