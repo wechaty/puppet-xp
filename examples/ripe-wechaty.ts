@@ -47,6 +47,7 @@ function onLogout (user: Contact) {
 
 async function onMessage (msg: Message) {
   // log.info('onMessage', msg.toString())
+  log.info('接收到消息：', JSON.stringify(msg))
   const contact = msg.talker()
   log.info('当前联系人信息：', JSON.stringify(contact))
   const room = msg.room()
@@ -124,7 +125,7 @@ async function onMessage (msg: Message) {
 
 }
 
-const puppet = new PuppetXp({wechatVersion:'5.0.0.0'})
+const puppet = new PuppetXp({wechatVersion:'0.0.0.0'})
 const bot = WechatyBuilder.build({
   name: 'ding-dong-bot',
   puppet,

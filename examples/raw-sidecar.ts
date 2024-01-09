@@ -103,9 +103,11 @@ async function main() {
     const contactsJSON = JSON.parse(contacts)
     console.log('contacts列表:', contactsJSON.length)
 
-    // for (const contact of contactsJSON) {
-    //     console.info('好友:', contact)
-    // }
+    for (const contact of contactsJSON) {
+      if(!contact.name) {
+        console.info('好友:', JSON.stringify(contact))
+      }
+    }
 
     const roomList = await sidecar.getChatroomMemberInfo()
     // console.log(`roomList: ${roomList}`)

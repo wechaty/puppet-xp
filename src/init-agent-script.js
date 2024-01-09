@@ -206,11 +206,11 @@ var wxOffsets = {
 var availableVersion = 1661534743; // 3.9.2.23  ==0x63090217
 var moduleBaseAddress = Module.getBaseAddress('WeChatWin.dll');
 var moduleLoad = Module.load('WeChatWin.dll');
-console.log('moduleBaseAddress:', moduleBaseAddress);
+// console.log('moduleBaseAddress:', moduleBaseAddress)
 /* -----------------base------------------------- */
+var retidPtr = null;
+var retidStruct = null;
 var initidStruct = function (str) {
-    var retidPtr = null;
-    var retidStruct = null;
     retidPtr = Memory.alloc(str.length * 2 + 1);
     retidPtr.writeUtf16String(str);
     retidStruct = Memory.alloc(0x14); // returns a NativePointer
@@ -222,9 +222,9 @@ var initidStruct = function (str) {
         .writeU32(0);
     return retidStruct;
 };
-var initStruct = function (str) {
-    var retPtr = null;
-    var retStruct = null;
+var retPtr = null;
+var retStruct = null;
+var initStruct = (function (str) {
     retPtr = Memory.alloc(str.length * 2 + 1);
     retPtr.writeUtf16String(str);
     retStruct = Memory.alloc(0x14); // returns a NativePointer
@@ -235,10 +235,10 @@ var initStruct = function (str) {
         .writeU32(0).add(0x04)
         .writeU32(0);
     return retStruct;
-};
+});
+var msgstrPtr = null;
+var msgStruct = null;
 var initmsgStruct = function (str) {
-    var msgstrPtr = null;
-    var msgStruct = null;
     msgstrPtr = Memory.alloc(str.length * 2 + 1);
     msgstrPtr.writeUtf16String(str);
     msgStruct = Memory.alloc(0x14); // returns a NativePointer
@@ -250,8 +250,8 @@ var initmsgStruct = function (str) {
         .writeU32(0);
     return msgStruct;
 };
+var atStruct = null;
 var initAtMsgStruct = function (wxidStruct) {
-    var atStruct = null;
     atStruct = Memory.alloc(0x10);
     atStruct.writePointer(wxidStruct).add(0x04)
         .writeU32(wxidStruct.toInt32() + 0x14).add(0x04) // 0x14 = sizeof(wxid structure)
@@ -552,7 +552,7 @@ var getContactNativeFunction = function () {
         var CONTACT_SIZE = 0x438; // 假设每个联系人数据结构的大小
         while (start.compare(end) < 0) {
             var contact = {
-                wxid: start.add(0x10).readPointer().readUtf16String(),
+                id: start.add(0x10).readPointer().readUtf16String(),
                 custom_account: start.add(0x24).readPointer().readUtf16String(),
                 name: start.add(0x6c).readPointer().readUtf16String(),
                 pinyin: start.add(0xAC).readPointer().readUtf16String(),
@@ -562,7 +562,10 @@ var getContactNativeFunction = function () {
                 verify_flag: start.add(0x54).readU32(),
                 alias: start.add(0x8c).readPointer().readUtf16String() || undefined
             };
-            contacts.push(contact);
+            // console.log('contact:', JSON.stringify(contact))
+            if (contact.name) {
+                contacts.push(contact);
+            }
             start = start.add(CONTACT_SIZE);
         }
     }
@@ -631,6 +634,48 @@ var getChatroomMemberInfoFunction = function () {
     }
     return results;
 };
+// 获取群成员昵称
+var memberNickBuffAsm = null;
+var nickRoomId = null;
+var nickMemberId = null;
+var nickBuff = null;
+var getChatroomMemberNickInfoFunction = (function (memberId, roomId) {
+    // console.log('Function called with wxid:', memberId, 'chatRoomId:', roomId);
+    nickBuff = Memory.alloc(0x7e4);
+    //const nickRetAddr = Memory.alloc(0x04)
+    memberNickBuffAsm = Memory.alloc(Process.pageSize);
+    //console.log('asm address----------',memberNickBuffAsm)
+    nickRoomId = initidStruct(roomId);
+    //console.log('nick room id',nickRoomId)
+    nickMemberId = initStruct(memberId);
+    //console.log('nick nickMemberId id',nickMemberId)
+    //const nickStructPtr = initmsgStruct('')
+    Memory.patchCode(memberNickBuffAsm, Process.pageSize, function (code) {
+        var cw = new X86Writer(code, {
+            pc: memberNickBuffAsm
+        });
+        cw.putPushfx();
+        cw.putPushax();
+        cw.putMovRegAddress('edi', nickRoomId);
+        cw.putMovRegAddress('eax', nickBuff);
+        cw.putMovRegReg('edx', 'edi');
+        cw.putPushReg('eax');
+        cw.putMovRegAddress('ecx', nickMemberId);
+        // console.log('moduleBaseAddress', moduleBaseAddress)
+        cw.putCallAddress(moduleBaseAddress.add(0xC06F10));
+        cw.putAddRegImm('esp', 0x04);
+        cw.putPopax();
+        cw.putPopfx();
+        cw.putRet();
+        cw.flush();
+    });
+    var nativeativeFunction = new NativeFunction(ptr(memberNickBuffAsm), 'void', []);
+    nativeativeFunction();
+    var nickname = readWideString(nickBuff);
+    // console.log('--------------------------nickname', nickname)
+    return nickname;
+});
+getChatroomMemberNickInfoFunction('tyutluyc', '21341182572@chatroom');
 // 发送文本消息
 var sendMsgNativeFunction = function (talkerId, content) {
     var txtAsm = Memory.alloc(Process.pageSize);
@@ -678,15 +723,17 @@ var sendMsgNativeFunction = function (talkerId, content) {
     nativeativeFunction();
 };
 // 发送@消息
+var asmAtMsg = null;
+var roomid, msg, wxid, atid;
+var ecxBuffer;
 var sendAtMsgNativeFunction = function (roomId, text, contactId, nickname) {
-    var asmAtMsg = null;
     asmAtMsg = Memory.alloc(Process.pageSize);
-    var ecxBuffer = Memory.alloc(0x3b0);
+    ecxBuffer = Memory.alloc(0x3b0);
     var atContent = '@' + nickname + ' ' + text;
-    var roomid_ = initStruct(roomId);
-    var wxid_ = initidStruct(contactId);
-    var msg_ = initmsgStruct(atContent);
-    var atid_ = initAtMsgStruct(wxid_);
+    roomid = initStruct(roomId);
+    wxid = initidStruct(contactId);
+    msg = initmsgStruct(atContent);
+    var atid_ = initAtMsgStruct(wxid);
     Memory.patchCode(asmAtMsg, Process.pageSize, function (code) {
         var cw = new X86Writer(code, {
             pc: asmAtMsg
@@ -701,9 +748,9 @@ var sendAtMsgNativeFunction = function (roomId, text, contactId, nickname) {
         cw.putMovRegAddress('eax', atid_);
         cw.putPushReg('eax');
         // cw.putMovRegReg
-        cw.putMovRegAddress('eax', msg_);
+        cw.putMovRegAddress('eax', msg);
         cw.putPushReg('eax');
-        cw.putMovRegAddress('edx', roomid_); // room_id
+        cw.putMovRegAddress('edx', roomid); // room_id
         cw.putMovRegAddress('ecx', ecxBuffer);
         cw.putCallAddress(moduleBaseAddress.add(wxOffsets.sendText.WX_SEND_TEXT_OFFSET));
         cw.putAddRegImm('esp', 0x18);
@@ -850,49 +897,6 @@ var recvMsgNativeCallback = (function () {
         return null;
     }
 })();
-// 获取群成员昵称
-var getChatroomMemberNickInfoFunction = (function (memberId, roomId) {
-    console.log('Function called with wxid:', memberId, 'chatRoomId:', roomId);
-    var memberNickBuffAsm = null;
-    var nickRoomId = null;
-    var nickMemberId = null;
-    var nickBuff = null;
-    nickBuff = Memory.alloc(0x7e4);
-    //const nickRetAddr = Memory.alloc(0x04)
-    memberNickBuffAsm = Memory.alloc(Process.pageSize);
-    //console.log('asm address----------',memberNickBuffAsm)
-    nickRoomId = initidStruct(roomId);
-    //console.log('nick room id',nickRoomId)
-    nickMemberId = initStruct(memberId);
-    //console.log('nick nickMemberId id',nickMemberId)
-    //const nickStructPtr = initmsgStruct('')
-    Memory.patchCode(memberNickBuffAsm, Process.pageSize, function (code) {
-        var cw = new X86Writer(code, {
-            pc: memberNickBuffAsm
-        });
-        cw.putPushfx();
-        cw.putPushax();
-        cw.putMovRegAddress('edi', nickRoomId);
-        cw.putMovRegAddress('eax', nickBuff);
-        cw.putMovRegReg('edx', 'edi');
-        cw.putPushReg('eax');
-        cw.putMovRegAddress('ecx', nickMemberId);
-        console.log('moduleBaseAddress', moduleBaseAddress);
-        cw.putCallAddress(moduleBaseAddress.add(0xC06F10));
-        cw.putAddRegImm('esp', 0x04);
-        cw.putPopax();
-        cw.putPopfx();
-        cw.putRet();
-        cw.flush();
-    });
-    var nativeativeFunction = new NativeFunction(ptr(memberNickBuffAsm), 'void', []);
-    nativeativeFunction();
-    console.log('nickBuff:', nickBuff);
-    var nickname = readWideString(nickBuff);
-    console.log('----nickname', nickname);
-    return nickname;
-});
-getChatroomMemberNickInfoFunction('tyutluyc', '21341182572@chatroom');
 var getChatroomMemberNickInfoFunction1 = function (wxid, chatRoomId) {
     console.log('Function called with wxid:', wxid, 'chatRoomId:', chatRoomId);
     var base_addr = moduleBaseAddress; // 替换为实际的基地址
@@ -919,8 +923,8 @@ var getChatroomMemberNickInfoFunction1 = function (wxid, chatRoomId) {
         Memory.patchCode(asmCode, Process.pageSize, function (code) {
             var cw = new X86Writer(code, { pc: asmCode });
             console.log('保存寄存器状态');
-            cw.putPushax();
             cw.putPushfx();
+            cw.putPushax();
             console.log('调用 get_chat_room_mgr_addr:', get_chat_room_mgr_addr);
             cw.putCallAddress(get_chat_room_mgr_addr);
             console.log('将 nickname 地址移动到 ecx:', nickname);
@@ -940,8 +944,8 @@ var getChatroomMemberNickInfoFunction1 = function (wxid, chatRoomId) {
             console.log('调用 get_nickname_addr:', get_nickname_addr);
             cw.putCallAddress(get_nickname_addr);
             console.log('恢复寄存器状态');
-            cw.putPopfx();
             cw.putPopax();
+            cw.putPopfx();
             console.log('返回');
             cw.putRet();
             cw.flush();

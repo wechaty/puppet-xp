@@ -211,13 +211,13 @@ const availableVersion = 1661534743 // 3.9.2.23  ==0x63090217
 
 const moduleBaseAddress = Module.getBaseAddress('WeChatWin.dll')
 const moduleLoad = Module.load('WeChatWin.dll')
-console.log('moduleBaseAddress:', moduleBaseAddress)
+// console.log('moduleBaseAddress:', moduleBaseAddress)
 
 /* -----------------base------------------------- */
 
+let retidPtr: any = null
+let retidStruct: any = null
 const initidStruct = (str: any) => {
-  let retidPtr: any = null
-  let retidStruct: any = null
   retidPtr = Memory.alloc(str.length * 2 + 1)
   retidPtr.writeUtf16String(str)
 
@@ -233,9 +233,10 @@ const initidStruct = (str: any) => {
   return retidStruct
 }
 
-const initStruct = (str: any) => {
-  let retPtr: any = null
-  let retStruct: any = null
+let retPtr:any = null
+let retStruct:any = null
+const initStruct = ((str) => {
+
   retPtr = Memory.alloc(str.length * 2 + 1)
   retPtr.writeUtf16String(str)
 
@@ -249,11 +250,11 @@ const initStruct = (str: any) => {
     .writeU32(0)
 
   return retStruct
-}
+})
 
+let msgstrPtr: any = null
+let msgStruct: any = null
 const initmsgStruct = (str: any) => {
-  let msgstrPtr: any = null
-  let msgStruct: any = null
   msgstrPtr = Memory.alloc(str.length * 2 + 1)
   msgstrPtr.writeUtf16String(str)
 
@@ -269,8 +270,8 @@ const initmsgStruct = (str: any) => {
   return msgStruct
 }
 
+let atStruct: any = null
 const initAtMsgStruct = (wxidStruct: any) => {
-  let atStruct: any = null
   atStruct = Memory.alloc(0x10)
 
   atStruct.writePointer(wxidStruct).add(0x04)
@@ -627,7 +628,7 @@ const getContactNativeFunction = (): string => {
 
     while (start.compare(end) < 0) {
       const contact = {
-        wxid: start.add(0x10).readPointer().readUtf16String(),
+        id: start.add(0x10).readPointer().readUtf16String(),
         custom_account: start.add(0x24).readPointer().readUtf16String(),
         name: start.add(0x6c).readPointer().readUtf16String(),
         pinyin: start.add(0xAC).readPointer().readUtf16String(),
@@ -637,8 +638,10 @@ const getContactNativeFunction = (): string => {
         verify_flag: start.add(0x54).readU32(),
         alias: start.add(0x8c).readPointer().readUtf16String() || undefined
       };
-
-      contacts.push(contact);
+      // console.log('contact:', JSON.stringify(contact))
+      if(contact.name){
+        contacts.push(contact);
+      }
       start = start.add(CONTACT_SIZE);
     }
   }
@@ -714,6 +717,55 @@ const getChatroomMemberInfoFunction = () => {
   return results
 }
 
+// 获取群成员昵称
+let memberNickBuffAsm: any = null
+let nickRoomId: any = null
+let nickMemberId: any = null
+let nickBuff: any = null
+const getChatroomMemberNickInfoFunction = ((memberId, roomId) => {
+  // console.log('Function called with wxid:', memberId, 'chatRoomId:', roomId);
+  nickBuff = Memory.alloc(0x7e4)
+  //const nickRetAddr = Memory.alloc(0x04)
+  memberNickBuffAsm = Memory.alloc(Process.pageSize)
+  //console.log('asm address----------',memberNickBuffAsm)
+  nickRoomId = initidStruct(roomId)
+  //console.log('nick room id',nickRoomId)
+  nickMemberId = initStruct(memberId)
+
+  //console.log('nick nickMemberId id',nickMemberId)
+  //const nickStructPtr = initmsgStruct('')
+
+  Memory.patchCode(memberNickBuffAsm, Process.pageSize, code => {
+    var cw = new X86Writer(code, {
+      pc: memberNickBuffAsm
+    })
+    
+    cw.putPushfx()
+    cw.putPushax()
+    cw.putMovRegAddress('edi', nickRoomId)
+    cw.putMovRegAddress('eax', nickBuff)
+    cw.putMovRegReg('edx', 'edi')
+    cw.putPushReg('eax')
+    cw.putMovRegAddress('ecx', nickMemberId)
+    // console.log('moduleBaseAddress', moduleBaseAddress)
+    cw.putCallAddress(moduleBaseAddress.add(0xC06F10))
+    cw.putAddRegImm('esp', 0x04)
+
+    cw.putPopax()
+    cw.putPopfx()
+    cw.putRet()
+    cw.flush()
+
+  })
+
+  const nativeativeFunction = new NativeFunction(ptr(memberNickBuffAsm), 'void', [])
+  nativeativeFunction()
+  const nickname = readWideString(nickBuff)
+  // console.log('--------------------------nickname', nickname)
+  return nickname
+})
+getChatroomMemberNickInfoFunction('tyutluyc', '21341182572@chatroom')
+
 // 发送文本消息
 const sendMsgNativeFunction = (talkerId: any, content: any) => {
 
@@ -781,17 +833,20 @@ const sendMsgNativeFunction = (talkerId: any, content: any) => {
 }
 
 // 发送@消息
+let asmAtMsg:any = null
+let roomid, msg, wxid, atid
+let ecxBuffer
+
 const sendAtMsgNativeFunction = (roomId: any, text: string, contactId: any, nickname: string) => {
-  let asmAtMsg: any = null
   asmAtMsg = Memory.alloc(Process.pageSize)
-  const ecxBuffer = Memory.alloc(0x3b0)
+  ecxBuffer = Memory.alloc(0x3b0)
 
   const atContent = '@' + nickname + ' ' + text
 
-  const roomid_: NativePointerValue = initStruct(roomId)
-  const wxid_ = initidStruct(contactId)
-  const msg_: NativePointerValue = initmsgStruct(atContent)
-  const atid_: NativePointerValue = initAtMsgStruct(wxid_)
+  roomid = initStruct(roomId)
+  wxid = initidStruct(contactId)
+  msg = initmsgStruct(atContent)
+  const atid_: NativePointerValue = initAtMsgStruct(wxid)
 
   Memory.patchCode(asmAtMsg, Process.pageSize, code => {
     const cw = new X86Writer(code, {
@@ -810,10 +865,10 @@ const sendAtMsgNativeFunction = (roomId: any, text: string, contactId: any, nick
 
     // cw.putMovRegReg
 
-    cw.putMovRegAddress('eax', msg_)
+    cw.putMovRegAddress('eax', msg)
     cw.putPushReg('eax')
 
-    cw.putMovRegAddress('edx', roomid_) // room_id
+    cw.putMovRegAddress('edx', roomid) // room_id
 
     cw.putMovRegAddress('ecx', ecxBuffer)
     cw.putCallAddress(moduleBaseAddress.add(
@@ -1002,54 +1057,6 @@ const recvMsgNativeCallback = (() => {
 
 })()
 
-// 获取群成员昵称
-const getChatroomMemberNickInfoFunction = ((memberId, roomId) => {
-  console.log('Function called with wxid:', memberId, 'chatRoomId:', roomId);
-  let memberNickBuffAsm: any = null
-  let nickRoomId: any = null
-  let nickMemberId: any = null
-  let nickBuff: any = null
-  nickBuff = Memory.alloc(0x7e4)
-  //const nickRetAddr = Memory.alloc(0x04)
-  memberNickBuffAsm = Memory.alloc(Process.pageSize)
-  //console.log('asm address----------',memberNickBuffAsm)
-  nickRoomId = initidStruct(roomId)
-  //console.log('nick room id',nickRoomId)
-  nickMemberId = initStruct(memberId)
-
-  //console.log('nick nickMemberId id',nickMemberId)
-  //const nickStructPtr = initmsgStruct('')
-
-  Memory.patchCode(memberNickBuffAsm, Process.pageSize, code => {
-    var cw = new X86Writer(code, {
-      pc: memberNickBuffAsm
-    })
-    cw.putPushfx()
-    cw.putPushax()
-    cw.putMovRegAddress('edi', nickRoomId)
-    cw.putMovRegAddress('eax', nickBuff)
-    cw.putMovRegReg('edx', 'edi')
-    cw.putPushReg('eax')
-    cw.putMovRegAddress('ecx', nickMemberId)
-    console.log('moduleBaseAddress', moduleBaseAddress)
-    cw.putCallAddress(moduleBaseAddress.add(0xC06F10))
-    cw.putAddRegImm('esp', 0x04)
-    cw.putPopax()
-    cw.putPopfx()
-    cw.putRet()
-    cw.flush()
-
-  })
-
-  const nativeativeFunction = new NativeFunction(ptr(memberNickBuffAsm), 'void', [])
-  nativeativeFunction()
-  console.log('nickBuff:', nickBuff)
-  const nickname = readWideString(nickBuff)
-  console.log('----nickname', nickname)
-  return nickname
-})
-getChatroomMemberNickInfoFunction('tyutluyc', '21341182572@chatroom')
-
 const getChatroomMemberNickInfoFunction1 = (wxid, chatRoomId) => {
   console.log('Function called with wxid:', wxid, 'chatRoomId:', chatRoomId);
 
@@ -1083,8 +1090,8 @@ const getChatroomMemberNickInfoFunction1 = (wxid, chatRoomId) => {
       const cw = new X86Writer(code, { pc: asmCode });
 
       console.log('保存寄存器状态');
-      cw.putPushax();
       cw.putPushfx();
+      cw.putPushax();
 
       console.log('调用 get_chat_room_mgr_addr:', get_chat_room_mgr_addr);
       cw.putCallAddress(get_chat_room_mgr_addr);
@@ -1111,8 +1118,8 @@ const getChatroomMemberNickInfoFunction1 = (wxid, chatRoomId) => {
       cw.putCallAddress(get_nickname_addr);
 
       console.log('恢复寄存器状态');
-      cw.putPopfx();
       cw.putPopax();
+      cw.putPopfx();
 
       console.log('返回');
       cw.putRet();
