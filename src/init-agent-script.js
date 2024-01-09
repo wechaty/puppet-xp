@@ -493,77 +493,6 @@ var SelfInfoInner = /** @class */ (function () {
     }
     return SelfInfoInner;
 }());
-var getMyselfInfoFunction2 = function () {
-    var out = new SelfInfoInner();
-    var baseAddr = moduleBaseAddress;
-    console.log('baseAddr:', baseAddr);
-    var accoutServiceAddr = baseAddr.add(wxOffsets.login.WX_ACCOUNT_SERVICE_OFFSET);
-    var getAppSaveAddr = baseAddr.add(wxOffsets.login.WX_GET_APP_DATA_SAVE_PATH_OFFSET);
-    var getCurrentDataPathAddr = baseAddr.add(wxOffsets.login.WX_GET_CURRENT_DATA_PATH_OFFSET);
-    // 创建 NativeFunction 实例
-    var callAccountService = new NativeFunction(accoutServiceAddr, 'pointer', []);
-    var callGetAppSave = new NativeFunction(getAppSaveAddr, 'void', ['pointer']);
-    var callGetCurrentDataPath = new NativeFunction(getCurrentDataPathAddr, 'void', ['pointer']);
-    console.log('callAccountService:', callAccountService);
-    // 检查地址有效性
-    if (!accoutServiceAddr.isNull()) {
-        console.log("accoutServiceAddr is not null, it might be a valid function address.");
-        // 尝试从该地址读取指针
-        try {
-            var readValue = accoutServiceAddr.readPointer();
-            console.log("Read value from accoutServiceAddr:", readValue);
-        }
-        catch (e) {
-            console.error("Error reading from accoutServiceAddr:", e);
-        }
-        // 监控函数调用
-        try {
-            Interceptor.attach(accoutServiceAddr, {
-                onEnter: function (args) {
-                    console.log("accoutServiceAddr function is called.");
-                }
-            });
-            console.log("Interceptor attached to accoutServiceAddr.");
-        }
-        catch (e) {
-            console.error("Error attaching Interceptor to accoutServiceAddr:", e);
-        }
-    }
-    else {
-        console.log("accoutServiceAddr is null, it's not a valid function address.");
-    }
-    var serviceAddr = callAccountService();
-    console.log('serviceAddr:', serviceAddr);
-    if (!serviceAddr.isNull()) {
-        // 读取个人信息的逻辑，类似于 C++ 代码中的内存操作
-        out.wxid = readStringFromMemory(serviceAddr.add(0x44), 0x10, 0x14);
-        out.account = readStringFromMemory(serviceAddr.add(0xA8), 0x10, 0x14);
-        out.mobile = readStringFromMemory(serviceAddr.add(0xC0), 0x10, 0x14);
-        // ... 读取其他字段 ...
-        // 读取 data_save_path 和 current_data_path
-        var dataSavePathPtr = Memory.alloc(0x100);
-        var currentDataPathPtr = Memory.alloc(0x100);
-        callGetAppSave(dataSavePathPtr);
-        callGetCurrentDataPath(currentDataPathPtr);
-        out.data_save_path = dataSavePathPtr.readUtf16String();
-        out.current_data_path = currentDataPathPtr.readUtf16String();
-        console.log('out temp:', JSON.stringify(out));
-    }
-    console.log('out:', JSON.stringify(out));
-    return out;
-};
-function readStringFromMemory(base, lengthOffset, flagOffset) {
-    var length = base.add(lengthOffset).readU32();
-    if (length === 0)
-        return '';
-    if (base.add(flagOffset).readU32() === 0xF) {
-        return base.readCString(length) || '';
-    }
-    else {
-        var strPtr = base.readPointer();
-        return strPtr.readCString(length) || '';
-    }
-}
 // 获取联系人列表
 var getContactNativeFunction = function () {
     // 基地址和偏移量需要根据目标程序实际情况调整
@@ -642,52 +571,6 @@ var getContactNativeFunction = function () {
     // console.log('contacts:', contactsString)
     return contactsString;
 };
-// 调试中
-function GetContactOrChatRoomNickname(wxId) {
-    var buff = Memory.alloc(0x440);
-    var pri = Memory.allocUtf16String(wxId);
-    var WX_CONTACT_MGR_OFFSET = wxOffsets.contactMgr.WX_CONTACT_MGR_OFFSET; // 替换为实际的偏移量
-    var WX_GET_CONTACT_OFFSET = wxOffsets.contact.WX_GET_CONTACT_OFFSET; // 替换为实际的偏移量
-    var WX_FREE_CONTACT_OFFSET = wxOffsets.chatRoom.WX_FREE_CONTACT_OFFSET; // 替换为实际的偏移量
-    var contactMgrAddr = moduleBaseAddress.add(WX_CONTACT_MGR_OFFSET);
-    var getContactAddr = moduleBaseAddress.add(WX_GET_CONTACT_OFFSET);
-    var freeContactAddr = moduleBaseAddress.add(WX_FREE_CONTACT_OFFSET);
-    var contactOrChatRooNickBuffAsm = Memory.alloc(Process.pageSize);
-    Memory.patchCode(ptr(contactOrChatRooNickBuffAsm), Process.pageSize, function (code) {
-        var cw = new X86Writer(code, { pc: ptr(contactOrChatRooNickBuffAsm) });
-        cw.putPushfx();
-        cw.putPushax();
-        cw.putMovRegAddress('ecx', contactMgrAddr);
-        cw.putCallReg('ecx');
-        cw.putMovRegAddress('ecx', buff);
-        cw.putPushReg('ecx');
-        cw.putMovRegAddress('ecx', pri);
-        cw.putPushReg('ecx');
-        cw.putMovRegReg('ecx', 'eax');
-        cw.putCallAddress(getContactAddr);
-        cw.putAddRegImm('esp', 0x08);
-        cw.putMovRegAddress('ecx', buff);
-        cw.putCallAddress(freeContactAddr);
-        cw.putPopax();
-        cw.putPopfx();
-        cw.putRet();
-        cw.flush();
-    });
-    // 执行汇编代码
-    var success = -1;
-    try {
-        var nativeFunction = new NativeFunction(contactOrChatRooNickBuffAsm, 'int', []);
-        success = nativeFunction();
-        console.log('success:', success);
-    }
-    catch (e) {
-        console.error('Error during function execution:', e);
-        return '';
-    }
-    var name = contactOrChatRooNickBuffAsm.readUtf16String();
-    console.log('name:', name);
-    return name;
-}
 // 获取群组列表
 var getChatroomMemberInfoFunction = function () {
     // 获取群组列表地址
@@ -747,239 +630,6 @@ var getChatroomMemberInfoFunction = function () {
         console.log('格式转换错误：', 'e');
     }
     return results;
-};
-// 调试中
-function GetMemberFromChatRoom(chatRoomId) {
-    var base_addr = moduleBaseAddress; // 替换为实际的基地址
-    var WX_GET_MEMBER_FROM_CHAT_ROOM_OFFSET = wxOffsets.chatRoom.WX_GET_MEMBER_FROM_CHAT_ROOM_OFFSET; // 替换为实际的偏移量
-    var WX_CHAT_ROOM_MGR_OFFSET = wxOffsets.chatRoomMgr.WX_CHAT_ROOM_MGR_OFFSET; // 替换为实际的偏移量
-    var WX_INIT_CHAT_ROOM_OFFSET = wxOffsets.chatRoom.WX_INIT_CHAT_ROOM_OFFSET; // 替换为实际的偏移量
-    var WX_FREE_CHAT_ROOM_OFFSET = wxOffsets.chatRoom.WX_FREE_CHAT_ROOM_OFFSET; // 替换为实际的偏移量
-    // 准备函数地址
-    var get_member_addr = base_addr.add(WX_GET_MEMBER_FROM_CHAT_ROOM_OFFSET);
-    var get_chat_room_mgr_addr = base_addr.add(WX_CHAT_ROOM_MGR_OFFSET);
-    var create_chat_room_addr = base_addr.add(WX_INIT_CHAT_ROOM_OFFSET);
-    var free_chat_room_addr = base_addr.add(WX_FREE_CHAT_ROOM_OFFSET);
-    // 准备内存空间
-    var buffer = Memory.alloc(0x1D4);
-    var chat_room_ptr = Memory.allocUtf16String(chatRoomId);
-    // 分配内存来存储 success 值
-    var successPtr = Memory.alloc(4); // 分配 4 字节，因为 int 类型通常是 4 字节
-    // 使用 X86Writer 编写内联汇编
-    var asmCode = Memory.alloc(Process.pageSize);
-    Memory.patchCode(asmCode, Process.pageSize, function (code) {
-        var cw = new X86Writer(code, { pc: asmCode });
-        // 模拟 C++ 中的内联汇编操作
-        cw.putPushax();
-        cw.putMovRegAddress('ecx', buffer);
-        cw.putCallAddress(create_chat_room_addr);
-        cw.putCallAddress(get_chat_room_mgr_addr);
-        cw.putMovRegAddress('eax', buffer);
-        cw.putPushReg('eax');
-        cw.putPushImmPtr(chat_room_ptr);
-        cw.putCallAddress(get_member_addr);
-        cw.putBytes([0x0F, 0xB6, 0xC0]); // movzx eax, al
-        cw.putMovRegAddress('eax', successPtr); // 将 EAX 寄存器的值存储到 successPtr 指向的内存地址
-        cw.putPopax();
-        cw.putRet();
-        cw.flush();
-    });
-    // 使用 NativeFunction 调用汇编代码
-    var success = -1;
-    try {
-        var nativeFunction = new NativeFunction(asmCode, 'int', []);
-        success = nativeFunction();
-        console.log('success:', success);
-    }
-    catch (e) {
-        console.error('Error during function execution:', e);
-    }
-    // 读取结果
-    var membersPtr = buffer.add(0x1c).readPointer();
-    var roomPtr = buffer.add(0x8).readPointer();
-    var adminPtr = buffer.add(0x4c).readPointer();
-    var members = membersPtr.readCString();
-    var room = roomPtr.readUtf16String();
-    var admin = adminPtr.readUtf16String();
-    console.log('Members:', members);
-    console.log('Room:', room);
-    console.log('Admin:', admin);
-    // 清理
-    var freeChatRoom = new NativeFunction(free_chat_room_addr, 'void', ['pointer']);
-    freeChatRoom(buffer);
-    return {
-        members: members,
-        room: room,
-        admin: admin
-    };
-}
-// 获取群成员昵称
-var getChatroomMemberNickInfoFunction = function (memberId, roomId) {
-    var nickRoomId = initidStruct(roomId);
-    var nickMemberId = initStruct(memberId);
-    // let nickStructPtr = initmsgStruct('')
-    var nickBuff = Memory.alloc(Process.pageSize);
-    var memberNickBuffAsm = Memory.alloc(Process.pageSize);
-    // let nickRetAddr:any = Memory.alloc(0x04)
-    // console.log('nickRoomId:', nickRoomId)
-    // console.log('nickMemberId:', nickMemberId)
-    // console.log('nickBuff:', nickBuff)
-    // console.log('memberNickBuffAsm:', memberNickBuffAsm)
-    try {
-        Memory.patchCode(memberNickBuffAsm, Process.pageSize, function (code) {
-            var cw = new X86Writer(code, { pc: memberNickBuffAsm });
-            cw.putPushfx();
-            cw.putPushax();
-            cw.putMovRegAddress('edi', nickRoomId);
-            cw.putMovRegAddress('eax', nickBuff);
-            cw.putMovRegReg('edx', 'edi');
-            cw.putPushReg('eax');
-            cw.putMovRegAddress('ecx', nickMemberId);
-            console.log('call wxOffsets.chatRoom.WX_GET_MEMBER_NICKNAME_OFFSET:', ptr(wxOffsets.chatRoom.WX_GET_MEMBER_NICKNAME_OFFSET));
-            cw.putCallAddress(moduleBaseAddress.add(wxOffsets.chatRoom.WX_GET_MEMBER_NICKNAME_OFFSET));
-            console.log('call wxOffsets.chatRoom.WX_GET_MEMBER_NICKNAME_OFFSET called');
-            cw.putXorRegReg('eax', 'eax'); // 将 EAX 寄存器清零
-            cw.putMovRegReg('ecx', 'eax');
-            // cw.putAddRegImm('esp', 0x04)
-            console.log('call wxOffsets.chatRoom.WX_GET_MEMBER_NICKNAME_OFFSET add esp');
-            cw.putPopax();
-            cw.putPopfx();
-            cw.putRet();
-            cw.flush();
-            console.log('call wxOffsets.chatRoom.WX_GET_MEMBER_NICKNAME_OFFSET flush');
-        });
-        console.log('memberNickBuffAsm:', memberNickBuffAsm);
-        try {
-            console.log('ptr(memberNickBuffAsm):', ptr(memberNickBuffAsm));
-            var nativeativeFunction = new NativeFunction(ptr(memberNickBuffAsm), 'void', []);
-            nativeativeFunction();
-        }
-        catch (e) {
-            console.log('调用nativeativeFunction失败:', e.message);
-        }
-        var nickname = readWideString(nickBuff);
-        console.info('--------nickname', nickname);
-        return nickname;
-        // return readWideString(nickRetAddr.readPointer())
-    }
-    catch (e) {
-        console.log('获取群成员昵称失败：', e);
-        return undefined;
-    }
-};
-var getChatroomMemberNickInfoFunction1 = function (wxid, chatRoomId) {
-    console.log('Function called with wxid:', wxid, 'chatRoomId:', chatRoomId);
-    var base_addr = moduleBaseAddress; // 替换为实际的基地址
-    var WX_CHAT_ROOM_MGR_OFFSET = wxOffsets.chatRoomMgr.WX_CHAT_ROOM_MGR_OFFSET; // 替换为实际的偏移量
-    var WX_GET_MEMBER_NICKNAME_OFFSET = wxOffsets.chatRoom.WX_GET_MEMBER_NICKNAME_OFFSET; // 替换为实际的偏移量
-    var WX_CONTACT_MGR_OFFSET = wxOffsets.contactMgr.WX_CONTACT_MGR_OFFSET; // 替换为实际的偏移量
-    var WX_GET_CONTACT_OFFSET = wxOffsets.contact.WX_GET_CONTACT_OFFSET; // 替换为实际的偏移量
-    var WX_FREE_CONTACT_OFFSET = wxOffsets.chatRoom.WX_FREE_CONTACT_OFFSET; // 替换为实际的偏移量
-    // 准备函数地址
-    var get_chat_room_mgr_addr = base_addr.add(WX_CHAT_ROOM_MGR_OFFSET);
-    var get_nickname_addr = base_addr.add(WX_GET_MEMBER_NICKNAME_OFFSET);
-    var contact_mgr_addr = base_addr.add(WX_CONTACT_MGR_OFFSET);
-    var get_contact_addr = base_addr.add(WX_GET_CONTACT_OFFSET);
-    var free_contact_addr = base_addr.add(WX_FREE_CONTACT_OFFSET);
-    // 准备内存空间
-    var chat_room = Memory.allocUtf16String(chatRoomId);
-    var member_id = Memory.allocUtf16String(wxid);
-    var nickname = Memory.allocUtf16String(''); // 初始化为空的 WeChatString
-    var buffer = Memory.alloc(0x440); // 分配用于存储姓名的缓冲区
-    var name = '';
-    // 使用 X86Writer 编写内联汇编
-    var asmCode = Memory.alloc(Process.pageSize);
-    try {
-        Memory.patchCode(asmCode, Process.pageSize, function (code) {
-            var cw = new X86Writer(code, { pc: asmCode });
-            console.log('保存寄存器状态');
-            cw.putPushax();
-            cw.putPushfx();
-            console.log('调用 get_chat_room_mgr_addr:', get_chat_room_mgr_addr);
-            cw.putCallAddress(get_chat_room_mgr_addr);
-            console.log('将 nickname 地址移动到 ecx:', nickname);
-            cw.putMovRegAddress('ecx', nickname);
-            console.log('将 ecx 压栈');
-            cw.putPushReg('ecx');
-            console.log('将 member_id 地址移动到 ecx:', member_id);
-            cw.putMovRegAddress('ecx', member_id);
-            console.log('将 ecx 压栈');
-            cw.putPushReg('ecx');
-            console.log('将 chat_room 地址移动到 ecx:', chat_room);
-            cw.putMovRegAddress('ecx', chat_room);
-            console.log('将 ecx 压栈');
-            cw.putPushReg('ecx');
-            console.log('将 eax 移动到 ecx');
-            cw.putMovRegReg('ecx', 'eax');
-            console.log('调用 get_nickname_addr:', get_nickname_addr);
-            cw.putCallAddress(get_nickname_addr);
-            console.log('恢复寄存器状态');
-            cw.putPopfx();
-            cw.putPopax();
-            console.log('返回');
-            cw.putRet();
-            cw.flush();
-        });
-        console.log('调用汇编代码的第一部分');
-        var nativeFunction = new NativeFunction(asmCode, 'void', []);
-        nativeFunction();
-    }
-    catch (e) {
-        console.error('执行第一部分汇编代码时出错:', e);
-    }
-    if (nickname.readPointer().isNull() || nickname.readPointer().equals(ptr(0))) {
-        console.log('昵称指针为空，调用汇编代码的第二部分');
-        try {
-            Memory.patchCode(asmCode, Process.pageSize, function (code) {
-                var cw = new X86Writer(code, { pc: asmCode });
-                cw.putPushfx();
-                cw.putPushax();
-                // 第二部分汇编
-                cw.putCallAddress(contact_mgr_addr);
-                cw.putMovRegAddress('ecx', buffer);
-                cw.putPushReg('ecx');
-                cw.putMovRegAddress('ecx', member_id);
-                cw.putPushReg('ecx');
-                cw.putMovRegReg('ecx', 'eax');
-                cw.putCallAddress(get_contact_addr);
-                cw.putPopax();
-                cw.putPopfx();
-                cw.putRet();
-                cw.flush();
-            });
-            var nativeFunction = new NativeFunction(asmCode, 'void', []);
-            nativeFunction();
-        }
-        catch (e) {
-            console.error('执行第二部分汇编代码时出错:', e);
-        }
-        try {
-            name = buffer.add(0x6C).readUtf16String();
-            console.log('从联系人管理器中找到姓名:', name);
-        }
-        catch (e) {
-            console.error('从缓冲区读取姓名时出错:', e);
-        }
-        try {
-            var freeChatRoom = new NativeFunction(free_contact_addr, 'void', ['pointer']);
-            freeChatRoom(buffer);
-        }
-        catch (e) {
-            console.error('清理资源时出错:', e);
-        }
-    }
-    else {
-        console.log('昵称指针非空，直接读取昵称');
-        try {
-            name = nickname.readPointer().readUtf16String();
-            console.log('从聊天室管理器中找到姓名:', name);
-        }
-        catch (e) {
-            console.error('从昵称指针读取姓名时出错:', e);
-        }
-    }
-    console.log('最终姓名:', name);
-    return name;
 };
 // 发送文本消息
 var sendMsgNativeFunction = function (talkerId, content) {
@@ -1200,4 +850,160 @@ var recvMsgNativeCallback = (function () {
         return null;
     }
 })();
-// getChatroomMemberNickInfoFunction('tyutluyc','21341182572@chatroom')
+// 获取群成员昵称
+var getChatroomMemberNickInfoFunction = (function (memberId, roomId) {
+    console.log('Function called with wxid:', memberId, 'chatRoomId:', roomId);
+    var memberNickBuffAsm = null;
+    var nickRoomId = null;
+    var nickMemberId = null;
+    var nickBuff = null;
+    nickBuff = Memory.alloc(0x7e4);
+    //const nickRetAddr = Memory.alloc(0x04)
+    memberNickBuffAsm = Memory.alloc(Process.pageSize);
+    //console.log('asm address----------',memberNickBuffAsm)
+    nickRoomId = initidStruct(roomId);
+    //console.log('nick room id',nickRoomId)
+    nickMemberId = initStruct(memberId);
+    //console.log('nick nickMemberId id',nickMemberId)
+    //const nickStructPtr = initmsgStruct('')
+    Memory.patchCode(memberNickBuffAsm, Process.pageSize, function (code) {
+        var cw = new X86Writer(code, {
+            pc: memberNickBuffAsm
+        });
+        cw.putPushfx();
+        cw.putPushax();
+        cw.putMovRegAddress('edi', nickRoomId);
+        cw.putMovRegAddress('eax', nickBuff);
+        cw.putMovRegReg('edx', 'edi');
+        cw.putPushReg('eax');
+        cw.putMovRegAddress('ecx', nickMemberId);
+        console.log('moduleBaseAddress', moduleBaseAddress);
+        cw.putCallAddress(moduleBaseAddress.add(0xC06F10));
+        cw.putAddRegImm('esp', 0x04);
+        cw.putPopax();
+        cw.putPopfx();
+        cw.putRet();
+        cw.flush();
+    });
+    var nativeativeFunction = new NativeFunction(ptr(memberNickBuffAsm), 'void', []);
+    nativeativeFunction();
+    console.log('nickBuff:', nickBuff);
+    var nickname = readWideString(nickBuff);
+    console.log('----nickname', nickname);
+    return nickname;
+});
+getChatroomMemberNickInfoFunction('tyutluyc', '21341182572@chatroom');
+var getChatroomMemberNickInfoFunction1 = function (wxid, chatRoomId) {
+    console.log('Function called with wxid:', wxid, 'chatRoomId:', chatRoomId);
+    var base_addr = moduleBaseAddress; // 替换为实际的基地址
+    var WX_CHAT_ROOM_MGR_OFFSET = wxOffsets.chatRoomMgr.WX_CHAT_ROOM_MGR_OFFSET; // 替换为实际的偏移量
+    var WX_GET_MEMBER_NICKNAME_OFFSET = wxOffsets.chatRoom.WX_GET_MEMBER_NICKNAME_OFFSET; // 替换为实际的偏移量
+    var WX_CONTACT_MGR_OFFSET = wxOffsets.contactMgr.WX_CONTACT_MGR_OFFSET; // 替换为实际的偏移量
+    var WX_GET_CONTACT_OFFSET = wxOffsets.contact.WX_GET_CONTACT_OFFSET; // 替换为实际的偏移量
+    var WX_FREE_CONTACT_OFFSET = wxOffsets.chatRoom.WX_FREE_CONTACT_OFFSET; // 替换为实际的偏移量
+    // 准备函数地址
+    var get_chat_room_mgr_addr = base_addr.add(WX_CHAT_ROOM_MGR_OFFSET);
+    var get_nickname_addr = base_addr.add(WX_GET_MEMBER_NICKNAME_OFFSET);
+    var contact_mgr_addr = base_addr.add(WX_CONTACT_MGR_OFFSET);
+    var get_contact_addr = base_addr.add(WX_GET_CONTACT_OFFSET);
+    var free_contact_addr = base_addr.add(WX_FREE_CONTACT_OFFSET);
+    // 准备内存空间
+    var chat_room = Memory.allocUtf16String(chatRoomId);
+    var member_id = Memory.allocUtf16String(wxid);
+    var nickname = Memory.allocUtf16String(''); // 初始化为空的 WeChatString
+    var buffer = Memory.alloc(0x440); // 分配用于存储姓名的缓冲区
+    var name = '';
+    // 使用 X86Writer 编写内联汇编
+    var asmCode = Memory.alloc(Process.pageSize);
+    try {
+        Memory.patchCode(asmCode, Process.pageSize, function (code) {
+            var cw = new X86Writer(code, { pc: asmCode });
+            console.log('保存寄存器状态');
+            cw.putPushax();
+            cw.putPushfx();
+            console.log('调用 get_chat_room_mgr_addr:', get_chat_room_mgr_addr);
+            cw.putCallAddress(get_chat_room_mgr_addr);
+            console.log('将 nickname 地址移动到 ecx:', nickname);
+            cw.putMovRegAddress('ecx', nickname);
+            console.log('将 ecx 压栈');
+            cw.putPushReg('ecx');
+            console.log('将 member_id 地址移动到 ecx:', member_id);
+            cw.putMovRegAddress('ecx', member_id);
+            console.log('将 ecx 压栈');
+            cw.putPushReg('ecx');
+            console.log('将 chat_room 地址移动到 ecx:', chat_room);
+            cw.putMovRegAddress('ecx', chat_room);
+            console.log('将 ecx 压栈');
+            cw.putPushReg('ecx');
+            console.log('将 eax 移动到 ecx');
+            cw.putMovRegReg('ecx', 'eax');
+            console.log('调用 get_nickname_addr:', get_nickname_addr);
+            cw.putCallAddress(get_nickname_addr);
+            console.log('恢复寄存器状态');
+            cw.putPopfx();
+            cw.putPopax();
+            console.log('返回');
+            cw.putRet();
+            cw.flush();
+        });
+        console.log('调用汇编代码的第一部分');
+        var nativeFunction = new NativeFunction(asmCode, 'void', []);
+        nativeFunction();
+    }
+    catch (e) {
+        console.error('执行第一部分汇编代码时出错:', e);
+    }
+    if (nickname.readPointer().isNull() || nickname.readPointer().equals(ptr(0))) {
+        console.log('昵称指针为空，调用汇编代码的第二部分');
+        try {
+            Memory.patchCode(asmCode, Process.pageSize, function (code) {
+                var cw = new X86Writer(code, { pc: asmCode });
+                cw.putPushfx();
+                cw.putPushax();
+                // 第二部分汇编
+                cw.putCallAddress(contact_mgr_addr);
+                cw.putMovRegAddress('ecx', buffer);
+                cw.putPushReg('ecx');
+                cw.putMovRegAddress('ecx', member_id);
+                cw.putPushReg('ecx');
+                cw.putMovRegReg('ecx', 'eax');
+                cw.putCallAddress(get_contact_addr);
+                cw.putPopax();
+                cw.putPopfx();
+                cw.putRet();
+                cw.flush();
+            });
+            var nativeFunction = new NativeFunction(asmCode, 'void', []);
+            nativeFunction();
+        }
+        catch (e) {
+            console.error('执行第二部分汇编代码时出错:', e);
+        }
+        try {
+            name = buffer.add(0x6C).readUtf16String();
+            console.log('从联系人管理器中找到姓名:', name);
+        }
+        catch (e) {
+            console.error('从缓冲区读取姓名时出错:', e);
+        }
+        try {
+            var freeChatRoom = new NativeFunction(free_contact_addr, 'void', ['pointer']);
+            freeChatRoom(buffer);
+        }
+        catch (e) {
+            console.error('清理资源时出错:', e);
+        }
+    }
+    else {
+        console.log('昵称指针非空，直接读取昵称');
+        try {
+            name = nickname.readPointer().readUtf16String();
+            console.log('从聊天室管理器中找到姓名:', name);
+        }
+        catch (e) {
+            console.error('从昵称指针读取姓名时出错:', e);
+        }
+    }
+    console.log('最终姓名:', name);
+    return name;
+};
