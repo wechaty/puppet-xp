@@ -74,7 +74,7 @@ function onScan (payload: PUPPET.payloads.EventScan) {
       'https://wechaty.js.org/qrcode/',
       encodeURIComponent(payload.qrcode),
     ].join('')
-    console.info('StarterBot', 'onScan: %s(%s) - %s', payload.status, qrcodeImageUrl)
+    console.info('onScan: %s(%s) - %s', payload.status, qrcodeImageUrl)
 
     qrcodeTerminal.generate(payload.qrcode, { small: true })  // show qrcode on console
     console.info(`[${payload.status}] ${payload.qrcode}\nScan QR Code above to log in: `)

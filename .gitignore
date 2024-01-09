@@ -65,3 +65,4 @@ typings/
 t/
 t.*
 cache/*
+src/init-agent-script.js

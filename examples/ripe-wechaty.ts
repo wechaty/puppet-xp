@@ -14,7 +14,7 @@ import { FileBox } from 'file-box'
 
 import { PuppetXp } from '../src/puppet-xp.js'
 import qrcodeTerminal from 'qrcode-terminal'
-import fs from 'fs'
+import * as fs from 'fs'
 
 function onScan (qrcode: string, status: ScanStatus) {
   if (qrcode) {
@@ -22,29 +22,40 @@ function onScan (qrcode: string, status: ScanStatus) {
       'https://wechaty.js.org/qrcode/',
       encodeURIComponent(qrcode),
     ].join('')
-    console.info('StarterBot', 'onScan: %s(%s) - %s', status, qrcodeImageUrl)
+    log.info('onScan', '%s(%s) - %s', status, qrcodeImageUrl)
 
     qrcodeTerminal.generate(qrcode, { small: true })  // show qrcode on console
-    console.info(`[${status}] ${qrcode}\nScan QR Code above to log in: `)
+    log.info(`[${status}] ${qrcode}\nScan QR Code above to log in: `)
   } else {
-    console.info(`[${status}]`)
+    log.info(`[${status}]`)
   }
 }
 
 async function onLogin (user: Contact) {
-  log.info('StarterBot', '%s login', user)
+  log.info('onLogin', '%s login', user)
   const roomList = await bot.Room.findAll()
-  console.info(roomList.length)
+  log.info('群数量：', roomList.length)
   const contactList = await bot.Contact.findAll()
-  console.info(contactList.length)
+  log.info('联系人数量：', contactList.length)
+  const friends = contactList.filter(c => c.friend())
+  log.info('好友数量：', friends.length)
 }
 
 function onLogout (user: Contact) {
-  log.info('StarterBot', '%s logout', user)
+  log.info('onLogout', '%s logout', user)
 }
 
 async function onMessage (msg: Message) {
-  log.info('StarterBot', msg.toString())
+  // log.info('onMessage', msg.toString())
+  log.info('接收到消息：', JSON.stringify(msg))
+  const contact = msg.talker()
+  log.info('当前联系人信息：', JSON.stringify(contact))
+  const room = msg.room()
+  if(room){
+    log.info('当前群信息：', await room.topic())
+    log.info('当前群群主：', JSON.stringify(room.owner()))
+  }
+
   if (msg.text() === 'ding') {
     await msg.say('dong')
   }
@@ -96,21 +107,25 @@ async function onMessage (msg: Message) {
       // Log other non-text messages
       const logData = {
         date: new Date(),
-        from: msg.talker().name(),
+        talker: msg.talker(),
+        listener: msg.listener(),
+        room:await msg.room(),
         text: msg.text(),
         type: msg.type(),
       }
-      const logPath = 'examples/log/message.log'
+
+      const logPath = 'examples/file/message.log'
       fs.appendFileSync(logPath, JSON.stringify(logData, null, 2) + '\n')
-      log.info(`Logged message data to ${logPath}`)
+
+      log.info(`日志查看路径： ${logPath}`)
     }
   } catch (e) {
-    console.error(`Error handling message: ${e}`)
+    log.error(`Error handling message: ${e}`)
   }
 
 }
 
-const puppet = new PuppetXp()
+const puppet = new PuppetXp({wechatVersion:'0.0.0.0'})
 const bot = WechatyBuilder.build({
   name: 'ding-dong-bot',
   puppet,
@@ -137,7 +152,7 @@ bot.on('room-invite', async roomInvitation => {
     log.info('received room-invite event.')
     await roomInvitation.accept()
   } catch (e) {
-    console.error(e)
+    log.error('处理进群申请信息错误：', e)
   }
 })
 
@@ -145,4 +160,4 @@ bot.start()
   .then(() => {
     return log.info('StarterBot', 'Starter Bot Started.')
   })
-  .catch(console.error)
+  .catch(log.error)
