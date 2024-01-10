@@ -1,6 +1,6 @@
 {
   "name": "wechaty-puppet-xp",
-  "version": "1.13.2",
+  "version": "1.13.4",
   "description": "Puppet XP for Wechaty",
   "type": "module",
   "exports": {
@@ -19,7 +19,6 @@
     "dist": "npm-run-all clean build dist:copy dist:commonjs",
     "build:agent": "tsc src/init-agent-script.ts --outFile src/init-agent-script.js",
     "build": "tsc && tsc -p tsconfig.cjs.json",
-    "build:agent": "tsc src/init-agent-script.ts --outFile src/init-agent-script.js",
     "dist:commonjs": "jq -n \"{ type: \\\"commonjs\\\" }\" > dist/cjs/package.json",
     "dist:copy": "npm-run-all copy:esm copy:cjs",
     "copy:esm": "shx cp -R commonjs/ dist/esm/ && shx cp src/init-agent-script.js dist/esm/src",
@@ -27,6 +26,7 @@
     "start": "cross-env NODE_OPTIONS=\"--no-warnings --loader=ts-node/esm\" node examples/ding-dong-bot.ts",
     "quick-start": "cross-env NODE_OPTIONS=\"--no-warnings --loader=ts-node/esm\" node examples/quick-start.ts",
     "start:raw": "cross-env BROLOG_LEVEL=silly NODE_OPTIONS=\"--no-warnings --loader=ts-node/esm\" node examples/raw-sidecar.ts",
+    "start:raw:nobuild": "cross-env BROLOG_LEVEL=info NODE_OPTIONS=\"--no-warnings --loader=ts-node/esm\" node examples/raw-sidecar.ts",
     "start:raw:info": "npm run build:agent && cross-env BROLOG_LEVEL=info NODE_OPTIONS=\"--no-warnings --loader=ts-node/esm\" node examples/raw-sidecar.ts",
     "start:ripe": "cross-env WECHATY_LOG=verbose NODE_OPTIONS=\"--no-warnings --loader=ts-node/esm\" node examples/ripe-wechaty.ts",
     "start:ripe:info": "npm run build:agent && cross-env WECHATY_LOG=info NODE_OPTIONS=\"--no-warnings --loader=ts-node/esm\" node examples/ripe-wechaty.ts",
@@ -97,10 +97,5 @@
   "publishConfig": {
     "access": "public",
     "tag": "next"
-  },
-  "git": {
-    "scripts": {
-      "pre-push": "npx git-scripts-pre-push"
-    }
   }
 }
