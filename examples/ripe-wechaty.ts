@@ -101,8 +101,12 @@ async function onMessage (msg: Message) {
     if (msg.type() === types.Message.Image || msg.type() === types.Message.Attachment || msg.type() === types.Message.Video || msg.type() === types.Message.Audio || msg.type() === types.Message.Emoticon) {
       const file = await msg.toFileBox()  // Save the media message as a FileBox
       const filePath = 'examples/file/' + file.name
-      file.toFile(filePath)
-      log.info(`Saved file: ${filePath}`)
+      try{
+        file.toFile(filePath,true)
+        log.info(`Saved file: ${filePath}`)
+      }catch(e){
+        log.error('保存文件错误：', e)
+      }
     } else {
       // Log other non-text messages
       const logData = {
