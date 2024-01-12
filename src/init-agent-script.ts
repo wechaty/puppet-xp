@@ -764,7 +764,7 @@ const wxOffsets = {
     // console.log('--------------------------nickname', nickname)
     return nickname
   })
-  getChatroomMemberNickInfoFunction('tyutluyc', '21341182572@chatroom')
+  // getChatroomMemberNickInfoFunction('xxx', 'xxx@chatroom')
   
   // 发送文本消息
   const sendMsgNativeFunction = (talkerId: any, content: any) => {
