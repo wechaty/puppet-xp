@@ -262,6 +262,8 @@ const recvMsgNativeCallback = (() => {
           let contentPtr = null
           let contentLen = 0
           let myContentPtr = null
+          console.log('msgType', msgType)
+          
           if (msgType == 3) { // pic path
             let thumbPtr = addr.add(0x198).readPointer();
             let hdPtr = addr.add(0x1ac).readPointer();

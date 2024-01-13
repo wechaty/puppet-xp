@@ -26,17 +26,21 @@ wechaty-puppet-xp is a local puppet for Wechaty:
 ## GETTING STARTED
 
 - STEP 1: Install wechat client in your Windows computer.
+
+> 1.13.0+ is the latest version, only support WeChat v3.9.2.23. Note to use the npm package that matches the WeChat version.
+
 - STEP 2: Login the wechat client on the computer.
 - STEP 3: Getting Started with TypeScript/JavaScript (RECOMMENDED).
-
-## QUICK START
-
-> 1.12.0+ is the latest version, only support WeChat v3.6.0.18, 1.11.14 is the last version base WeChat v3.3.0.115. Note to use the npm package that matches the WeChat version.
 
 ```sh
 git clone https://github.com/wechaty/wechaty-puppet-xp.git
 cd wechaty-puppet-xp
+
+# 安装依赖
 npm install
+
+# 启动程序
+npm start
 #
 # Do not forget to install WeChat with requried version and login.
 #
@@ -47,6 +51,10 @@ npm install
 | `npm start` | [examples/ding-dong-bot.ts](examples/ding-dong-bot.ts) | Puppet ding/dong |
 | `npm run start:ripe` | [examples/ripe-wechaty.ts](examples/ripe-wechaty.ts) | Wechaty ding/dong |
 | `npm run start:raw` | [examples/raw-sidecar.ts](examples/raw-sidecar.ts) | Sidecar ding/dong |
+
+## RUNNING WHITH NPM
+
+puppet-xp also have already released the installation package on NPM. Running with NPM and more examples can be referred to [wechaty-puppet-xp-getting-started](https://github.com/atorber/wechaty-puppet-xp-getting-started).
 
 ## PUPPET COMPARISON
 
@@ -86,9 +94,9 @@ Note: You need to install an NPM version that matches your WeChat client version
 
 puppet-xp|wechat|npm install|
 |:---|:---|:---|
-|1.11.14|[WeChat-v3.3.0.115](https://github.com/wechaty/wechaty-puppet-xp/releases/download/v0.5/WeChatSetup-v3.3.0.115.exe)|npm i wechaty-puppet-xp@1.11.14|
-|1.12.7|[WeChat-v3.6.0.18](https://github.com/tom-snow/wechat-windows-versions/releases/download/v3.6.0.18/WeChatSetup-3.6.0.18.exe)|npm i wechaty-puppet-xp@1.12.7|
 |1.3.x|[WeChat-v3.9.2.23](https://github.com/tom-snow/wechat-windows-versions/releases/download/v3.9.2.23/WeChatSetup-3.9.2.23.exe)|npm i wechaty-puppet-xp@next|
+|1.12.7|[WeChat-v3.6.0.18](https://github.com/tom-snow/wechat-windows-versions/releases/download/v3.6.0.18/WeChatSetup-3.6.0.18.exe)|npm i wechaty-puppet-xp@1.12.7|
+|1.11.14|[WeChat-v3.3.0.115](https://github.com/wechaty/wechaty-puppet-xp/releases/download/v0.5/WeChatSetup-v3.3.0.115.exe)|npm i wechaty-puppet-xp@1.11.14|
 
 ## HISTORY
 

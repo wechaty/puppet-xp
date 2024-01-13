@@ -99,7 +99,8 @@ async function onMessage (msg: Message) {
 
   try {
     if (msg.type() === types.Message.Image || msg.type() === types.Message.Attachment || msg.type() === types.Message.Video || msg.type() === types.Message.Audio || msg.type() === types.Message.Emoticon) {
-      const file = await msg.toFileBox()  // Save the media message as a FileBox
+      const file = await msg.toImage().thumbnail()  // Save the media message as a FileBox
+
       const filePath = 'examples/file/' + file.name
       try{
         file.toFile(filePath,true)
