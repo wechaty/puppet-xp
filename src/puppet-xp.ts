@@ -735,12 +735,11 @@ class PuppetXp extends PUPPET.Puppet {
     imageType: PUPPET.types.Image,
   ): Promise<FileBoxInterface> {
 
-    log.info('PuppetXp', 'messageImage(%s, %s[%s])',
-      messageId,
-      imageType,
-      PUPPET.types.Image[imageType],
-    )
-
+    // log.info('PuppetXp', 'messageImage(%s, %s, %s)',
+    //   messageId,
+    //   imageType,
+    //   PUPPET.types.Image[imageType],
+    // )
     const message = this.messageStore[messageId]
     let base64 = ''
     let fileName = ''
@@ -752,18 +751,21 @@ class PuppetXp extends PUPPET.Puppet {
         const picData = JSON.parse(message.text)
         const filePath = picData[imageType]
         const dataPath = rootPath + filePath    // 要解密的文件路径
-        log.info(dataPath, true)
+        log.info('图片原始文件路径：', dataPath, true)
 
-        //  如果请求的是大图等待2s
-        if (imageType === PUPPET.types.Image.HD) {
-          await wait(1500)
-          if (!fs.existsSync(dataPath)) {
-            await wait(1500)
+        //  检测图片原始文件是否存在，如果存在则继续，如果不存在则每隔0.5秒后检测一次，直到10s后还不存在则继续
+        let fileExist = fs.existsSync(dataPath)
+        let count = 0
+        while (!fileExist) {
+          await wait(500)
+          fileExist = fs.existsSync(dataPath)
+          if (count > 20) {
+            break
           }
+          count++
         }
-
         await fsPromise.access(dataPath)
-
+        log.info('图片解密文件路径：', dataPath, true)
         const imageInfo = ImageDecrypt(dataPath, messageId)
         // const imageInfo = ImageDecrypt('C:\\Users\\choogoo\\Documents\\WeChat Files\\wxid_pnza7m7kf9tq12\\FileStorage\\Image\\Thumb\\2022-05\\e83b2aea275460cd50352559e040a2f8_t.dat','cl34vez850000gkmw2macd3dw')
 
@@ -777,7 +779,7 @@ class PuppetXp extends PUPPET.Puppet {
         const paths = dataPath.split('\\')
         paths[paths.length - 1] = fileName
         imagePath = paths.join('\\')
-        // log.debug(imagePath)
+        log.info('图片解密后文件路径：', imagePath, true)
         await file.toFile(imagePath)
       }
     } catch (err) {
@@ -1030,19 +1032,10 @@ class PuppetXp extends PUPPET.Puppet {
  *
  */
   override async roomRawPayloadParser (payload: PUPPET.payloads.Room) { return payload }
-  override async roomRawPayload (id: string): Promise<PUPPET.payloads.Room> {
+  override async roomRawPayload (id: string): Promise<PUPPET.payloads.Room|undefined> {
+    // log.info('PuppetXp', 'roomRawPayload(%s)', id)
     //  log.verbose('PuppetXp----------------------', 'roomRawPayload(%s%s)', id, this.roomStore[id]?.topic)
-    if (this.roomStore[id]) {
-      return this.roomStore[id] || {} as any
-    } else {
-      const room: PUPPET.payloads.Room = {
-        adminIdList: [],
-        id,
-        memberIdList: [],
-        topic: 'Unknown Room Topic',
-      }
-      return room
-    }
+    return this.roomStore[id]
   }
 
   override async roomList (): Promise<string[]> {
@@ -1115,8 +1108,8 @@ class PuppetXp extends PUPPET.Puppet {
     log.verbose('PuppetXp', 'roomMemberList(%s)', roomId)
     try {
       const roomRawPayload = await this.roomRawPayload(roomId)
-      const memberIdList = roomRawPayload.memberIdList
-      return memberIdList
+      const memberIdList = roomRawPayload?.memberIdList
+      return memberIdList || []
     } catch (e) {
       log.error('roomMemberList()', e)
       return []
