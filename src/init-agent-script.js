@@ -143,7 +143,7 @@ var wxOffsets = {
     },
     // send text
     sendText: {
-        WX_SEND_TEXT_OFFSET: 0xce6c80
+        WX_SEND_TEXT_OFFSET: 0xCE6C80
     },
     // ocr
     ocr: {
@@ -214,6 +214,20 @@ var moduleBaseAddress = Module.getBaseAddress('WeChatWin.dll');
 var moduleLoad = Module.load('WeChatWin.dll');
 // console.log('moduleBaseAddress:', moduleBaseAddress)
 /* -----------------base------------------------- */
+var retidPtr = null;
+var retidStruct = null;
+var initidStruct = (function (str) {
+    retidPtr = Memory.alloc(str.length * 2 + 1);
+    retidPtr.writeUtf16String(str);
+    retidStruct = Memory.alloc(0x14); // returns a NativePointer
+    retidStruct
+        .writePointer(retidPtr).add(0x04)
+        .writeU32(str.length * 2).add(0x04)
+        .writeU32(str.length * 2).add(0x04)
+        .writeU32(0).add(0x04)
+        .writeU32(0);
+    return retidStruct;
+});
 var retPtr = null;
 var retStruct = null;
 var initStruct = (function (str) {
@@ -573,7 +587,7 @@ var contact = null;
 var content = null;
 var modifyContactRemark = function (wxid, remark) {
     var base_addr = moduleBaseAddress; // 假设基础地址已经定义好
-    contact = initStruct(wxid);
+    contact = initidStruct(wxid);
     content = initStruct(remark);
     var mod_addr = base_addr.add(wxOffsets.contact.WX_MOD_REMARK_OFFSET); // 替换为实际偏移量
     var modifyContactRemarkAsm = Memory.alloc(Process.pageSize);
@@ -581,23 +595,23 @@ var modifyContactRemark = function (wxid, remark) {
         var writer = new X86Writer(code, { pc: modifyContactRemarkAsm });
         writer.putPushax();
         writer.putPushfx();
-        writer.putMovRegAddress('eax', content);
+        // writer.putMovRegAddress('eax', content);
         writer.putPushReg('eax');
-        writer.putMovRegAddress('eax', contact);
+        // writer.putMovRegAddress('eax', contact);
         writer.putPushReg('eax');
-        console.log('begin call mod_addr:', mod_addr);
+        // console.log('begin call mod_addr:', mod_addr)
         writer.putCallAddress(mod_addr);
         writer.putPopfx();
         writer.putPopax();
         writer.flush();
-        console.log('end call mod_addr:', mod_addr);
+        // console.log('end call mod_addr:', mod_addr)
     });
     // console.log('txtAsm:', modifyContactRemarkAsm)
     var nativeFunction = new NativeFunction(ptr(modifyContactRemarkAsm), 'void', []);
-    console.log('nativeFunction:', nativeFunction);
+    // console.log('nativeFunction:', nativeFunction)
     try {
         var success = nativeFunction();
-        console.log('success:', success);
+        console.log('设置备注好友备注结果:', success);
         return success;
     }
     catch (e) {
@@ -678,9 +692,9 @@ var getChatroomMemberNickInfoFunction = (function (memberId, roomId) {
     //const nickRetAddr = Memory.alloc(0x04)
     memberNickBuffAsm = Memory.alloc(Process.pageSize);
     //console.log('asm address----------',memberNickBuffAsm)
-    nickRoomId = initStruct(roomId);
+    nickRoomId = initidStruct(roomId);
     //console.log('nick room id',nickRoomId)
-    nickMemberId = initStruct(memberId);
+    nickMemberId = initidStruct(memberId);
     //console.log('nick nickMemberId id',nickMemberId)
     //const nickStructPtr = initmsgStruct('')
     Memory.patchCode(memberNickBuffAsm, Process.pageSize, function (code) {
@@ -725,7 +739,7 @@ Error: stack overflow
     at deleteMemberFromChatRoom (/script1.js:899)
     at <eval> (/script1.js:903) */
 var delMemberFromChatRoom = function (chat_room_id, wxids) {
-    console.log('chat_room_id:', chat_room_id, 'wxids:', wxids);
+    // console.log('chat_room_id:', chat_room_id, 'wxids:', wxids);
     var base_addr = moduleBaseAddress; // 请替换为实际的基础地址
     var chat_room = Memory.allocUtf16String(chat_room_id);
     var members = wxids.map(function (id) { return Memory.allocUtf16String(id); });
@@ -762,15 +776,15 @@ var delMemberFromChatRoom = function (chat_room_id, wxids) {
     var nativeFunction = new NativeFunction(ptr(delMemberFromChatRoomAsm), 'void', []);
     try {
         var success = nativeFunction();
-        console.log('success:', success);
+        // console.log('success:', success);
         return success;
     }
     catch (e) {
-        console.error('[踢出群聊]Error during delMemberFromChatRoom nativeFunction function execution:', e);
+        // console.error('[踢出群聊]Error during delMemberFromChatRoom nativeFunction function execution:', e);
         return false;
     }
 };
-delMemberFromChatRoom('21341182572@chatroom', ['tyutluyc']);
+// delMemberFromChatRoom('21341182572@chatroom', ['tyutluyc'])
 // 未完成，添加群成员
 /**21:16:16 ERR SidecarBody [SCRIPT_MESSAGRE_HANDLER_SYMBOL]() MessageType.Error: Error: stack overflow
     at addMemberToChatRoom (/script1.js:946)
@@ -970,16 +984,16 @@ var sendMsgNativeFunction = function (talkerId, content) {
 };
 // 发送@消息
 var asmAtMsg = null;
-var roomid, msg, wxid, atid;
+var roomid_, msg_, wxid_, atid_;
 var ecxBuffer;
-var sendAtMsgNativeFunction = function (roomId, text, contactId, nickname) {
+var sendAtMsgNativeFunction = (function (roomId, text, contactId, nickname) {
     asmAtMsg = Memory.alloc(Process.pageSize);
     ecxBuffer = Memory.alloc(0x3b0);
     var atContent = '@' + nickname + ' ' + text;
-    roomid = initStruct(roomId);
-    wxid = initStruct(contactId);
-    msg = initmsgStruct(atContent);
-    var atid_ = initAtMsgStruct(wxid);
+    roomid_ = initStruct(roomId);
+    wxid_ = initidStruct(contactId);
+    msg_ = initmsgStruct(atContent);
+    atid_ = initAtMsgStruct(wxid_);
     Memory.patchCode(asmAtMsg, Process.pageSize, function (code) {
         var cw = new X86Writer(code, {
             pc: asmAtMsg
@@ -990,13 +1004,13 @@ var sendAtMsgNativeFunction = function (roomId, text, contactId, nickname) {
         cw.putPushU32(0x0);
         cw.putPushU32(0x0);
         cw.putPushU32(0x1);
-        // cw.putPushU32(0x0)
+        //cw.putPushU32(0x0)
         cw.putMovRegAddress('eax', atid_);
         cw.putPushReg('eax');
-        // cw.putMovRegReg
-        cw.putMovRegAddress('eax', msg);
+        //cw.putMovRegReg
+        cw.putMovRegAddress('eax', msg_);
         cw.putPushReg('eax');
-        cw.putMovRegAddress('edx', roomid); // room_id
+        cw.putMovRegAddress('edx', roomid_); //room_id
         cw.putMovRegAddress('ecx', ecxBuffer);
         cw.putCallAddress(moduleBaseAddress.add(wxOffsets.sendText.WX_SEND_TEXT_OFFSET));
         cw.putAddRegImm('esp', 0x18);
@@ -1005,10 +1019,11 @@ var sendAtMsgNativeFunction = function (roomId, text, contactId, nickname) {
         cw.putRet();
         cw.flush();
     });
-    // console.log('----------txtAsm', asmAtMsg)
+    //console.log('----------txtAsm', asmAtMsg)
     var nativeativeFunction = new NativeFunction(ptr(asmAtMsg), 'void', []);
     nativeativeFunction();
-};
+});
+sendAtMsgNativeFunction('21341182572@chatroom', new Date().toLocaleString(), 'tyutluyc', '超哥');
 // 发送图片消息
 var sendPicMsgNativeFunction = function (contactId, path) {
     var picAsm = Memory.alloc(Process.pageSize);

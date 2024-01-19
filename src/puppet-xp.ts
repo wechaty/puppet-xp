@@ -751,7 +751,7 @@ class PuppetXp extends PUPPET.Puppet {
         const picData = JSON.parse(message.text)
         const filePath = picData[imageType]
         const dataPath = rootPath + filePath    // 要解密的文件路径
-        log.info('图片原始文件路径：', dataPath, true)
+        // log.info('图片原始文件路径：', dataPath, true)
 
         //  检测图片原始文件是否存在，如果存在则继续，如果不存在则每隔0.5秒后检测一次，直到10s后还不存在则继续
         let fileExist = fs.existsSync(dataPath)
@@ -765,7 +765,7 @@ class PuppetXp extends PUPPET.Puppet {
           count++
         }
         await fsPromise.access(dataPath)
-        log.info('图片解密文件路径：', dataPath, true)
+        // log.info('图片解密文件路径：', dataPath, true)
         const imageInfo = ImageDecrypt(dataPath, messageId)
         // const imageInfo = ImageDecrypt('C:\\Users\\choogoo\\Documents\\WeChat Files\\wxid_pnza7m7kf9tq12\\FileStorage\\Image\\Thumb\\2022-05\\e83b2aea275460cd50352559e040a2f8_t.dat','cl34vez850000gkmw2macd3dw')
 
