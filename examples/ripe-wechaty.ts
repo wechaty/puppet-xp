@@ -15,7 +15,6 @@ import { FileBox } from 'file-box'
 import { PuppetXp } from '../src/puppet-xp.js'
 import qrcodeTerminal from 'qrcode-terminal'
 import * as fs from 'fs'
-import { roomMemberMixin } from 'wechaty-puppet/dist/esm/src/mixins/room-member-mixin.js'
 
 function onScan (qrcode: string, status: ScanStatus) {
   if (qrcode) {
@@ -41,13 +40,14 @@ async function onLogin (user: Contact) {
   const friends = contactList.filter(c => c.friend())
   log.info('好友数量：', friends.length)
 
-  const room = await bot.Room.find({topic:'大师是群主'})
-  const contact = await bot.Contact.find({name:'luyuchao'})
-  log.info('room：', room)
-  if(room && contact){
-    const contacts:Contact[]= [contact]
-    await room.say(new Date().toLocaleString() + '：瓦力上线了！', ...contacts)
-  }
+  // 发送@好友消息
+  // const room = await bot.Room.find({topic:'大师是群主'})
+  // const contact = await bot.Contact.find({name:'luyuchao'})
+  // log.info('room：', room)
+  // if(room && contact){
+  //   const contacts:Contact[]= [contact]
+  //   await room.say(new Date().toLocaleString() + '：瓦力上线了！', ...contacts)
+  // }
 }
 
 function onLogout (user: Contact) {
