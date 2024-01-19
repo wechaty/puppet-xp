@@ -70,7 +70,7 @@ const getTestInfoFunction = (() => {
 
 })
 
-// 002 get global data
+// 002 get global dataf
 const isLoggedInFunction = (() => {
   loggedIn = moduleBaseAddress.add(offset.is_logged_in_offset).readU32()
   return !!loggedIn
