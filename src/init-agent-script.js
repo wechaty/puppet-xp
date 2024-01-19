@@ -143,7 +143,7 @@ var wxOffsets = {
     },
     // send text
     sendText: {
-        WX_SEND_TEXT_OFFSET: 0xCE6C80
+        WX_SEND_TEXT_OFFSET: 0xce6c80
     },
     // ocr
     ocr: {

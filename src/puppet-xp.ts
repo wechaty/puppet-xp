@@ -765,7 +765,9 @@ class PuppetXp extends PUPPET.Puppet {
           count++
         }
         await fsPromise.access(dataPath)
+
         // log.info('图片解密文件路径：', dataPath, true)
+
         const imageInfo = ImageDecrypt(dataPath, messageId)
         // const imageInfo = ImageDecrypt('C:\\Users\\choogoo\\Documents\\WeChat Files\\wxid_pnza7m7kf9tq12\\FileStorage\\Image\\Thumb\\2022-05\\e83b2aea275460cd50352559e040a2f8_t.dat','cl34vez850000gkmw2macd3dw')
 
