@@ -146,7 +146,7 @@ const wxOffsets = {
   },
   // send text
   sendText: {
-    WX_SEND_TEXT_OFFSET: 0xce6c80,
+    WX_SEND_TEXT_OFFSET: 0xCE6C80,
   },
   // ocr
   ocr: {
@@ -220,6 +220,24 @@ const moduleLoad = Module.load('WeChatWin.dll')
 // console.log('moduleBaseAddress:', moduleBaseAddress)
 
 /* -----------------base------------------------- */
+let retidPtr:any=null
+let retidStruct:any=null
+const initidStruct = ((str) => {
+
+  retidPtr = Memory.alloc(str.length * 2 + 1)
+  retidPtr.writeUtf16String(str)
+
+  retidStruct = Memory.alloc(0x14) // returns a NativePointer
+
+  retidStruct
+    .writePointer(retidPtr).add(0x04)
+    .writeU32(str.length * 2).add(0x04)
+    .writeU32(str.length * 2).add(0x04)
+    .writeU32(0).add(0x04)
+    .writeU32(0)
+
+  return retidStruct
+})
 
 let retPtr: any = null
 let retStruct: any = null
@@ -647,7 +665,7 @@ let contact: any = null
 let content: any = null
 const modifyContactRemark = (wxid, remark) => {
   const base_addr = moduleBaseAddress; // 假设基础地址已经定义好
-  contact = initStruct(wxid);
+  contact = initidStruct(wxid);
   content = initStruct(remark);
   const mod_addr = base_addr.add(wxOffsets.contact.WX_MOD_REMARK_OFFSET); // 替换为实际偏移量
   const modifyContactRemarkAsm: any = Memory.alloc(Process.pageSize);
@@ -665,23 +683,23 @@ const modifyContactRemark = (wxid, remark) => {
     writer.putPopfx();
     writer.putPopax();
     writer.flush();
-    console.log('end call mod_addr:', mod_addr)
+    // console.log('end call mod_addr:', mod_addr)
   });
   // console.log('txtAsm:', modifyContactRemarkAsm)
   const nativeFunction = new NativeFunction(ptr(modifyContactRemarkAsm), 'void', []);
-  console.log('nativeFunction:', nativeFunction)
+  // console.log('nativeFunction:', nativeFunction)
   try {
     const success = nativeFunction();
-    console.log('success:', success)
+    // console.log('设置备注好友备注结果:', success)
     return success;
   } catch (e) {
-    console.error('[设置备注好友备注]Error during modifyContactRemark nativeFunction function execution:', e);
+    // console.error('[设置好友备注]Error during modifyContactRemark nativeFunction function execution:', e);
     return false;
   }
 
 };
 // 示例调用
-modifyContactRemark("tyutluyc", "超哥2");
+// modifyContactRemark("ledongmao", "超哥2");
 
 // 获取群组列表
 const getChatroomMemberInfoFunction = () => {
@@ -760,9 +778,9 @@ const getChatroomMemberNickInfoFunction = ((memberId: any, roomId: any) => {
   //const nickRetAddr = Memory.alloc(0x04)
   memberNickBuffAsm = Memory.alloc(Process.pageSize)
   //console.log('asm address----------',memberNickBuffAsm)
-  nickRoomId = initStruct(roomId)
+  nickRoomId = initidStruct(roomId)
   //console.log('nick room id',nickRoomId)
-  nickMemberId = initStruct(memberId)
+  nickMemberId = initidStruct(memberId)
 
   //console.log('nick nickMemberId id',nickMemberId)
   //const nickStructPtr = initmsgStruct('')
@@ -814,7 +832,7 @@ Error: stack overflow
     at deleteMemberFromChatRoom (/script1.js:899)
     at <eval> (/script1.js:903) */
 const delMemberFromChatRoom = (chat_room_id, wxids) => {
-  console.log('chat_room_id:', chat_room_id, 'wxids:', wxids);
+  // console.log('chat_room_id:', chat_room_id, 'wxids:', wxids);
   const base_addr = moduleBaseAddress; // 请替换为实际的基础地址
   const chat_room = Memory.allocUtf16String(chat_room_id);
   const members = wxids.map(id => Memory.allocUtf16String(id));
@@ -855,15 +873,15 @@ const delMemberFromChatRoom = (chat_room_id, wxids) => {
   const nativeFunction = new NativeFunction(ptr(delMemberFromChatRoomAsm), 'void', []);
   try {
     const success = nativeFunction();
-    console.log('success:', success);
+    // console.log('success:', success);
     return success;
   } catch (e) {
-    console.error('[踢出群聊]Error during delMemberFromChatRoom nativeFunction function execution:', e);
+    // console.error('[踢出群聊]Error during delMemberFromChatRoom nativeFunction function execution:', e);
     return false;
 
   }
 };
-delMemberFromChatRoom('21341182572@chatroom', ['tyutluyc'])
+// delMemberFromChatRoom('21341182572@chatroom', ['ledongmao'])
 
 // 未完成，添加群成员
 /**21:16:16 ERR SidecarBody [SCRIPT_MESSAGRE_HANDLER_SYMBOL]() MessageType.Error: Error: stack overflow
@@ -935,7 +953,7 @@ const addMemberToChatRoom = (chat_room_id, wxids) => {
 
   }
 };
-// addMemberToChatRoom('21341182572@chatroom', ['tyutluyc'])
+// addMemberToChatRoom('21341182572@chatroom', ['ledongmao'])
 
 // 邀请群成员
 /**21:30:53 ERR SidecarBody [SCRIPT_MESSAGRE_HANDLER_SYMBOL]() MessageType.Error: Error: access violation accessing 0x2538fc20
@@ -1026,7 +1044,7 @@ const inviteMemberToChatRoom = (chat_room_id, wxids) => {
   }
 };
 
-// inviteMemberToChatRoom('21341182572@chatroom', ['tyutluyc'])
+// inviteMemberToChatRoom('21341182572@chatroom', ['ledongmao'])
 
 // 发送文本消息
 const sendMsgNativeFunction = (talkerId: any, content: any) => {
@@ -1095,24 +1113,24 @@ const sendMsgNativeFunction = (talkerId: any, content: any) => {
 }
 
 // 发送@消息
-let asmAtMsg: any = null
-let roomid: NativePointerValue, msg: NativePointerValue, wxid, atid
-let ecxBuffer: any
+let asmAtMsg:any = null
+let roomid_, msg_, wxid_, atid_
+let ecxBuffer
+const sendAtMsgNativeFunction = ((roomId, text, contactId,nickname) => {
 
-const sendAtMsgNativeFunction = (roomId: any, text: string, contactId: any, nickname: string) => {
   asmAtMsg = Memory.alloc(Process.pageSize)
   ecxBuffer = Memory.alloc(0x3b0)
 
-  const atContent = '@' + nickname + ' ' + text
+  const atContent = '@'+nickname+' '+text
 
-  roomid = initStruct(roomId)
-  wxid = initStruct(contactId)
-  msg = initmsgStruct(atContent)
-  const atid_: NativePointerValue = initAtMsgStruct(wxid)
+  roomid_ = initStruct(roomId)
+  wxid_ = initidStruct(contactId)
+  msg_ = initmsgStruct(atContent)
+  atid_ = initAtMsgStruct(wxid_)
 
   Memory.patchCode(asmAtMsg, Process.pageSize, code => {
-    const cw = new X86Writer(code, {
-      pc: asmAtMsg,
+    var cw = new X86Writer(code, {
+      pc: asmAtMsg
     })
     cw.putPushfx()
     cw.putPushax()
@@ -1121,20 +1139,20 @@ const sendAtMsgNativeFunction = (roomId: any, text: string, contactId: any, nick
     cw.putPushU32(0x0)
     cw.putPushU32(0x0)
     cw.putPushU32(0x1)
-    // cw.putPushU32(0x0)
+    //cw.putPushU32(0x0)
     cw.putMovRegAddress('eax', atid_)
     cw.putPushReg('eax')
 
-    // cw.putMovRegReg
+    //cw.putMovRegReg
 
-    cw.putMovRegAddress('eax', msg)
+    cw.putMovRegAddress('eax', msg_)
     cw.putPushReg('eax')
 
-    cw.putMovRegAddress('edx', roomid) // room_id
+    cw.putMovRegAddress('edx', roomid_) //room_id
 
     cw.putMovRegAddress('ecx', ecxBuffer)
     cw.putCallAddress(moduleBaseAddress.add(
-      wxOffsets.sendText.WX_SEND_TEXT_OFFSET,
+      wxOffsets.sendText.WX_SEND_TEXT_OFFSET
     ))
 
     cw.putAddRegImm('esp', 0x18)
@@ -1145,11 +1163,13 @@ const sendAtMsgNativeFunction = (roomId: any, text: string, contactId: any, nick
 
   })
 
-  // console.log('----------txtAsm', asmAtMsg)
+  //console.log('----------txtAsm', asmAtMsg)
   const nativeativeFunction = new NativeFunction(ptr(asmAtMsg), 'void', [])
   nativeativeFunction()
 
-}
+})
+
+// sendAtMsgNativeFunction('21341182572@chatroom', new Date().toLocaleString(), 'ledongmao', '超哥')
 
 // 发送图片消息
 const sendPicMsgNativeFunction = (contactId: string, path: string) => {
