@@ -987,11 +987,11 @@ var asmAtMsg = null;
 var roomid_, msg_, wxid_, atid_;
 var ecxBuffer;
 var sendAtMsgNativeFunction = (function (roomId, text, contactId, nickname) {
+    // console.log('Function called with roomId:', roomId, 'text:', text, 'contactId:', contactId, 'nickname:', nickname)
     asmAtMsg = Memory.alloc(Process.pageSize);
     ecxBuffer = Memory.alloc(0x3b0);
-    var atContent = text;
-    if (!text.startsWith('@' + nickname))
-        atContent = '@' + nickname + ' ' + text;
+    // console.log('xxxx', text.indexOf('@'+nickname))
+    var atContent = text.indexOf('@' + nickname) !== -1 ? text : ('@' + nickname + ' ' + text);
     roomid_ = initStruct(roomId);
     wxid_ = initidStruct(contactId);
     msg_ = initmsgStruct(atContent);
