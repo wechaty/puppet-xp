@@ -765,9 +765,7 @@ class PuppetXp extends PUPPET.Puppet {
           count++
         }
         await fsPromise.access(dataPath)
-
         // log.info('图片解密文件路径：', dataPath, true)
-
         const imageInfo = ImageDecrypt(dataPath, messageId)
         // const imageInfo = ImageDecrypt('C:\\Users\\choogoo\\Documents\\WeChat Files\\wxid_pnza7m7kf9tq12\\FileStorage\\Image\\Thumb\\2022-05\\e83b2aea275460cd50352559e040a2f8_t.dat','cl34vez850000gkmw2macd3dw')
 
@@ -906,7 +904,9 @@ class PuppetXp extends PUPPET.Puppet {
     mentionIdList?: string[],
   ): Promise<void> {
     if (conversationId.split('@').length === 2 && mentionIdList && mentionIdList[0]) {
-      await this.sidecar.sendAtMsg(conversationId, text, mentionIdList[0])
+      const wxid = mentionIdList[0]
+      const contact = await this.contactRawPayload(wxid)
+      await this.sidecar.sendAtMsg(conversationId, text, mentionIdList[0], contact.name)
     } else {
       await this.sidecar.sendMsg(conversationId, text)
     }
