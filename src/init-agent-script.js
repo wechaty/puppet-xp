@@ -611,16 +611,16 @@ var modifyContactRemark = function (wxid, remark) {
     // console.log('nativeFunction:', nativeFunction)
     try {
         var success = nativeFunction();
-        console.log('设置备注好友备注结果:', success);
+        // console.log('设置备注好友备注结果:', success)
         return success;
     }
     catch (e) {
-        console.error('[设置备注好友备注]Error during modifyContactRemark nativeFunction function execution:', e);
+        // console.error('[设置好友备注]Error during modifyContactRemark nativeFunction function execution:', e);
         return false;
     }
 };
 // 示例调用
-modifyContactRemark("tyutluyc", "超哥2");
+// modifyContactRemark("ledongmao", "超哥2");
 // 获取群组列表
 var getChatroomMemberInfoFunction = function () {
     // 获取群组列表地址
@@ -784,7 +784,7 @@ var delMemberFromChatRoom = function (chat_room_id, wxids) {
         return false;
     }
 };
-// delMemberFromChatRoom('21341182572@chatroom', ['tyutluyc'])
+// delMemberFromChatRoom('21341182572@chatroom', ['ledongmao'])
 // 未完成，添加群成员
 /**21:16:16 ERR SidecarBody [SCRIPT_MESSAGRE_HANDLER_SYMBOL]() MessageType.Error: Error: stack overflow
     at addMemberToChatRoom (/script1.js:946)
@@ -851,7 +851,7 @@ var addMemberToChatRoom = function (chat_room_id, wxids) {
         return false;
     }
 };
-// addMemberToChatRoom('21341182572@chatroom', ['tyutluyc'])
+// addMemberToChatRoom('21341182572@chatroom', ['ledongmao'])
 // 邀请群成员
 /**21:30:53 ERR SidecarBody [SCRIPT_MESSAGRE_HANDLER_SYMBOL]() MessageType.Error: Error: access violation accessing 0x2538fc20
     at inviteMemberToChatRoom (/script1.js:1040)
@@ -935,7 +935,7 @@ var inviteMemberToChatRoom = function (chat_room_id, wxids) {
         return false;
     }
 };
-// inviteMemberToChatRoom('21341182572@chatroom', ['tyutluyc'])
+// inviteMemberToChatRoom('21341182572@chatroom', ['ledongmao'])
 // 发送文本消息
 var sendMsgNativeFunction = function (talkerId, content) {
     var txtAsm = Memory.alloc(Process.pageSize);
@@ -1023,7 +1023,7 @@ var sendAtMsgNativeFunction = (function (roomId, text, contactId, nickname) {
     var nativeativeFunction = new NativeFunction(ptr(asmAtMsg), 'void', []);
     nativeativeFunction();
 });
-sendAtMsgNativeFunction('21341182572@chatroom', new Date().toLocaleString(), 'tyutluyc', '超哥');
+// sendAtMsgNativeFunction('21341182572@chatroom', new Date().toLocaleString(), 'ledongmao', '超哥')
 // 发送图片消息
 var sendPicMsgNativeFunction = function (contactId, path) {
     var picAsm = Memory.alloc(Process.pageSize);
