@@ -116,6 +116,8 @@ async function main() {
     // for (const room of roomListJSON) {
     //   console.info('room:', room)
     // }
+    // await sidecar.sendAtMsg('21341182572@chatroom', new Date().toLocaleString(), 'atorber', '超哥');
+
   }
 
   const onLogout = (bySrv: number) => {
