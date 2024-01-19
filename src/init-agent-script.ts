@@ -1116,12 +1116,13 @@ const sendMsgNativeFunction = (talkerId: any, content: any) => {
 let asmAtMsg:any = null
 let roomid_, msg_, wxid_, atid_
 let ecxBuffer
-const sendAtMsgNativeFunction = ((roomId, text, contactId,nickname) => {
+const sendAtMsgNativeFunction = ((roomId, text, contactId, nickname) => {
 
   asmAtMsg = Memory.alloc(Process.pageSize)
   ecxBuffer = Memory.alloc(0x3b0)
-
-  const atContent = '@'+nickname+' '+text
+  let atContent = text
+  
+  if(!text.startsWith('@'+nickname)) atContent = '@'+nickname+' '+text
 
   roomid_ = initStruct(roomId)
   wxid_ = initidStruct(contactId)
@@ -1169,7 +1170,7 @@ const sendAtMsgNativeFunction = ((roomId, text, contactId,nickname) => {
 
 })
 
-// sendAtMsgNativeFunction('21341182572@chatroom', new Date().toLocaleString(), 'ledongmao', '超哥')
+// sendAtMsgNativeFunction('21341182572@chatroom', new Date().toLocaleString(), 'atorber', '超哥')
 
 // 发送图片消息
 const sendPicMsgNativeFunction = (contactId: string, path: string) => {

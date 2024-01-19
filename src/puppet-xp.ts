@@ -904,7 +904,9 @@ class PuppetXp extends PUPPET.Puppet {
     mentionIdList?: string[],
   ): Promise<void> {
     if (conversationId.split('@').length === 2 && mentionIdList && mentionIdList[0]) {
-      await this.sidecar.sendAtMsg(conversationId, text, mentionIdList[0])
+      const wxid = mentionIdList[0]
+      const contact = await this.contactRawPayload(wxid)
+      await this.sidecar.sendAtMsg(conversationId, text, mentionIdList[0], contact.name)
     } else {
       await this.sidecar.sendMsg(conversationId, text)
     }

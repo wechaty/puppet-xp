@@ -989,7 +989,9 @@ var ecxBuffer;
 var sendAtMsgNativeFunction = (function (roomId, text, contactId, nickname) {
     asmAtMsg = Memory.alloc(Process.pageSize);
     ecxBuffer = Memory.alloc(0x3b0);
-    var atContent = '@' + nickname + ' ' + text;
+    var atContent = text;
+    if (!text.startsWith('@' + nickname))
+        atContent = '@' + nickname + ' ' + text;
     roomid_ = initStruct(roomId);
     wxid_ = initidStruct(contactId);
     msg_ = initmsgStruct(atContent);
@@ -1023,7 +1025,7 @@ var sendAtMsgNativeFunction = (function (roomId, text, contactId, nickname) {
     var nativeativeFunction = new NativeFunction(ptr(asmAtMsg), 'void', []);
     nativeativeFunction();
 });
-// sendAtMsgNativeFunction('21341182572@chatroom', new Date().toLocaleString(), 'ledongmao', '超哥')
+// sendAtMsgNativeFunction('21341182572@chatroom', new Date().toLocaleString(), 'atorber', '超哥')
 // 发送图片消息
 var sendPicMsgNativeFunction = function (contactId, path) {
     var picAsm = Memory.alloc(Process.pageSize);
