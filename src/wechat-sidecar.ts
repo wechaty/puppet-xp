@@ -183,7 +183,8 @@ class WeChatSidecar extends SidecarBody {
     roomId:string,
     text: string,
     contactId: string,
-  ): Promise<string> { return Ret(roomId, text, contactId) }
+    nickname: string,
+  ): Promise<string> { return Ret(roomId, text, contactId, nickname) }
 
   @Call(agentTarget('SendMiniProgramNativeFunction'))
   SendMiniProgram (

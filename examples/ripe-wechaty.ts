@@ -39,6 +39,15 @@ async function onLogin (user: Contact) {
   log.info('联系人数量：', contactList.length)
   const friends = contactList.filter(c => c.friend())
   log.info('好友数量：', friends.length)
+
+  // 发送@好友消息
+  // const room = await bot.Room.find({topic:'大师是群主'})
+  // const contact = await bot.Contact.find({name:'luyuchao'})
+  // log.info('room：', room)
+  // if(room && contact){
+  //   const contacts:Contact[]= [contact]
+  //   await room.say(new Date().toLocaleString() + '：瓦力上线了！', ...contacts)
+  // }
 }
 
 function onLogout (user: Contact) {
