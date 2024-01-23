@@ -15,8 +15,8 @@
 
 <img src="https://github.com/atorber/puppet-xp/assets/19552906/ac34b791-bfff-4beb-9631-088939d40465" alt="chatie puppet xp" width="300" height="300" align="bottom" />
 
-Official website: <https://wechaty.js.org/docs/puppet-providers/xp>
-XP Discord: <https://discord.gg/uE8Tb77VBm>
+- Official website: <https://wechaty.js.org/docs/puppet-providers/xp>
+- Join XP Discord: <https://discord.gg/uE8Tb77VBm>
 
 ## WECHATY PUPPET YOUTH STAR
 
