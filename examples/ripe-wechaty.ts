@@ -1,3 +1,4 @@
+/* eslint-disable sort-keys */
 /**
  * Wechaty - Conversational RPA SDK for Chatbot Makers.
  *  - https://github.com/wechaty/wechaty
@@ -41,11 +42,11 @@ async function onLogin (user: Contact) {
   log.info('好友数量：', friends.length)
 
   // 发送@好友消息
-  const room = await bot.Room.find({topic:'大师是群主'})
-  const contact = await bot.Contact.find({name:'luyuchao'})
+  const room = await bot.Room.find({ topic:'大师是群主' })
+  const contact = await bot.Contact.find({ name:'luyuchao' })
   log.info('room：', room)
-  if(room && contact){
-    const contacts:Contact[]= [contact]
+  if (room && contact) {
+    const contacts:Contact[] = [ contact ]
     await room.say(new Date().toLocaleString() + '：瓦力上线了！', ...contacts)
   }
 }
@@ -60,7 +61,7 @@ async function onMessage (msg: Message) {
   const contact = msg.talker()
   log.info('当前联系人信息：', JSON.stringify(contact))
   const room = msg.room()
-  if(room){
+  if (room) {
     log.info('当前群信息：', await room.topic())
     log.info('当前群群主：', JSON.stringify(room.owner()))
   }
@@ -111,10 +112,10 @@ async function onMessage (msg: Message) {
       const file = await msg.toImage().thumbnail()  // Save the media message as a FileBox
 
       const filePath = 'examples/file/' + file.name
-      try{
-        file.toFile(filePath,true)
+      try {
+        await file.toFile(filePath, true)
         log.info(`Saved file: ${filePath}`)
-      }catch(e){
+      } catch (e) {
         log.error('保存文件错误：', e)
       }
     } else {
@@ -139,7 +140,7 @@ async function onMessage (msg: Message) {
 
 }
 
-const puppet = new PuppetXp({wechatVersion:'0.0.0.0'})
+const puppet = new PuppetXp({ wechatVersion:'0.0.0.0' })
 const bot = WechatyBuilder.build({
   name: 'ding-dong-bot',
   puppet,

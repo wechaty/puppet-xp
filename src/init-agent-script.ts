@@ -148,6 +148,12 @@ const wxOffsets = {
   sendText: {
     WX_SEND_TEXT_OFFSET: 0xCE6C80,
   },
+  sendLink:{
+    NEW_MM_READ_ITEM_OFFSET:0x76e630,
+ FREE_MM_READ_ITEM_OFFSET:  0x76da30,
+ FREE_MM_READ_ITEM_2_OFFSET:  0x76e350,
+ FORWARD_PUBLIC_MSG_OFFSET:  0xb73000
+  },
   // ocr
   ocr: {
     WX_INIT_OBJ_OFFSET: 0x80a800,
@@ -397,7 +403,7 @@ const isLoggedInFunction = () => {
   }
   // console.log('isLoggedInFunction结果:', success)
   // 813746031、813746031、813746031
-
+  // console.log('isLoggedInFunction结果=======:', success)
   return success
 }
 
@@ -660,46 +666,220 @@ const getContactNativeFunction = (): string => {
   return contactsString;
 };
 
-// 未完成，设置备注
-let contact: any = null
-let content: any = null
-const modifyContactRemark = (wxid, remark) => {
-  const base_addr = moduleBaseAddress; // 假设基础地址已经定义好
-  contact = initidStruct(wxid);
-  content = initStruct(remark);
-  const mod_addr = base_addr.add(wxOffsets.contact.WX_MOD_REMARK_OFFSET); // 替换为实际偏移量
-  const modifyContactRemarkAsm: any = Memory.alloc(Process.pageSize);
+// 设置联系人备注——done,2024-03-13，call和实现方法来源于ttttupup/wxhelper项目
+const modifyContactRemarkFunction = (contactId: string, text: string) => {
 
-  Memory.patchCode(modifyContactRemarkAsm, Process.pageSize, code => {
-    const writer = new X86Writer(code, { pc: modifyContactRemarkAsm });
-    writer.putPushax();
+  const txtAsm: any = Memory.alloc(Process.pageSize)
+
+  const wxidPtr: any = Memory.alloc(contactId.length * 2 + 2)
+  wxidPtr.writeUtf16String(contactId)
+
+  const picWxid = Memory.alloc(0x0c)
+  picWxid.writePointer(ptr(wxidPtr)).add(0x04)
+    .writeU32(contactId.length * 2).add(0x04)
+    .writeU32(contactId.length * 2).add(0x04)
+
+  const contentPtr = Memory.alloc(text.length * 2 + 2)
+  contentPtr.writeUtf16String(text)
+
+  const sizeOfStringStruct = Process.pointerSize * 5
+  const contentStruct = Memory.alloc(sizeOfStringStruct)
+
+  contentStruct
+    .writePointer(contentPtr).add(0x4)
+    .writeU32(text.length).add(0x4)
+    .writeU32(text.length * 2)
+
+  // const ecxBuffer = Memory.alloc(0x2d8)
+
+  Memory.patchCode(txtAsm, Process.pageSize, code => {
+    const writer = new X86Writer(code, {
+      pc: txtAsm,
+    })
+
     writer.putPushfx();
-    // writer.putMovRegAddress('eax', content);
+    writer.putPushax();
+    writer.putMovRegAddress('eax', contentStruct);
     writer.putPushReg('eax');
-    // writer.putMovRegAddress('eax', contact);
+    writer.putMovRegAddress('eax', picWxid);
+    // writer.putMovRegAddress('ecx', ecxBuffer)
     writer.putPushReg('eax');
-    // console.log('begin call mod_addr:', mod_addr)
-    writer.putCallAddress(mod_addr);
-    writer.putPopfx();
+    writer.putCallAddress(moduleBaseAddress.add(
+      wxOffsets.contact.WX_MOD_REMARK_OFFSET,
+    ));
+    // writer.putAddRegImm('esp', 0x18);
     writer.putPopax();
+    writer.putPopfx();
+    writer.putRet()
     writer.flush();
-    // console.log('end call mod_addr:', mod_addr)
-  });
-  // console.log('txtAsm:', modifyContactRemarkAsm)
-  const nativeFunction = new NativeFunction(ptr(modifyContactRemarkAsm), 'void', []);
-  // console.log('nativeFunction:', nativeFunction)
+
+  })
+
+  // console.log('----------txtAsm', txtAsm)
+  const nativeativeFunction = new NativeFunction(ptr(txtAsm), 'void', [])
+  nativeativeFunction()
+
+}
+// 示例调用
+// modifyContactRemarkFunction("tyutluyc", "超哥xxxxx");
+
+// 获取联系人头像——待测试，2024-03-13，call和实现方法来源于ttttupup/wxhelper项目
+const getHeadImage = (contactId: string, url: string) => {
+
+  const txtAsm: any = Memory.alloc(Process.pageSize)
+
+  const wxidPtr: any = Memory.alloc(contactId.length * 2 + 2)
+  wxidPtr.writeUtf16String(contactId)
+
+  const contact = Memory.alloc(0x0c)
+  contact.writePointer(ptr(wxidPtr)).add(0x04)
+    .writeU32(contactId.length * 2).add(0x04)
+    .writeU32(contactId.length * 2).add(0x04)
+
+  const contentPtr = Memory.alloc(url.length * 2 + 2)
+  contentPtr.writeUtf16String(url)
+
+  const sizeOfStringStruct = Process.pointerSize * 5
+  const img_url = Memory.alloc(sizeOfStringStruct)
+
+  img_url
+    .writePointer(contentPtr).add(0x4)
+    .writeU32(url.length).add(0x4)
+    .writeU32(url.length * 2)
+
+  // const ecxBuffer = Memory.alloc(0x2d8)
+  const head_image_mgr_addr = moduleBaseAddress.add(wxOffsets.contact.WX_HEAD_IMAGE_MGR_OFFSET);
+  const get_img_download_addr = moduleBaseAddress.add(wxOffsets.contact.QUERY_THEN_DOWNLOAD_OFFSET);
+  const temp = Memory.alloc(0x8);
+
+  Memory.patchCode(txtAsm, Process.pageSize, code => {
+    const writer = new X86Writer(code, {
+      pc: txtAsm,
+    })
+
+    writer.putPushfx();
+    writer.putPushax();
+    writer.putCallAddress(head_image_mgr_addr);
+    writer.putMovRegAddress('ecx', img_url);
+    writer.putPushReg('ecx');
+    writer.putMovRegAddress('ecx', contact);
+    writer.putPushReg('ecx');
+    writer.putMovRegAddress('ecx', temp);
+    writer.putPushReg('ecx');
+    // 执行MOV ECX,EAX,将EAX（由head_image_mgr_addr函数返回的值）移动到ECX，用于下一个函数调用
+    writer.putMovRegReg('ecx', 'eax');
+    writer.putCallAddress(get_img_download_addr);
+    // writer.putAddRegImm('esp', 0x18);
+    writer.putPopax();
+    writer.putPopfx();
+    writer.putRet()
+    writer.flush();
+
+  })
+
+  // console.log('----------txtAsm', txtAsm)
+  const nativeativeFunction = new NativeFunction(ptr(txtAsm), 'void', [])
+  const head_img = nativeativeFunction()
+  console.log('head_img:', head_img)
+  return head_img
+}
+
+// 添加好友——未实现,2024-03-13，会报错
+const addFriendByWxid = (contactId: string, text: string) => {
+
+  const txtAsm: any = Memory.alloc(Process.pageSize)
+
+  const wxidPtr: any = Memory.alloc(contactId.length * 2 + 2)
+  wxidPtr.writeUtf16String(contactId)
+
+  const user_id = Memory.alloc(0x0c)
+  user_id.writePointer(ptr(wxidPtr)).add(0x04)
+    .writeU32(contactId.length * 2).add(0x04)
+    .writeU32(contactId.length * 2).add(0x04)
+
+  const contentPtr = Memory.alloc(text.length * 2 + 2)
+  contentPtr.writeUtf16String(text)
+
+  const sizeOfStringStruct = Process.pointerSize * 5
+  const w_msg = Memory.alloc(sizeOfStringStruct)
+
+  w_msg
+    .writePointer(contentPtr).add(0x4)
+    .writeU32(text.length).add(0x4)
+    .writeU32(text.length * 2)
+
+  // const ecxBuffer = Memory.alloc(0x2d8)
+
+  let success = -1;
+  const contact_mgr_addr = moduleBaseAddress.add(wxOffsets.contactMgr.WX_CONTACT_MGR_OFFSET) ;
+  const verify_msg_addr = moduleBaseAddress.add(wxOffsets.contact.WX_VERIFY_MSG_OFFSET);
+  const set_value_addr =  moduleBaseAddress.add(wxOffsets.setChatMsgValue.WX_INIT_CHAT_MSG_OFFSET);
+  const do_verify_user_addr = moduleBaseAddress.add(wxOffsets.contact.WX_DO_VERIFY_USER_OFFSET) ;
+  const fn1_addr = moduleBaseAddress.add(0x7591b0);
+
+  // 创建未知结构体null_obj，并初始化
+  const nullObjSize = 24; // 根据C++代码中Unkown结构体的大小进行调整
+  const nullObj = Memory.alloc(nullObjSize);
+  nullObj.writeByteArray([0, 0, 0, 0, 0, 0, 0xF]); // 根据C++代码中的初始化逻辑进行调整
+
+  Memory.patchCode(txtAsm, Process.pageSize, code => {
+    const writer = new X86Writer(code, {
+      pc: txtAsm,
+    })
+
+    // PUSHAD
+    // PUSHFD
+    writer.putPushfx();
+    writer.putPushax();
+
+        // 调用contact_mgr_addr函数获取实例
+        writer.putCallAddress(contact_mgr_addr);
+
+        // 根据C++代码逻辑设置EDI, ESI和其他参数
+        // 注意：这部分逻辑可能需要根据实际情况调整
+        writer.putSubRegImm('edi', 0xE);
+        writer.putSubRegImm('esi', 0x8);
+        
+        // 这里使用临时栈空间的逻辑需要特别注意，因为在Frida中直接操作ESP可能不是最佳实践
+        // 如果fn1_addr函数对ESP的操作是必需的，那么需要确保在Frida脚本中正确模拟
+        // 可能需要创建一个足够大的buffer来模拟这部分内存操作，而不是直接操作ESP
+    
+        // 调用fn1_addr函数
+        writer.putCallAddress(fn1_addr);
+    
+        // 准备verify_msg_addr函数的参数
+        writer.putMovRegAddress('eax', w_msg);
+        writer.putPushReg('eax');
+        writer.putCallAddress(verify_msg_addr);
+    
+        // 准备set_value_addr函数的参数
+        writer.putMovRegPtrReg('eax', wxidPtr);
+        writer.putPushReg('eax');
+        writer.putCallAddress(set_value_addr);
+    
+        // 调用do_verify_user_addr函数
+        writer.putCallAddress(do_verify_user_addr);
+
+    // POPFD         
+    // POPAD
+    writer.putPopax();
+    writer.putPopfx();
+    writer.putRet()
+    writer.flush();
+
+  })
+
+  // console.log('----------txtAsm', txtAsm)
+  const nativeativeFunction = new NativeFunction(ptr(txtAsm), 'int', [])
   try {
-    const success = nativeFunction();
-    // console.log('设置备注好友备注结果:', success)
-    return success;
+    success = nativeativeFunction()
   } catch (e) {
-    // console.error('[设置好友备注]Error during modifyContactRemark nativeFunction function execution:', e);
-    return false;
+    console.error('Error during function execution:', e);
+    return '';
   }
 
-};
-// 示例调用
-// modifyContactRemark("ledongmao", "超哥2");
+}
+// addFriendByWxid('tyutluyc', 'hello')
 
 // 获取群组列表
 const getChatroomMemberInfoFunction = () => {
@@ -816,88 +996,73 @@ const getChatroomMemberNickInfoFunction = ((memberId: any, roomId: any) => {
 })
 // getChatroomMemberNickInfoFunction('xxx', 'xxx@chatroom')
 
-// 未完成，移除群成员
-/**21:17:43 ERR SidecarBody [SCRIPT_MESSAGRE_HANDLER_SYMBOL]() MessageType.Error: Error: stack overflow
-    at deleteMemberFromChatRoom (/script1.js:899)
-    at <eval> (/script1.js:903)
-file:///C:/Users/Administrator/Documents/GitHub/puppet-xp/node_modules/sidecar/src/sidecar-body/sidecar-body.ts:400
-          const e = new Error(message.description)
-                    ^
-Error: Error: stack overflow
-    at WeChatSidecar.[scriptMessageHandler] (file:///C:/Users/Administrator/Documents/GitHub/puppet-xp/node_modules/sidecar/src/sidecar-body/sidecar-body.ts:400:21
-)
-    at C:\Users\Administrator\Documents\GitHub\puppet-xp\node_modules\frida\dist\script.js:95:21
------ Agent Script Internal -----
-Error: stack overflow
-    at deleteMemberFromChatRoom (/script1.js:899)
-    at <eval> (/script1.js:903) */
-const delMemberFromChatRoom = (chat_room_id, wxids) => {
-  // console.log('chat_room_id:', chat_room_id, 'wxids:', wxids);
-  const base_addr = moduleBaseAddress; // 请替换为实际的基础地址
-  const chat_room = Memory.allocUtf16String(chat_room_id);
-  const members = wxids.map(id => Memory.allocUtf16String(id));
-  const membersBuffer = Memory.alloc(Process.pointerSize * (members.length + 2));
-  membersBuffer.writePointer(NULL);
-  membersBuffer.add(Process.pointerSize).writePointer(membersBuffer.add(Process.pointerSize * 2));
-
-  for (let i = 0; i < members.length; i++) {
-    membersBuffer.add(Process.pointerSize * (2 + i)).writePointer(members[i]);
+// 移除群成员——未完成,2024-03-13，会导致微信崩溃
+const delMemberFromChatRoom = (chat_room_id: string, wxids: string[]) => {
+  let success: any = 0
+  const txtAsm: any = Memory.alloc(Process.pageSize)
+  const get_chat_room_mgr_addr = moduleBaseAddress.add(wxOffsets.chatRoomMgr.WX_CHAT_ROOM_MGR_OFFSET);
+  const del_member_addr = moduleBaseAddress.add(wxOffsets.chatRoom.WX_DEL_CHAT_ROOM_MEMBER_OFFSET);
+  const init_chat_msg_addr = moduleBaseAddress.add(wxOffsets.setChatMsgValue.WX_INIT_CHAT_MSG_OFFSET);
+  const chatRoomPtr = Memory.allocUtf16String(chat_room_id);
+  const membersBuffer = Memory.alloc(Process.pointerSize * (wxids.length + 1));
+  for (let i = 0; i < wxids.length; i++) {
+    const wxidPtr = Memory.allocUtf16String(wxids[i]);
+    membersBuffer.add(Process.pointerSize * i).writePointer(wxidPtr);
   }
+  membersBuffer.add(Process.pointerSize * wxids.length).writePointer(NULL); // 确保数组以NULL结尾
 
-  const get_chat_room_mgr_addr = base_addr.add(wxOffsets.chatRoomMgr.WX_CHAT_ROOM_MGR_OFFSET);
-  const del_member_addr = base_addr.add(wxOffsets.chatRoom.WX_DEL_CHAT_ROOM_MEMBER_OFFSET);
-  const init_chat_msg_addr = base_addr.add(wxOffsets.setChatMsgValue.WX_INIT_CHAT_MSG_OFFSET);
-  const delMemberFromChatRoomAsm: any = Memory.alloc(Process.pageSize);
 
-  Memory.patchCode(delMemberFromChatRoomAsm, Process.pageSize, code => {
-    const writer = new X86Writer(code, { pc: delMemberFromChatRoomAsm });
-    writer.putPushax();
+  Memory.patchCode(txtAsm, Process.pageSize, code => {
+    const writer = new X86Writer(code, {
+      pc: txtAsm,
+    })
     writer.putPushfx();
+    writer.putPushax();
+
+    console.log('get_chat_room_mgr_addr:', get_chat_room_mgr_addr)
     writer.putCallAddress(get_chat_room_mgr_addr);
     writer.putSubRegImm('esp', 0x14);
     writer.putMovRegReg('esi', 'eax');
-    writer.putMovRegAddress('ecx', chat_room);
-    writer.putPushReg('edi');
+    // writer.putMovRegReg('ecx', 'esp');
+    console.log('chat_room:', chatRoomPtr)
+    writer.putMovRegAddress('ecx', chatRoomPtr);
+    writer.putPushReg('ecx');
+
+    console.log('init_chat_msg_addr:', init_chat_msg_addr)
     writer.putCallAddress(init_chat_msg_addr);
     writer.putMovRegReg('ecx', 'esi');
-    writer.putMovRegAddress('eax', membersBuffer.add(Process.pointerSize));
-    writer.putPushReg('eax');
-    writer.putCallAddress(del_member_addr);
-    writer.putMovRegReg('eax', 'esi');
-    writer.putPopfx();
-    writer.putPopax();
-    writer.flush();
-  });
 
+    console.log('membersBuffer:', membersBuffer)
+    writer.putMovRegAddress('eax', membersBuffer);
+    writer.putPushReg('eax');
+    console.log('del_member_addr:', del_member_addr)
+    writer.putCallAddress(del_member_addr);
+    
+    console.log('putPopax:', 'putPopax')
+    writer.putPopax();
+    writer.putPopfx();
+
+    writer.putRet()
+    writer.flush();
+    console.log('writer.flush();')
+  })
+
+  console.log('----------txtAsm', txtAsm)
   // 调用刚才写入的汇编代码
-  const nativeFunction = new NativeFunction(ptr(delMemberFromChatRoomAsm), 'void', []);
+  const nativeFunction = new NativeFunction(ptr(txtAsm), 'int', []);
   try {
-    const success = nativeFunction();
-    // console.log('success:', success);
+    success = nativeFunction();
+    console.log('[踢出群聊]delMemberFromChatRoom success:', success);
     return success;
   } catch (e) {
-    // console.error('[踢出群聊]Error during delMemberFromChatRoom nativeFunction function execution:', e);
+    console.error('[踢出群聊]Error during delMemberFromChatRoom nativeFunction function execution:', e);
     return false;
-
   }
-};
-// delMemberFromChatRoom('21341182572@chatroom', ['ledongmao'])
+
+}
+// delMemberFromChatRoom('21341182572@chatroom', ['tyutluyc'])
 
 // 未完成，添加群成员
-/**21:16:16 ERR SidecarBody [SCRIPT_MESSAGRE_HANDLER_SYMBOL]() MessageType.Error: Error: stack overflow
-    at addMemberToChatRoom (/script1.js:946)
-    at <eval> (/script1.js:949)
-file:///C:/Users/Administrator/Documents/GitHub/puppet-xp/node_modules/sidecar/src/sidecar-body/sidecar-body.ts:400
-          const e = new Error(message.description)
-                    ^
-Error: Error: stack overflow
-    at WeChatSidecar.[scriptMessageHandler] (file:///C:/Users/Administrator/Documents/GitHub/puppet-xp/node_modules/sidecar/src/sidecar-body/sidecar-body.ts:400:21
-)
-    at C:\Users\Administrator\Documents\GitHub\puppet-xp\node_modules\frida\dist\script.js:95:21
------ Agent Script Internal -----
-Error: stack overflow
-    at addMemberToChatRoom (/script1.js:946)
-    at <eval> (/script1.js:949) */
 const addMemberToChatRoom = (chat_room_id, wxids) => {
   const base_addr = moduleBaseAddress; // 假设基础地址已经定义好
   const chat_room = Memory.allocUtf16String(chat_room_id);
@@ -955,21 +1120,7 @@ const addMemberToChatRoom = (chat_room_id, wxids) => {
 };
 // addMemberToChatRoom('21341182572@chatroom', ['ledongmao'])
 
-// 邀请群成员
-/**21:30:53 ERR SidecarBody [SCRIPT_MESSAGRE_HANDLER_SYMBOL]() MessageType.Error: Error: access violation accessing 0x2538fc20
-    at inviteMemberToChatRoom (/script1.js:1040)
-    at <eval> (/script1.js:1043)
-file:///C:/Users/Administrator/Documents/GitHub/puppet-xp/node_modules/sidecar/src/sidecar-body/sidecar-body.ts:400
-          const e = new Error(message.description)
-                    ^
-Error: Error: access violation accessing 0x2538fc20
-    at WeChatSidecar.[scriptMessageHandler] (file:///C:/Users/Administrator/Documents/GitHub/puppet-xp/node_modules/sidecar/src/sidecar-body/sidecar-body.ts:400:21
-)
-    at C:\Users\Administrator\Documents\GitHub\puppet-xp\node_modules\frida\dist\script.js:95:21
------ Agent Script Internal -----
-Error: access violation accessing 0x2538fc20
-    at inviteMemberToChatRoom (/script1.js:1040)
-    at <eval> (/script1.js:1043) */
+// 未完成，邀请群成员
 const inviteMemberToChatRoom = (chat_room_id, wxids) => {
   console.log('chat_room_id:', chat_room_id, 'wxids:', wxids);
   const base_addr = moduleBaseAddress; // 假设基础地址已经定义好
@@ -1241,6 +1392,63 @@ const sendPicMsgNativeFunction = (contactId: string, path: string) => {
 
 }
 
+// 发送link消息——未完成
+function sendLinkMsgNativeFunction(wxid, title, url, thumburl, senderId, senderName, digest) {
+  console.log('Function called with wxid:', wxid, 'title:', title, 'url:', url, 'thumburl:', thumburl, 'senderId:', senderId, 'senderName:', senderName, 'digest:', digest);
+  let success = -1;
+
+  // 假设已经有了这些函数和基地址的相对偏移量
+  const initChatMsgAddr = moduleBaseAddress.add(wxOffsets.setChatMsgValue.WX_INIT_CHAT_MSG_OFFSET); // 这些偏移量需要替换为实际的偏移量
+  const appMsgMgrAddr = moduleBaseAddress.add(wxOffsets.appMsgMgr.WX_APP_MSG_MGR_OFFSET);
+  const newItemAddr = moduleBaseAddress.add(wxOffsets.sendLink.NEW_MM_READ_ITEM_OFFSET);
+  const freeItem2Addr = moduleBaseAddress.add(wxOffsets.sendLink.FREE_MM_READ_ITEM_2_OFFSET);
+  const forwardPublicMsgAddr = moduleBaseAddress.add(wxOffsets.sendLink.FORWARD_PUBLIC_MSG_OFFSET);
+
+  const buff = Memory.alloc(0x238);
+
+  // 调用 newItemAddr 函数初始化 buff
+  const newItem = new NativeFunction(newItemAddr, 'void', ['pointer']);
+  newItem(buff);
+
+  // 创建WeChatString对象
+  const toUser = Memory.allocUtf16String(wxid);
+  const wTitle = Memory.allocUtf16String(title);
+  const wUrl = Memory.allocUtf16String(url);
+  const wThumburl = Memory.allocUtf16String(thumburl);
+  const wSender = Memory.allocUtf16String(senderId);
+  const wName = Memory.allocUtf16String(senderName);
+  const wDigest = Memory.allocUtf16String(digest);
+
+  // 将WeChatString对象的地址复制到buff中的相应位置
+  // 注意：这里的偏移量需要根据实际的结构体布局调整
+  buff.add(0x4).writePointer(wTitle);
+  buff.add(0x2c).writePointer(wUrl);
+  buff.add(0x6c).writePointer(wThumburl);
+  buff.add(0x94).writePointer(wDigest);
+  buff.add(0x1A0).writePointer(wSender);
+  buff.add(0x1B4).writePointer(wName);
+
+  // 调用其他函数完成消息的转发
+try {
+  const appMsgMgr = new NativeFunction(appMsgMgrAddr, 'pointer', [])();
+  const initChatMsg = new NativeFunction(initChatMsgAddr, 'void', ['pointer', 'pointer']);
+  initChatMsg(buff, toUser);
+
+  const forwardPublicMsg = new NativeFunction(forwardPublicMsgAddr, 'int', ['pointer']);
+  success = forwardPublicMsg(appMsgMgr);
+
+  const freeItem2 = new NativeFunction(freeItem2Addr, 'void', ['pointer', 'int']);
+  freeItem2(buff, 0);
+} catch (e) {
+  console.error('Error during sendLinkMsgNativeFunction function execution:', e);
+  return false;
+}
+
+  return success;
+}
+
+// sendLinkMsgNativeFunction('tyutluyc', '标题是测试', 'https://www.json.cn', 'C:\\Users\\tyutl\\Documents\\GitHub\\puppet-xp\\examples\\file\\message-cltngju1k0030wko48uiwa2qs-url-1.jpg', 'tyutluyc', '超哥', '这是描述...')
+
 // 接收消息回调
 const recvMsgNativeCallback = (() => {
 
@@ -1268,7 +1476,7 @@ const recvMsgNativeCallback = (() => {
             let contentPtr: any = null
             let contentLen = 0
             let myContentPtr: any = null
-            console.log('msgType', msgType)
+            // console.log('msgType', msgType)
 
             if (msgType === 3) { // pic path
               const thumbPtr = addr.add(0x19c).readPointer()

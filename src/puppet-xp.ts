@@ -79,7 +79,7 @@ class PuppetXp extends PUPPET.Puppet {
   }
 
   constructor (
-    public override options: PuppetXpOptions = { wechatVersion:'3.9.2.23' },
+    public override options: PuppetXpOptions = {},
   ) {
     log.info('options...', JSON.stringify(options))
     super(options)
@@ -647,6 +647,10 @@ class PuppetXp extends PUPPET.Puppet {
 
   override async contactAlias (contactId: string, alias?: string | null): Promise<void | string> {
     log.verbose('PuppetXp', 'contactAlias(%s, %s)', contactId, alias)
+    if (alias) {
+      await this.sidecar.modifyContactRemark(contactId, alias)
+      return alias
+    }
     const contact = await this.contactRawPayload(contactId)
     // if (typeof alias === 'undefined') {
     //   throw new Error('to be implement')

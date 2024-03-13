@@ -100,7 +100,12 @@ puppet-xp|wechat|npm install|
 
 ## HISTORY
 
-### next v1.13.0 (September 21, 2023)
+### next v1.13.9
+
+1. Add setting for contact remark
+2. Optimize sample code
+
+### v1.13.0 (September 21, 2023)
 
 1. This version start to support WeChat v3.9.2.23,need to update WeChat on your pc to 3.9.2.23
 2. [WeChatSetup-v3.9.2.23.exe](https://github.com/tom-snow/wechat-windows-versions/releases/download/v3.9.2.23/WeChatSetup-3.9.2.23.exe)
