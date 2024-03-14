@@ -1,5 +1,6 @@
 # Wechaty Puppet XP
 
+[![Join Wechaty Discord Developer Community](https://img.shields.io/discord/916984413944967180?logo=discord&style=flat)](https://discord.gg/uE8Tb77VBm)
 [![NPM](https://github.com/wechaty/wechaty-puppet-xp/workflows/NPM/badge.svg)](https://github.com/wechaty/wechaty/actions?query=workflow%3ANPM)
 [![NPM Version](https://img.shields.io/npm/v/wechaty-puppet-xp?color=brightgreen)](https://www.npmjs.com/package/wechaty-puppet-xp)
 [![npm (tag)](https://img.shields.io/npm/v/wechaty-puppet-xp/next.svg)](https://www.npmjs.com/package/wechaty-puppet-xp?activeTab=versions)
@@ -15,6 +16,7 @@
 <img src="https://github.com/atorber/puppet-xp/assets/19552906/ac34b791-bfff-4beb-9631-088939d40465" alt="chatie puppet xp" width="300" height="300" align="bottom" />
 
 Official website: <https://wechaty.js.org/docs/puppet-providers/xp>
+XP Discord: <https://discord.gg/uE8Tb77VBm>
 
 ## WECHATY PUPPET YOUTH STAR
 
