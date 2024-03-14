@@ -630,7 +630,7 @@ var modifyContactRemarkFunction = function (contactId, text) {
     nativeativeFunction();
 };
 // 示例调用
-// modifyContactRemarkFunction("tyutluyc", "超哥xxxxx");
+// modifyContactRemarkFunction("ledongmao", "超哥xxxxx");
 // 获取联系人头像——待测试，2024-03-13，call和实现方法来源于ttttupup/wxhelper项目
 var getHeadImage = function (contactId, url) {
     var txtAsm = Memory.alloc(Process.pageSize);
@@ -754,7 +754,7 @@ var addFriendByWxid = function (contactId, text) {
         return '';
     }
 };
-// addFriendByWxid('tyutluyc', 'hello')
+// addFriendByWxid('ledongmao', 'hello')
 // 获取群组列表
 var getChatroomMemberInfoFunction = function () {
     // 获取群组列表地址
@@ -913,7 +913,7 @@ var delMemberFromChatRoom = function (chat_room_id, wxids) {
         return false;
     }
 };
-// delMemberFromChatRoom('21341182572@chatroom', ['tyutluyc'])
+// delMemberFromChatRoom('21341182572@chatroom', ['ledongmao'])
 // 未完成，添加群成员
 var addMemberToChatRoom = function (chat_room_id, wxids) {
     var base_addr = moduleBaseAddress; // 假设基础地址已经定义好
@@ -1223,7 +1223,7 @@ function sendLinkMsgNativeFunction(wxid, title, url, thumburl, senderId, senderN
     }
     return success;
 }
-// sendLinkMsgNativeFunction('tyutluyc', '标题是测试', 'https://www.json.cn', 'C:\\Users\\tyutl\\Documents\\GitHub\\puppet-xp\\examples\\file\\message-cltngju1k0030wko48uiwa2qs-url-1.jpg', 'tyutluyc', '超哥', '这是描述...')
+// sendLinkMsgNativeFunction('ledongmao', '标题是测试', 'https://www.json.cn', 'C:\\Users\\tyutl\\Documents\\GitHub\\puppet-xp\\examples\\file\\message-cltngju1k0030wko48uiwa2qs-url-1.jpg', 'ledongmao', '超哥', '这是描述...')
 // 接收消息回调
 var recvMsgNativeCallback = (function () {
     var nativeCallback = new NativeCallback(function () { }, 'void', ['int32', 'pointer', 'pointer', 'pointer', 'pointer', 'int32']);

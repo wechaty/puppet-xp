@@ -54,7 +54,7 @@ async function main () {
   // for (const item of JSON.parse(contact)) {
   //   for(const wxid of item.roomMember){
   //     //console.log(wxid)
-  //     if(wxid === 'tyutluyc'){
+  //     if(wxid === 'ledongmao'){
   //       const nick = await sidecar.getChatroomMemberNickInfo(wxid,item.roomid)
   //       console.log('wxid:====',wxid,"==nick:===",nick)
   //     }

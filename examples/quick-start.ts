@@ -126,7 +126,7 @@ async function onMessage (message: Message) {
     supported: false,
   })
 
-  // const contact = await bot.Contact.find({ id:"tyutluyc"} )
+  // const contact = await bot.Contact.find({ id:"ledongmao"} )
   // if (contact) {
   //   await message.forward(contact)
   //   console.log('forward this message to wechaty room!')

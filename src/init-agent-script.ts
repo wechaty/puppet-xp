@@ -384,13 +384,30 @@ const checkSupportedFunction = () => {
   return ver === availableVersion
 }
 
-// 检查是否已登录—
+// 检查是否已登录——done,2024-03-14，call和实现方法来源于ttttupup/wxhelper项目
+const checkLogin = () => {
+  let success = -1;
+  const accout_service_addr = moduleBaseAddress.add(wxOffsets.login.WX_ACCOUNT_SERVICE_OFFSET);
+  // 创建原生函数对象，此处假设该函数返回'pointer'并且不需要输入参数
+  let getAccountService = new NativeFunction(accout_service_addr, 'pointer', []);
+  // 调用原生函数并获取服务地址
+  let service_addr = getAccountService();
+  // 判断服务地址是否有效
+  if (!service_addr.isNull()) {
+    // 成功获取账户服务地址，现在访问0x4E0偏移的值
+    // 注意：针对返回的地址，必须使用正确的类型，这里假设它是DWORD
+    success = service_addr.add(0x4E0).readU32();
+  }
+  // 返回获得的状态值
+  return success;
+}
+
+// 检查是否已登录
 const isLoggedInFunction = () => {
   let success = -1
   const accout_service_addr = moduleBaseAddress.add(wxOffsets.login.WX_ACCOUNT_SERVICE_OFFSET)
   const callFunction = new NativeFunction(accout_service_addr, 'pointer', [])
   const service_addr = callFunction()
-
   // console.log('service_addr:', service_addr)
 
   try {
@@ -402,8 +419,6 @@ const isLoggedInFunction = () => {
     throw new Error(e)
   }
   // console.log('isLoggedInFunction结果:', success)
-  // 813746031、813746031、813746031
-  // console.log('isLoggedInFunction结果=======:', success)
   return success
 }
 
@@ -668,9 +683,6 @@ const getContactNativeFunction = (): string => {
 
 // 设置联系人备注——done,2024-03-13，call和实现方法来源于ttttupup/wxhelper项目
 const modifyContactRemarkFunction = (contactId: string, text: string) => {
-
-  const txtAsm: any = Memory.alloc(Process.pageSize)
-
   const wxidPtr: any = Memory.alloc(contactId.length * 2 + 2)
   wxidPtr.writeUtf16String(contactId)
 
@@ -692,6 +704,7 @@ const modifyContactRemarkFunction = (contactId: string, text: string) => {
 
   // const ecxBuffer = Memory.alloc(0x2d8)
 
+  const txtAsm: any = Memory.alloc(Process.pageSize)
   Memory.patchCode(txtAsm, Process.pageSize, code => {
     const writer = new X86Writer(code, {
       pc: txtAsm,
@@ -721,7 +734,7 @@ const modifyContactRemarkFunction = (contactId: string, text: string) => {
 
 }
 // 示例调用
-// modifyContactRemarkFunction("tyutluyc", "超哥xxxxx");
+// modifyContactRemarkFunction("ledongmao", "超哥xxxxx");
 
 // 获取联系人头像——待测试，2024-03-13，call和实现方法来源于ttttupup/wxhelper项目
 const getHeadImage = (contactId: string, url: string) => {
@@ -879,7 +892,7 @@ const addFriendByWxid = (contactId: string, text: string) => {
   }
 
 }
-// addFriendByWxid('tyutluyc', 'hello')
+// addFriendByWxid('ledongmao', 'hello')
 
 // 获取群组列表
 const getChatroomMemberInfoFunction = () => {
@@ -1060,7 +1073,7 @@ const delMemberFromChatRoom = (chat_room_id: string, wxids: string[]) => {
   }
 
 }
-// delMemberFromChatRoom('21341182572@chatroom', ['tyutluyc'])
+// delMemberFromChatRoom('21341182572@chatroom', ['ledongmao'])
 
 // 未完成，添加群成员
 const addMemberToChatRoom = (chat_room_id, wxids) => {
@@ -1447,7 +1460,7 @@ try {
   return success;
 }
 
-// sendLinkMsgNativeFunction('tyutluyc', '标题是测试', 'https://www.json.cn', 'C:\\Users\\tyutl\\Documents\\GitHub\\puppet-xp\\examples\\file\\message-cltngju1k0030wko48uiwa2qs-url-1.jpg', 'tyutluyc', '超哥', '这是描述...')
+// sendLinkMsgNativeFunction('ledongmao', '标题是测试', 'https://www.json.cn', 'C:\\Users\\tyutl\\Documents\\GitHub\\puppet-xp\\examples\\file\\message-cltngju1k0030wko48uiwa2qs-url-1.jpg', 'ledongmao', '超哥', '这是描述...')
 
 // 接收消息回调
 const recvMsgNativeCallback = (() => {
