@@ -1,6 +1,6 @@
 {
   "name": "wechaty-puppet-xp",
-  "version": "1.13.10",
+  "version": "1.13.11",
   "description": "Puppet XP for Wechaty",
   "type": "module",
   "exports": {
@@ -55,7 +55,7 @@
     "puppet",
     "mock"
   ],
-  "author": "Huan LI <zixia@zixia.net>",
+  "author": "Hua ZHANG <@cixingguangming55555> & Yuchao LU <@atorber>",
   "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/wechaty/puppet-xp/issues"
