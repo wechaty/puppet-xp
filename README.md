@@ -102,7 +102,11 @@ puppet-xp|wechat|npm install|
 
 ## HISTORY
 
-### next v1.13.9
+### v1.13.12
+
+1. Fixed the bug where the system crashes upon receiving a message before successful startup
+
+### v1.13.9
 
 1. Add setting for contact remark
 2. Optimize sample code
