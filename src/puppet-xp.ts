@@ -73,13 +73,15 @@ class PuppetXp extends PUPPET.Puppet {
 
   private selfInfo: any
 
+  private isReady = false
+
   #sidecar?: WeChatSidecar
   protected get sidecar (): WeChatSidecar {
     return this.#sidecar!
   }
 
   constructor (
-    public override options: PuppetXpOptions = { wechatVersion:'3.9.2.23' },
+    public override options: PuppetXpOptions = {},
   ) {
     log.info('options...', JSON.stringify(options))
     super(options)
@@ -150,6 +152,8 @@ class PuppetXp extends PUPPET.Puppet {
 
   private async onAgentReady () {
     log.verbose('PuppetXp', 'onAgentReady()')
+    this.isReady = true
+    this.emit('ready', this.selfInfo)
     // const isLoggedIn = await this.sidecar.isLoggedIn()
     // if (!isLoggedIn) {
     //   await this.sidecar.callLoginQrcode(false)
@@ -494,7 +498,9 @@ class PuppetXp extends PUPPET.Puppet {
           }
         } else {
           this.messageStore[payload.id] = payload
-          this.emit('message', { messageId: payload.id })
+          if (this.isReady) {
+            this.emit('message', { messageId: payload.id })
+          }
         }
       }
     } catch (e) {
@@ -647,6 +653,10 @@ class PuppetXp extends PUPPET.Puppet {
 
   override async contactAlias (contactId: string, alias?: string | null): Promise<void | string> {
     log.verbose('PuppetXp', 'contactAlias(%s, %s)', contactId, alias)
+    if (alias) {
+      await this.sidecar.modifyContactRemark(contactId, alias)
+      return alias
+    }
     const contact = await this.contactRawPayload(contactId)
     // if (typeof alias === 'undefined') {
     //   throw new Error('to be implement')

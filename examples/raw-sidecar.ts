@@ -23,12 +23,12 @@ import {
   detach,
 } from 'sidecar'
 
-import { 
-  WeChatSidecar, 
-  // XpSidecar 
+import {
+  WeChatSidecar,
+  // XpSidecar
 } from '../src/wechat-sidecar.js'
 
-async function main() {
+async function main () {
   console.info('WeChat Sidecar starting...')
   // new XpSidecar({ wechatVersion: '3.9.2.23' })
 
@@ -42,7 +42,7 @@ async function main() {
   const isSupported = await sidecar.checkSupported()
   console.info(`\nWeChat Version: ${ver} -> ${verStr} , Supported: ${isSupported}\n`)
 
-  const isLoggedIn = false
+  const isLoggedIn = await sidecar.isLoggedIn()
   const myselfInfo = await sidecar.getMyselfInfo()
   console.info(`当前登陆账号信息: ${myselfInfo}`)
 
@@ -54,31 +54,38 @@ async function main() {
   // for (const item of JSON.parse(contact)) {
   //   for(const wxid of item.roomMember){
   //     //console.log(wxid)
-  //     if(wxid === 'tyutluyc'){
+  //     if(wxid === 'ledongmao'){
   //       const nick = await sidecar.getChatroomMemberNickInfo(wxid,item.roomid)
   //       console.log('wxid:====',wxid,"==nick:===",nick)
   //     }
   //   }
-      
+
   // }
 
-  sidecar.on('hook', async ({ method, args }) => {
+  sidecar.on('hook', ({ method, args }) => {
     // console.log(`onhook事件消息：${new Date().toLocaleString()}\n`, method, JSON.stringify(args))
     console.log(`onhook事件消息：${new Date().toLocaleString()}`, method)
     switch (method) {
-      case 'recvMsg':
+      case 'recvMsg':{
         void onRecvMsg(args)
         break
+      }
       case 'checkQRLogin':
-        onScan(args)
+        void onScan(args)
         break
       case 'loginEvent':{
-        if(!isLoggedIn){
-          const loginRes = await sidecar.isLoggedIn()
-          if(loginRes){
-            onLogin()
-          }
-        } 
+        if (!isLoggedIn) {
+          let loginRes = false
+          sidecar.isLoggedIn().then(res => {
+            loginRes = res
+            if (loginRes) {
+              void onLogin()
+            }
+            return res
+          }).catch(e => {
+            console.error('登录状态检查失败:', e)
+          })
+        }
         break
       }
       case 'agentReady':
@@ -91,7 +98,6 @@ async function main() {
         console.info('onHook没有匹配到处理方法:', method, JSON.stringify(args))
         break
     }
-
   })
 
   const onLogin = async () => {
@@ -104,7 +110,7 @@ async function main() {
     console.log('contacts列表:', contactsJSON.length)
 
     for (const contact of contactsJSON) {
-      if(!contact.name) {
+      if (!contact.name) {
         console.info('好友:', JSON.stringify(contact))
       }
     }
@@ -116,6 +122,8 @@ async function main() {
     // for (const room of roomListJSON) {
     //   console.info('room:', room)
     // }
+    // await sidecar.sendAtMsg('21341182572@chatroom', new Date().toLocaleString(), 'atorber', '超哥');
+
   }
 
   const onLogout = (bySrv: number) => {
@@ -162,7 +170,7 @@ async function main() {
     // const nickname = await sidecar.GetContactOrChatRoomNickname(talkerId)
     // console.log('发言人昵称：', nickname)
 
-    const talker = await sidecar.getChatroomMemberNickInfo(talkerId,toId)
+    const talker = await sidecar.getChatroomMemberNickInfo(talkerId, toId)
     console.log('发言人：', talker)
     if (talkerId && text === 'ding') {
       console.info('叮咚测试: ding found, reply dong')
@@ -171,9 +179,9 @@ async function main() {
     }
   }
 
-  const clean = async () => {
+  const clean =  () => {
     console.info('Sidecar detaching...')
-    await detach(sidecar)
+    void detach(sidecar)
   }
 
   process.on('SIGINT', clean)
@@ -181,6 +189,6 @@ async function main() {
 }
 
 main()
-  .catch(e=>{
+  .catch(e => {
     console.error('主函数运行失败:', e)
   })

@@ -1,5 +1,6 @@
 # Wechaty Puppet XP
 
+[![Join Wechaty Discord Developer Community](https://img.shields.io/discord/916984413944967180?logo=discord&style=flat)](https://discord.gg/uE8Tb77VBm)
 [![NPM](https://github.com/wechaty/wechaty-puppet-xp/workflows/NPM/badge.svg)](https://github.com/wechaty/wechaty/actions?query=workflow%3ANPM)
 [![NPM Version](https://img.shields.io/npm/v/wechaty-puppet-xp?color=brightgreen)](https://www.npmjs.com/package/wechaty-puppet-xp)
 [![npm (tag)](https://img.shields.io/npm/v/wechaty-puppet-xp/next.svg)](https://www.npmjs.com/package/wechaty-puppet-xp?activeTab=versions)
@@ -14,7 +15,8 @@
 
 <img src="https://github.com/atorber/puppet-xp/assets/19552906/ac34b791-bfff-4beb-9631-088939d40465" alt="chatie puppet xp" width="300" height="300" align="bottom" />
 
-Official website: <https://wechaty.js.org/docs/puppet-providers/xp>
+- Official website: <https://wechaty.js.org/docs/puppet-providers/xp>
+- Join XP Discord: <https://discord.gg/uE8Tb77VBm>
 
 ## WECHATY PUPPET YOUTH STAR
 
@@ -100,7 +102,16 @@ puppet-xp|wechat|npm install|
 
 ## HISTORY
 
-### next v1.13.0 (September 21, 2023)
+### v1.13.12
+
+1. Fixed the bug where the system crashes upon receiving a message before successful startup
+
+### v1.13.9
+
+1. Add setting for contact remark
+2. Optimize sample code
+
+### v1.13.0 (September 21, 2023)
 
 1. This version start to support WeChat v3.9.2.23,need to update WeChat on your pc to 3.9.2.23
 2. [WeChatSetup-v3.9.2.23.exe](https://github.com/tom-snow/wechat-windows-versions/releases/download/v3.9.2.23/WeChatSetup-3.9.2.23.exe)
