@@ -135,10 +135,16 @@ class WeChatSidecar extends SidecarBody {
   @Call(agentTarget('getMyselfInfoFunction'))
   getMyselfInfo ():Promise<string> { return Ret() }
 
-  @Call(agentTarget('GetContactOrChatRoomNickname'))
-  GetContactOrChatRoomNickname (
-    wxId: string,
-  ): Promise<string> { return Ret(wxId) }
+  // @Call(agentTarget('GetContactOrChatRoomNickname'))
+  // GetContactOrChatRoomNickname (
+  //   wxId: string,
+  // ): Promise<string> { return Ret(wxId) }
+
+  @Call(agentTarget('modifyContactRemarkFunction'))
+  modifyContactRemark (
+    contactId: string,
+    text: string,
+  ): Promise<string> { return Ret(contactId, text) }
 
   @Call(agentTarget('getChatroomMemberInfoFunction'))
   getChatroomMemberInfo ():Promise<string> { return Ret() }
