@@ -1,15 +1,17 @@
-/* eslint-disable sort-keys */
-/* eslint-disable camelcase */
-/* eslint-disable no-console */
-/* eslint-disable no-undef */
 /**
- * WeChat 3.9.2.23
- *  > Special thanks to: @cixingguangming55555 老张学技术
- * Credit: https://github.com/cixingguangming55555/wechat-bot
+ * WeChat 3.9.10.19
+ *
  */
-// https://blog.csdn.net/iloveitvm/article/details/109119687  frida学习
 // 偏移地址,来自于wxhelper项目
 var wxOffsets = {
+    kGetAccountServiceMgr: 0x1c1fe70,
+    kSyncMsg: 0xc39680,
+    kSyncMsgNext: 0xc39680,
+    kGetCurrentDataPath: 0x2315ea0,
+    kGetAppDataSavePath: 0x26a7df0,
+    kGetSendMessageMgr: 0x1c1e670,
+    kSendTextMsg: 0x238ec70,
+    kFreeChatMsg: 0x1c1fef0,
     shareRecordMgr: {
         WX_SHARE_RECORD_MGR_OFFSET: 0x78cb40
     },
@@ -122,7 +124,7 @@ var wxOffsets = {
     login: {
         WX_LOGIN_URL_OFFSET: 0x3040DE8,
         WX_LOGOUT_OFFSET: 0xe58870,
-        WX_ACCOUNT_SERVICE_OFFSET: 0x768c80,
+        WX_ACCOUNT_SERVICE_OFFSET: 0x1c1fe70,
         WX_GET_APP_DATA_SAVE_PATH_OFFSET: 0xf3a610,
         WX_GET_CURRENT_DATA_PATH_OFFSET: 0xc872c0
     },
@@ -143,13 +145,28 @@ var wxOffsets = {
     },
     // send text
     sendText: {
-        WX_SEND_TEXT_OFFSET: 0xCE6C80
+        WX_SEND_TEXT_OFFSET: 0x11de090
     },
     sendLink: {
         NEW_MM_READ_ITEM_OFFSET: 0x76e630,
         FREE_MM_READ_ITEM_OFFSET: 0x76da30,
         FREE_MM_READ_ITEM_2_OFFSET: 0x76e350,
         FORWARD_PUBLIC_MSG_OFFSET: 0xb73000
+    },
+    sendApp: {
+        // send app msg
+        // #define NEW_SHARE_APP_MSG_REQ_OFFSET 0xfb9890
+        NEW_SHARE_APP_MSG_REQ_OFFSET: 0xfb9890,
+        // #define FREE_SHARE_APP_MSG_REQ_OFFSET 0xfbc0d0
+        FREE_SHARE_APP_MSG_REQ_OFFSET: 0xfbc0d0,
+        // #define FREE_SHARE_APP_MSG_REQ_OFFSET 0xfbab40
+        NEW_SHARE_APP_MSG_INFO_OFFSET: 0xfbab40,
+        // #define NEW_WA_UPDATABLE_MSG_INFO_OFFSET 0x7b3290
+        NEW_WA_UPDATABLE_MSG_INFO_OFFSET: 0x7b3290,
+        // #define FREE_WA_UPDATABLE_MSG_INFO_OFFSET 0x79ca10
+        FREE_WA_UPDATABLE_MSG_INFO_OFFSET: 0x79ca10,
+        // #define SEND_APP_MSG_OFFSET 0xfe7840
+        SEND_APP_MSG_OFFSET: 0xfe7840
     },
     // ocr
     ocr: {
@@ -204,8 +221,8 @@ var wxOffsets = {
         WX_HOOK_LOG_NEXT_OFFSET: 0x240ea71
     },
     hookMsg: {
-        WX_RECV_MSG_HOOK_OFFSET: 0xd19a0b,
-        WX_RECV_MSG_HOOK_NEXT_OFFSET: 0x756960,
+        WX_RECV_MSG_HOOK_OFFSET: 0x23d6f50,
+        WX_RECV_MSG_HOOK_NEXT_OFFSET: 0xc39680,
         WX_SNS_HOOK_OFFSET: 0x14f9e15,
         WX_SNS_HOOK_NEXT_OFFSET: 0x14fa0a0
     },
@@ -214,1088 +231,439 @@ var wxOffsets = {
         WX_HOOK_VOICE_NEXT_OFFSET: 0x203d130
     }
 };
-// 当前支持的微信版本
-var availableVersion = 1661534743; // 3.9.2.23  ==0x63090217
 var moduleBaseAddress = Module.getBaseAddress('WeChatWin.dll');
-var moduleLoad = Module.load('WeChatWin.dll');
-// console.log('moduleBaseAddress:', moduleBaseAddress)
+// console.info('moduleBaseAddress:', moduleBaseAddress)
 /* -----------------base------------------------- */
-var retidPtr = null;
-var retidStruct = null;
-var initidStruct = (function (str) {
-    retidPtr = Memory.alloc(str.length * 2 + 1);
-    retidPtr.writeUtf16String(str);
-    retidStruct = Memory.alloc(0x14); // returns a NativePointer
-    retidStruct
-        .writePointer(retidPtr).add(0x04)
-        .writeU32(str.length * 2).add(0x04)
-        .writeU32(str.length * 2).add(0x04)
-        .writeU32(0).add(0x04)
-        .writeU32(0);
-    return retidStruct;
-});
-var retPtr = null;
-var retStruct = null;
-var initStruct = (function (str) {
-    retPtr = Memory.alloc(str.length * 2 + 1);
-    retPtr.writeUtf16String(str);
-    retStruct = Memory.alloc(0x14); // returns a NativePointer
-    retStruct
-        .writePointer(retPtr).add(0x04)
-        .writeU32(str.length * 2).add(0x04)
-        .writeU32(str.length * 2).add(0x04)
-        .writeU32(0).add(0x04)
-        .writeU32(0);
-    return retStruct;
-});
-var msgstrPtr = null;
-var msgStruct = null;
-var initmsgStruct = function (str) {
-    msgstrPtr = Memory.alloc(str.length * 2 + 1);
-    msgstrPtr.writeUtf16String(str);
-    msgStruct = Memory.alloc(0x14); // returns a NativePointer
-    msgStruct
-        .writePointer(msgstrPtr).add(0x04)
-        .writeU32(str.length * 2).add(0x04)
-        .writeU32(str.length * 2).add(0x04)
-        .writeU32(0).add(0x04)
-        .writeU32(0);
-    return msgStruct;
+var writeWStringPtr = function (str) {
+    console.log("\u8F93\u5165\u5B57\u7B26\u4E32\u5185\u5BB9: ".concat(str));
+    var strLength = str.length;
+    // console.log(`字符串长度: ${strLength}`);
+    // 计算UTF-16编码的字节长度（每个字符2个字节）
+    var utf16Length = strLength * 2;
+    // 计算我们需要为字符串对象结构分配的总内存空间，结构包含：指针 (Process.pointerSize) + 长度 (4 bytes) + 容量 (4 bytes)
+    var structureSize = Process.pointerSize + 4 + 4;
+    // 为字符串数据和结构体分配连续的内存空间
+    var totalSize = utf16Length + 2 + structureSize; // +2 用于 null 终止符
+    var basePointer = Memory.alloc(totalSize);
+    // 将结构体指针定位到分配的内存起始位置
+    var structurePointer = basePointer;
+    // console.log(`字符串分配空间内存指针: ${structurePointer}`);
+    // 将字符串数据指针定位到结构体之后的位置
+    var stringDataPointer = basePointer.add(structureSize);
+    // console.log(`字符串保存地址指针: ${stringDataPointer}`);
+    // 将 JavaScript 字符串转换成 UTF-16 编码格式，并写入分配的内存空间
+    stringDataPointer.writeUtf16String(str);
+    // console.log(`写入字符串到地址: ${stringDataPointer.readUtf16String()}`);
+    // 检查分配的内存内容
+    var allocatedMemoryContent = stringDataPointer.readUtf16String();
+    // console.log(`检查分配的内存内容: ${allocatedMemoryContent}`);
+    // 在分配的内存空间中写入字符串对象的信息
+    // 写入字符串数据指针
+    structurePointer.writePointer(stringDataPointer);
+    // console.log(`写入字符串地址存放指针: ${structurePointer.readPointer()}`);
+    // console.log(`写入字符串内容确认: ${structurePointer.readPointer().readUtf16String()}`);
+    // 写入字符串长度（确保是长度，不包含 null 终止符）
+    structurePointer.add(Process.pointerSize).writeU32(strLength);
+    // console.log(`写入字符串长度指针: ${structurePointer.add(Process.pointerSize)}`);
+    // 写入字符串容量，这里我们假设容量和长度是相同的
+    structurePointer.add(Process.pointerSize + 4).writeU32(strLength);
+    // console.log(`写入字符串容量指针: ${structurePointer.add(Process.pointerSize + 4)}`);
+    // console.log(`写入字符串内容再次确认: ${structurePointer.readPointer().readUtf16String()}`);
+    // console.log(`写入字符地址再次确认: ${structurePointer.readPointer()}`);
+    // console.log(`读取32位测试: ${structurePointer.readPointer().readS32()}`);
+    // console.log(`return写入字符串结构体: ${structurePointer}`);
+    // 返回分配的结构体表面的起始地址
+    return structurePointer;
 };
-var atStruct = null;
-var initAtMsgStruct = function (wxidStruct) {
-    atStruct = Memory.alloc(0x10);
-    atStruct.writePointer(wxidStruct).add(0x04)
-        .writeU32(wxidStruct.toInt32() + 0x14).add(0x04) // 0x14 = sizeof(wxid structure)
-        .writeU32(wxidStruct.toInt32() + 0x14).add(0x04)
-        .writeU32(0);
-    return atStruct;
-};
-var readStringPtr = function (address) {
-    var addr = ptr(address);
-    var size = addr.add(16).readU32();
-    var capacity = addr.add(20).readU32();
-    addr.ptr = addr;
-    addr.size = size;
-    addr.capacity = capacity;
-    if (capacity > 15 && !addr.readPointer().isNull()) {
-        addr.ptr = addr.readPointer();
-    }
-    addr.ptr._readCString = addr.ptr.readCString;
-    addr.ptr._readAnsiString = addr.ptr.readAnsiString;
-    addr.ptr._readUtf8String = addr.ptr.readUtf8String;
-    addr.readCString = function () {
-        return addr.size ? addr.ptr._readCString(addr.size) : '';
-    };
-    addr.readAnsiString = function () {
-        return addr.size ? addr.ptr._readAnsiString(addr.size) : '';
-    };
-    addr.readUtf8String = function () {
-        return addr.size ? addr.ptr._readUtf8String(addr.size) : '';
-    };
-    // console.log('readStringPtr() address:',address,' -> str ptr:', addr.ptr, 'size:', addr.size, 'capacity:', addr.capacity)
-    // console.log('readStringPtr() str:' , addr.readUtf8String())
-    // console.log('readStringPtr() address:', addr,'dump:', addr.readByteArray(24))
-    return addr;
-};
-var readWStringPtr = function (address) {
-    var addr = ptr(address);
-    var size = addr.add(4).readU32();
-    var capacity = addr.add(8).readU32();
-    addr.ptr = addr.readPointer();
-    addr.size = size;
-    addr.capacity = capacity;
-    addr.ptr._readUtf16String = addr.ptr.readUtf16String;
-    addr.readUtf16String = function () {
-        return addr.size ? addr.ptr._readUtf16String(addr.size * 2) : '';
-    };
-    // console.log('readWStringPtr() address:',address,' -> ptr:', addr.ptr, 'size:', addr.size, 'capacity:', addr.capacity)
-    // console.log('readWStringPtr() str:' ,  `"${addr.readUtf16String()}"`,'\n',addr.ptr.readByteArray(addr.size*2+2),'\n')
-    // console.log('readWStringPtr() address:', addr,'dump:', addr.readByteArray(16),'\n')
-    return addr;
-};
-var readString = function (address) {
-    return readStringPtr(address).readUtf8String();
-};
-var readWideString = function (address) {
-    return readWStringPtr(address).readUtf16String();
-};
-/* -----------------base------------------------- */
-// 获取微信版本号
-var getWechatVersionFunction = function () {
-    var pattern = '55 8B ?? 83 ?? ?? A1 ?? ?? ?? ?? 83 ?? ?? 85 ?? 7F ?? 8D ?? ?? E8 ?? ?? ?? ?? 84 ?? 74 ?? 8B ?? ?? ?? 85 ?? 75 ?? E8 ?? ?? ?? ?? 0F ?? ?? 0D ?? ?? ?? ?? A3 ?? ?? ?? ?? A3 ?? ?? ?? ?? 8B ?? 5D C3';
-    var results = Memory.scanSync(moduleLoad.base, moduleLoad.size, pattern);
-    if (results.length === 0) {
-        return 0;
-    }
-    var addr = results[0].address;
-    var ret = addr.add(0x07).readPointer();
-    var ver = ret.add(0x0).readU32();
-    return ver;
-};
-// 获取微信版本号字符串
-var getWechatVersionStringFunction = function () {
-    var ver = getWechatVersionFunction();
-    if (!ver) {
-        return '0.0.0.0';
-    }
-    var vers = [];
-    vers.push((ver >> 24) & 255 - 0x60);
-    vers.push((ver >> 16) & 255);
-    vers.push((ver >> 8) & 255);
-    vers.push(ver & 255);
-    return vers.join('.');
-};
-// 检查微信版本是否支持
-var checkSupportedFunction = function () {
-    var ver = getWechatVersionFunction();
-    return ver === availableVersion;
-};
-// 检查是否已登录—
-var isLoggedInFunction = function () {
-    var success = -1;
-    var accout_service_addr = moduleBaseAddress.add(wxOffsets.login.WX_ACCOUNT_SERVICE_OFFSET);
-    var callFunction = new NativeFunction(accout_service_addr, 'pointer', []);
-    var service_addr = callFunction();
-    // console.log('service_addr:', service_addr)
-    try {
-        if (!service_addr.isNull()) {
-            var loginStatusAddress = service_addr.add(0x4E0);
-            success = loginStatusAddress.readU32();
-        }
-    }
-    catch (e) {
-        throw new Error(e);
-    }
-    // console.log('isLoggedInFunction结果:', success)
-    // 813746031、813746031、813746031
-    // console.log('isLoggedInFunction结果=======:', success)
-    return success;
-};
-// 登录事件回调,登陆状态下每3s检测一次，非登陆状态下不间断检测且每3s打印一次状态，直到登陆成功
-var hookLoginEventCallback = (function () {
-    var nativeCallback = new NativeCallback(function () { }, 'void', []);
-    var nativeativeFunction = new NativeFunction(nativeCallback, 'void', []);
-    Interceptor.attach(moduleBaseAddress.add(wxOffsets.login.WX_ACCOUNT_SERVICE_OFFSET), {
-        onLeave: function (retval) {
-            // console.log('hookLoginEventCallback:', retval)
-            var isLoggedIn = isLoggedInFunction();
-            if (isLoggedIn !== 1) {
-                console.log('当前登陆状态:', isLoggedIn);
-                setImmediate(function () { return nativeativeFunction(); });
-            }
-            return retval;
-        }
-    });
-    var checkLoginStatus = function () {
-        var isLoggedIn = isLoggedInFunction();
-        // console.log('当前登陆状态:', isLoggedIn);
-        if (isLoggedIn !== 1) {
-            setImmediate(function () { return nativeativeFunction(); });
-            setTimeout(checkLoginStatus, 3000); // 每3秒检查一次，直到登陆成功
-        }
-        else {
-            setImmediate(function () { return nativeativeFunction(); });
+var readWStringPtr = function (addr) {
+    // console.log(`input读取字符串地址指针4: ${addr}`);
+    // console.log(`读取字符串内容指针4: ${addr.readPointer().readUtf16String()}`);
+    var stringPointer = addr.readPointer();
+    // console.log(`读取数据指针地址1: ${stringPointer}`);
+    // console.log(`读取数据指针内容1: ${stringPointer.readUtf16String()}`);
+    var size = addr.add(Process.pointerSize).readU32();
+    // console.log(`读取字符串长度: ${size}`);
+    var capacity = addr.add(Process.pointerSize + 4).readU32();
+    // console.log(`读取字符串容量: ${capacity}`);
+    return {
+        ptr: stringPointer,
+        size: size,
+        capacity: capacity,
+        readUtf16String: function () {
+            var _a;
+            // UTF-16字符串长度需要乘以2，因为每个字符占2个字节
+            var content = size ? (_a = stringPointer.readUtf16String()) === null || _a === void 0 ? void 0 : _a.replace(/\0+$/, '') : '';
+            console.log("\u8BFB\u53D6\u5B57\u7B26\u4E32\u5185\u5BB9: ".concat(content));
+            return content;
         }
     };
-    setTimeout(checkLoginStatus, 3000); // 初始延迟3秒启动
-    return nativeCallback;
-})();
-// 登出事件回调
-var hookLogoutEventCallback = (function () {
-    var nativeCallback = new NativeCallback(function () { }, 'void', ['int32']);
-    var nativeativeFunction = new NativeFunction(nativeCallback, 'void', ['int32']);
-    try {
-        Interceptor.attach(moduleBaseAddress.add(wxOffsets.login.WX_LOGOUT_OFFSET), {
-            onEnter: function (args) {
-                try {
-                    console.log('已登出:', args[0].toInt32());
-                    var bySrv_1 = args[0].toInt32();
-                    setImmediate(function () { return nativeativeFunction(bySrv_1); });
-                }
-                catch (e) {
-                    console.error('登出回调失败：', e);
-                    throw new Error(e);
-                }
-            }
-        });
-        return nativeCallback;
-    }
-    catch (e) {
-        console.error('登出回调失败：', e);
-        return null;
-    }
-})();
-// 获取登录二维码
-var getQrcodeLoginData = function () {
-    var getQRCodeLoginMgr = new NativeFunction(moduleBaseAddress.add(wxOffsets.login.WX_LOGIN_URL_OFFSET), 'pointer', []);
-    var qlMgr = getQRCodeLoginMgr();
-    var json = {
-        status: 0,
-        uuid: '',
-        wxid: '',
-        avatarUrl: ''
-    };
-    if (!qlMgr.isNull()) {
-        json.uuid = readString(qlMgr.add(8));
-        json.status = qlMgr.add(40).readUInt();
-        json.wxid = readString(qlMgr.add(44));
-        json.avatarUrl = readString(qlMgr.add(92));
-    }
-    return json;
 };
-var isReady = false;
-// 准备就绪回调
-var agentReadyCallback = (function () {
-    var nativeCallback = new NativeCallback(function () { }, 'void', []);
-    var nativeativeFunction = new NativeFunction(nativeCallback, 'void', []);
-    var checkLoginStatus = function () {
-        var isLoggedIn = isLoggedInFunction();
-        // console.log('当前登陆状态:', isLoggedIn);
-        // 如果已经登陆则执行回调
-        if (isLoggedIn === 1) {
-            if (!isReady) {
-                setImmediate(function () { return nativeativeFunction(); });
-                isReady = true;
-            }
-            setTimeout(checkLoginStatus, 3000); // 每3秒检查一次，直到登陆成功
-        }
-    };
-    setTimeout(checkLoginStatus, 3000); // 初始延迟3秒启动
-    return nativeCallback;
-})();
-// 获取登录二维码(登录地址)
-var getLoginUrlFunction = function () {
-    var loginUrlAddr = moduleBaseAddress.add(wxOffsets.login.WX_LOGIN_URL_OFFSET).readPointer();
-    var loginUrl = 'http://weixin.qq.com/x/' + loginUrlAddr.readUtf8String();
-    return loginUrl;
-};
-// 获取自己的信息
-var getMyselfInfoFunction = function () {
-    // const ptr = 0
-    var wx_code = '';
-    var wx_id = '';
-    var wx_name = '';
-    var head_img_url = '';
-    var base = moduleBaseAddress.add(wxOffsets.myselfInfo.WX_SELF_ID_OFFSET);
-    var wxid_len = base.add(0x4D4).readU32();
-    if (wxid_len === 0x13) { // 新版本微信
-        wx_id = base.readPointer().readAnsiString(wxid_len);
-        wx_code = base.add(0x64).readAnsiString();
+function ReadWeChatStr(addr) {
+    // console.log("addr: " + addr);
+    addr = ptr(addr);
+    var len = addr.add(0x10).readS64(); // 使用 ptr的`.readS64`方法
+    // console.log("len: " + len);
+    if (len == 0)
+        return "";
+    var max_len = addr.add(0x18).readS64();
+    // console.log("max_len: " + max_len);
+    var res = '';
+    if ((max_len.or(0xF)).equals(0xF)) {
+        res = addr.readUtf8String(len);
     }
     else {
-        wx_id = readString(base);
-        wx_code = wx_id;
+        var char_from_user = addr.readPointer();
+        res = char_from_user.readUtf8String(len);
     }
-    wx_name = readString(base.add(0x10C));
-    var img_addr = base.add(0x2D8).readPointer();
-    var img_len = base.add(0x2E8).readU32();
-    head_img_url = img_addr.readAnsiString(img_len);
-    var myself = {
-        id: wx_id,
-        code: wx_code,
-        name: wx_name,
-        head_img_url: head_img_url
+    // console.log("res: " + res);
+    return res;
+}
+function ReadSKBuiltinString(addr) {
+    var inner_string = ptr(addr.add(0x8)).readS64();
+    // console.log("inner_string: " + inner_string);
+    // if (inner_string.isNull()) return "";
+    return ReadWeChatStr(inner_string);
+}
+function HandleSyncMsg(param1, param2, param3) {
+    // console.log("HandleSyncMsg called with param2: " + param2);
+    var msg = {
+        fromUser: '',
+        toUser: '',
+        content: '',
+        signature: '',
+        msgId: '',
+        msgSequence: 0,
+        createTime: 0,
+        displayFullContent: '',
+        type: 0
     };
-    var myselfJson = JSON.stringify(myself);
-    // console.log('myselfJson:', myselfJson)
+    // 填充消息内容到JSON对象
+    msg.fromUser = ReadSKBuiltinString(param2.add(0x18).readS64()); // 发送者
+    msg.toUser = ReadSKBuiltinString(param2.add(0x28).readS64()); // 发送者
+    msg.content = ReadSKBuiltinString(param2.add(0x30).readS64()); // 消息内容
+    msg.signature = ReadWeChatStr(param2.add(0x48).readS64()); // 消息签名
+    msg.msgId = param2.add(0x60).readS64(); // 消息ID
+    msg.msgSequence = param2.add(0x5C).readS32(); // 消息序列号
+    msg.createTime = param2.add(0x58).readS32(); // 创建时间
+    msg.displayFullContent = ReadWeChatStr((param2.add(0x50).readS64())); // 是否展示完整内容
+    msg.type = param2.add(0x24).readS32(); // 消息类型
+    // 根据消息类型处理图片消息
+    if (msg['type'] == 3) {
+        // const img = ReadSKBuiltinBuffer(param2.add(0x40).readS64()); // 读取图片数据
+        var img = ReadSKBuiltinString(param2.add(0x40).readS64()); // 读取图片数据
+        console.log("img: " + img);
+        msg.base64Img = img; // 将图片数据编码为Base64字符串
+    }
+    console.log("HandleSyncMsg msg: " + JSON.stringify(msg));
+    return msg;
+}
+// 获取自己的信息
+var getMyselfInfoFunction = function () {
+    var success = -1;
+    var out = {};
+    // 确定相关函数的地址
+    var accountServiceAddr = moduleBaseAddress.add(wxOffsets.kGetAccountServiceMgr);
+    var getAppDataSavePathAddr = moduleBaseAddress.add(wxOffsets.kGetAppDataSavePath);
+    var getCurrentDataPathAddr = moduleBaseAddress.add(wxOffsets.kGetCurrentDataPath);
+    // Funcion hooks (使用Interceptor.attach可以替代这些函数，下面只是示例)
+    var GetService = new NativeFunction(accountServiceAddr, 'pointer', []);
+    var GetDataSavePath = new NativeFunction(getAppDataSavePathAddr, 'void', ['pointer']);
+    var GetCurrentDataPath = new NativeFunction(getCurrentDataPathAddr, 'void', ['pointer']);
+    var serviceAddr = GetService();
+    // 必要的辅助函数
+    function readWeChatString(addr, offset) {
+        if (addr.add(offset).readU32() === 0 || addr.add(offset + 0x10).readU32() === 0) {
+            return '';
+        }
+        var stringAddr = addr.add(offset);
+        if (stringAddr.add(0x18).readU32() === 0xF) {
+            return stringAddr.readUtf8String(addr.add(offset + 0x10).readU32());
+        }
+        else {
+            return stringAddr.readPointer().readUtf8String(addr.add(offset + 0x10).readU32());
+        }
+    }
+    // 使用辅助函数来模版处理字符串读取
+    if (!serviceAddr.isNull()) {
+        out.wxid = ReadWeChatStr(serviceAddr.add(0x80));
+        out.account = readWeChatString(serviceAddr, 0x108);
+        out.mobile = readWeChatString(serviceAddr, 0x128);
+        out.signature = readWeChatString(serviceAddr, 0x148);
+        // ... 其他属性按照相同的模式处理
+        //     if (*(int64_t*)(service_addr + 0x148) == 0 ||
+        //     *(int64_t*)(service_addr + 0x148 + 0x10) == 0) {
+        if (serviceAddr.add(0x148).readU32() === 0 || serviceAddr.add(0x148 + 0x10).readU32() === 0) {
+            //   out.signature = std::string();
+            out.signature = '';
+            // } else {
+        }
+        else {
+            //   if (*(int64_t*)(service_addr + 0x148 + 0x18) == 0xF) {
+            if (serviceAddr.add(0x148 + 0x18).readU32() === 0xF) {
+                //     out.signature = std::string((char*)(service_addr + 0x148),
+                //                                 *(int64_t*)(service_addr + 0x148 + 0x10));
+                out.signature = serviceAddr.add(0x148).readUtf8String(serviceAddr.add(0x148 + 0x10).readU32());
+                //   } else {
+            }
+            else {
+                //     out.signature = std::string(*(char**)(service_addr + 0x148),
+                //                                 *(int64_t*)(service_addr + 0x148 + 0x10));
+                out.signature = serviceAddr.add(0x148).readPointer().readUtf8String(serviceAddr.add(0x148 + 0x10).readU32());
+                //   }
+            }
+            // }
+        }
+        // if (*(int64_t*)(service_addr + 0x168) == 0 ||
+        //     *(int64_t*)(service_addr + 0x168 + 0x10) == 0) {
+        if (serviceAddr.add(0x168).readU32() === 0 || serviceAddr.add(0x168 + 0x10).readU32() === 0) {
+            //   out.country = std::string();
+            // } else {
+        }
+        else {
+            //   if (*(int64_t*)(service_addr + 0x168 + 0x18) == 0xF) {
+            if (serviceAddr.add(0x168 + 0x18).readU32() === 0xF) {
+                //     out.country = std::string((char*)(service_addr + 0x168),
+                //                               *(int64_t*)(service_addr + 0x168 + 0x10));
+                out.country = serviceAddr.add(0x168).readUtf8String(serviceAddr.add(0x168 + 0x10).readU32());
+                //   } else {
+            }
+            else {
+                //     out.country = std::string(*(char**)(service_addr + 0x168),
+                //                               *(int64_t*)(service_addr + 0x168 + 0x10));
+                out.country = serviceAddr.add(0x168).readPointer().readUtf8String(serviceAddr.add(0x168 + 0x10).readU32());
+                //   }
+            }
+            // }
+        }
+        // if (*(int64_t*)(service_addr + 0x188) == 0 ||
+        //     *(int64_t*)(service_addr + 0x188 + 0x10) == 0) {
+        if (serviceAddr.add(0x188).readU32() === 0 || serviceAddr.add(0x188 + 0x10).readU32() === 0) {
+            //   out.province = std::string();
+            out.province = '';
+            // } else {
+        }
+        else {
+            //   if (*(int64_t*)(service_addr + 0x188 + 0x18) == 0xF) {
+            //     out.province = std::string((char*)(service_addr + 0x188),
+            //                                *(int64_t*)(service_addr + 0x188 + 0x10));
+            //   } else {
+            //     out.province = std::string(*(char**)(service_addr + 0x188),
+            //                                *(int64_t*)(service_addr + 0x188 + 0x10));
+            //   }
+            // }
+            if (serviceAddr.add(0x188 + 0x18).readU32() === 0xF) {
+                out.province = serviceAddr.add(0x188).readUtf8String(serviceAddr.add(0x188 + 0x10).readU32());
+            }
+            else {
+                out.province = serviceAddr.add(0x188).readPointer().readUtf8String(serviceAddr.add(0x188 + 0x10).readU32());
+            }
+        }
+        // if (*(int64_t*)(service_addr + 0x1A8) == 0 ||
+        //     *(int64_t*)(service_addr + 0x1A8 + 0x10) == 0) {
+        //   out.city = std::string();
+        // } else {
+        //   if (*(int64_t*)(service_addr + 0x1A8 + 0x18) == 0xF) {
+        //     out.city = std::string((char*)(service_addr + 0x1A8),
+        //                            *(int64_t*)(service_addr + 0x1A8 + 0x10));
+        //   } else {
+        //     out.city = std::string(*(char**)(service_addr + 0x1A8),
+        //                            *(int64_t*)(service_addr + 0x1A8 + 0x10));
+        //   }
+        // }
+        if (serviceAddr.add(0x1A8).readU32() === 0 || serviceAddr.add(0x1A8 + 0x10).readU32() === 0) {
+            out.city = '';
+        }
+        else {
+            if (serviceAddr.add(0x1A8 + 0x18).readU32() === 0xF) {
+                out.city = serviceAddr.add(0x1A8).readUtf8String(serviceAddr.add(0x1A8 + 0x10).readU32());
+            }
+            else {
+                out.city = serviceAddr.add(0x1A8).readPointer().readUtf8String(serviceAddr.add(0x1A8 + 0x10).readU32());
+            }
+        }
+        // if (*(int64_t*)(service_addr + 0x1E8) == 0 ||
+        //     *(int64_t*)(service_addr + 0x1E8 + 0x10) == 0) {
+        //   out.name = std::string();
+        // } else {
+        //   if (*(int64_t*)(service_addr + 0x1E8 + 0x18) == 0xF) {
+        //     out.name = std::string((char*)(service_addr + 0x1E8),
+        //                            *(int64_t*)(service_addr + 0x1E8 + 0x10));
+        //   } else {
+        //     out.name = std::string(*(char**)(service_addr + 0x1E8),
+        //                            *(int64_t*)(service_addr + 0x1E8 + 0x10));
+        //   }
+        // }
+        if (serviceAddr.add(0x1E8).readU32() === 0 || serviceAddr.add(0x1E8 + 0x10).readU32() === 0) {
+            out.name = '';
+        }
+        else {
+            if (serviceAddr.add(0x1E8 + 0x18).readU32() === 0xF) {
+                out.name = serviceAddr.add(0x1E8).readUtf8String(serviceAddr.add(0x1E8 + 0x10).readU32());
+            }
+            else {
+                out.name = serviceAddr.add(0x1E8).readPointer().readUtf8String(serviceAddr.add(0x1E8 + 0x10).readU32());
+            }
+        }
+        // if (*(int64_t*)(service_addr + 0x450) == 0 ||
+        //     *(int64_t*)(service_addr + 0x450 + 0x10) == 0) {
+        //   out.head_img = std::string();
+        // } else {
+        //   out.head_img = std::string(*(char**)(service_addr + 0x450),
+        //                              *(int64_t*)(service_addr + 0x450 + 0x10));
+        // }
+        if (serviceAddr.add(0x450).readU32() === 0 || serviceAddr.add(0x450 + 0x10).readU32() === 0) {
+            out.head_img = '';
+        }
+        else {
+            out.head_img = serviceAddr.add(0x450).readPointer().readUtf8String(serviceAddr.add(0x450 + 0x10).readU32());
+        }
+        // if (*(int64_t*)(service_addr + 0x7B8) == 0 ||
+        //     *(int64_t*)(service_addr + 0x7B8 + 0x10) == 0) {
+        //   out.public_key = std::string();
+        // } else {
+        //   out.public_key = std::string(*(char**)(service_addr + 0x7B8),
+        //                                *(int64_t*)(service_addr + 0x7B8 + 0x10));
+        // }
+        if (serviceAddr.add(0x7B8).readU32() === 0 || serviceAddr.add(0x7B8 + 0x10).readU32() === 0) {
+            out.public_key = '';
+        }
+        else {
+            out.public_key = serviceAddr.add(0x7B8).readPointer().readUtf8String(serviceAddr.add(0x7B8 + 0x10).readU32());
+        }
+        // if (*(int64_t*)(service_addr + 0x7D8) == 0 ||
+        //     *(int64_t*)(service_addr + 0x7D8 + 0x10) == 0) {
+        //   out.private_key = std::string();
+        // } else {
+        //   out.private_key = std::string(*(char**)(service_addr + 0x7D8),
+        //                                 *(int64_t*)(service_addr + 0x7D8 + 0x10));
+        // }
+        if (serviceAddr.add(0x7D8).readU32() === 0 || serviceAddr.add(0x7D8 + 0x10).readU32() === 0) {
+            out.private_key = '';
+        }
+        else {
+            out.private_key = serviceAddr.add(0x7D8).readPointer().readUtf8String(serviceAddr.add(0x7D8 + 0x10).readU32());
+        }
+    }
+    // console.info('out:', JSON.stringify(out, null, 2))
+    var myself = {
+        id: out.wxid,
+        code: out.account,
+        name: out.name,
+        head_img_url: out.head_img
+    };
+    var myselfJson = JSON.stringify(myself, null, 2);
+    // console.info('myselfJson:', myselfJson)
     return myselfJson;
 };
-var SelfInfoInner = /** @class */ (function () {
-    function SelfInfoInner() {
-    }
-    return SelfInfoInner;
-}());
-// 获取联系人列表
-var getContactNativeFunction = function () {
-    // 基地址和偏移量需要根据目标程序实际情况调整
-    // console.log('moduleBaseAddress:', moduleBaseAddress)
-    var getInstanceAddr = moduleBaseAddress.add(wxOffsets.contactMgr.WX_CONTACT_MGR_OFFSET);
-    // console.log('getInstanceAddr:', getInstanceAddr)
-    var contactGetListAddr = moduleBaseAddress.add(wxOffsets.contact.WX_CONTACT_GET_LIST_OFFSET);
-    // 准备用于存储联系人信息的数组
-    var contacts = [];
-    var contactPtr = Memory.alloc(Process.pointerSize * 3);
-    contactPtr.writePointer(ptr(0)); // 初始化指针数组
-    // 分配内存并编写汇编代码
-    var asmCode = Memory.alloc(Process.pageSize);
-    try {
-        Memory.patchCode(asmCode, Process.pageSize, function (code) {
-            var cw = new X86Writer(code, { pc: asmCode });
-            // 模拟 C++ 中的内联汇编操作
-            cw.putPushfx();
-            cw.putPushax();
-            // console.log('call getInstanceAddr:', getInstanceAddr)
-            cw.putCallAddress(getInstanceAddr);
-            // console.log('called getInstanceAddr:', getInstanceAddr)
-            cw.putMovRegAddress('ecx', contactPtr);
-            // console.log('putLeaRegAddress:', contactPtr)
-            cw.putPushReg('ecx');
-            // console.log('putPushReg:', 'ecx')
-            cw.putMovRegReg('ecx', 'eax');
-            // console.log('call contactGetListAddr:', contactGetListAddr)
-            cw.putCallAddress(contactGetListAddr);
-            cw.putXorRegReg('eax', 'eax'); // 将 EAX 寄存器清零
-            cw.putMovRegReg('ecx', 'eax');
-            cw.putPopax();
-            cw.putPopfx();
-            cw.putRet();
-            cw.flush();
-        });
-    }
-    catch (e) {
-        console.error('Error during assembly code construction:', e);
-        return '';
-    }
-    // 执行汇编代码
-    var success = -1;
-    try {
-        var nativeFunction = new NativeFunction(asmCode, 'int', []);
-        success = nativeFunction();
-        // console.log('success:', success)
-    }
-    catch (e) {
-        console.error('Error during function execution:', e);
-        return '';
-    }
-    // 解析联系人信息
-    if (success) {
-        var start = contactPtr.readPointer();
-        var end = contactPtr.add(Process.pointerSize * 2).readPointer();
-        var CONTACT_SIZE = 0x438; // 假设每个联系人数据结构的大小
-        while (start.compare(end) < 0) {
-            var contact = {
-                id: start.add(0x10).readPointer().readUtf16String(),
-                custom_account: start.add(0x24).readPointer().readUtf16String(),
-                del_flag: start.add(0x4c).readU32(),
-                type: start.add(0x50).readU32(),
-                verify_flag: start.add(0x54).readU32(),
-                alias: start.add(0x58).readPointer().readUtf16String() || '',
-                name: start.add(0x6c).readPointer().readUtf16String(),
-                pinyin: start.add(0xAC).readPointer().readUtf16String(),
-                pinyin_all: start.add(0xC0).readPointer().readUtf16String()
-            };
-            // if(contact.alias){
-            //   console.log('contact:', JSON.stringify(contact))
-            // }
-            if (contact.name) {
-                contacts.push(contact);
-            }
-            start = start.add(CONTACT_SIZE);
-        }
-    }
-    // console.log('contacts size:', contacts.length)
-    var contactsString = JSON.stringify(contacts);
-    // console.log('contacts:', contactsString)
-    return contactsString;
-};
-// 设置联系人备注——done,2024-03-13，call和实现方法来源于ttttupup/wxhelper项目
-var modifyContactRemarkFunction = function (contactId, text) {
-    var txtAsm = Memory.alloc(Process.pageSize);
-    var wxidPtr = Memory.alloc(contactId.length * 2 + 2);
-    wxidPtr.writeUtf16String(contactId);
-    var picWxid = Memory.alloc(0x0c);
-    picWxid.writePointer(ptr(wxidPtr)).add(0x04)
-        .writeU32(contactId.length * 2).add(0x04)
-        .writeU32(contactId.length * 2).add(0x04);
-    var contentPtr = Memory.alloc(text.length * 2 + 2);
-    contentPtr.writeUtf16String(text);
-    var sizeOfStringStruct = Process.pointerSize * 5;
-    var contentStruct = Memory.alloc(sizeOfStringStruct);
-    contentStruct
-        .writePointer(contentPtr).add(0x4)
-        .writeU32(text.length).add(0x4)
-        .writeU32(text.length * 2);
-    // const ecxBuffer = Memory.alloc(0x2d8)
-    Memory.patchCode(txtAsm, Process.pageSize, function (code) {
-        var writer = new X86Writer(code, {
-            pc: txtAsm
-        });
-        writer.putPushfx();
-        writer.putPushax();
-        writer.putMovRegAddress('eax', contentStruct);
-        writer.putPushReg('eax');
-        writer.putMovRegAddress('eax', picWxid);
-        // writer.putMovRegAddress('ecx', ecxBuffer)
-        writer.putPushReg('eax');
-        writer.putCallAddress(moduleBaseAddress.add(wxOffsets.contact.WX_MOD_REMARK_OFFSET));
-        // writer.putAddRegImm('esp', 0x18);
-        writer.putPopax();
-        writer.putPopfx();
-        writer.putRet();
-        writer.flush();
-    });
-    // console.log('----------txtAsm', txtAsm)
-    var nativeativeFunction = new NativeFunction(ptr(txtAsm), 'void', []);
-    nativeativeFunction();
-};
-// 示例调用
-// modifyContactRemarkFunction("ledongmao", "超哥xxxxx");
-// 获取联系人头像——待测试，2024-03-13，call和实现方法来源于ttttupup/wxhelper项目
-var getHeadImage = function (contactId, url) {
-    var txtAsm = Memory.alloc(Process.pageSize);
-    var wxidPtr = Memory.alloc(contactId.length * 2 + 2);
-    wxidPtr.writeUtf16String(contactId);
-    var contact = Memory.alloc(0x0c);
-    contact.writePointer(ptr(wxidPtr)).add(0x04)
-        .writeU32(contactId.length * 2).add(0x04)
-        .writeU32(contactId.length * 2).add(0x04);
-    var contentPtr = Memory.alloc(url.length * 2 + 2);
-    contentPtr.writeUtf16String(url);
-    var sizeOfStringStruct = Process.pointerSize * 5;
-    var img_url = Memory.alloc(sizeOfStringStruct);
-    img_url
-        .writePointer(contentPtr).add(0x4)
-        .writeU32(url.length).add(0x4)
-        .writeU32(url.length * 2);
-    // const ecxBuffer = Memory.alloc(0x2d8)
-    var head_image_mgr_addr = moduleBaseAddress.add(wxOffsets.contact.WX_HEAD_IMAGE_MGR_OFFSET);
-    var get_img_download_addr = moduleBaseAddress.add(wxOffsets.contact.QUERY_THEN_DOWNLOAD_OFFSET);
-    var temp = Memory.alloc(0x8);
-    Memory.patchCode(txtAsm, Process.pageSize, function (code) {
-        var writer = new X86Writer(code, {
-            pc: txtAsm
-        });
-        writer.putPushfx();
-        writer.putPushax();
-        writer.putCallAddress(head_image_mgr_addr);
-        writer.putMovRegAddress('ecx', img_url);
-        writer.putPushReg('ecx');
-        writer.putMovRegAddress('ecx', contact);
-        writer.putPushReg('ecx');
-        writer.putMovRegAddress('ecx', temp);
-        writer.putPushReg('ecx');
-        // 执行MOV ECX,EAX,将EAX（由head_image_mgr_addr函数返回的值）移动到ECX，用于下一个函数调用
-        writer.putMovRegReg('ecx', 'eax');
-        writer.putCallAddress(get_img_download_addr);
-        // writer.putAddRegImm('esp', 0x18);
-        writer.putPopax();
-        writer.putPopfx();
-        writer.putRet();
-        writer.flush();
-    });
-    // console.log('----------txtAsm', txtAsm)
-    var nativeativeFunction = new NativeFunction(ptr(txtAsm), 'void', []);
-    var head_img = nativeativeFunction();
-    console.log('head_img:', head_img);
-    return head_img;
-};
-// 添加好友——未实现,2024-03-13，会报错
-var addFriendByWxid = function (contactId, text) {
-    var txtAsm = Memory.alloc(Process.pageSize);
-    var wxidPtr = Memory.alloc(contactId.length * 2 + 2);
-    wxidPtr.writeUtf16String(contactId);
-    var user_id = Memory.alloc(0x0c);
-    user_id.writePointer(ptr(wxidPtr)).add(0x04)
-        .writeU32(contactId.length * 2).add(0x04)
-        .writeU32(contactId.length * 2).add(0x04);
-    var contentPtr = Memory.alloc(text.length * 2 + 2);
-    contentPtr.writeUtf16String(text);
-    var sizeOfStringStruct = Process.pointerSize * 5;
-    var w_msg = Memory.alloc(sizeOfStringStruct);
-    w_msg
-        .writePointer(contentPtr).add(0x4)
-        .writeU32(text.length).add(0x4)
-        .writeU32(text.length * 2);
-    // const ecxBuffer = Memory.alloc(0x2d8)
-    var success = -1;
-    var contact_mgr_addr = moduleBaseAddress.add(wxOffsets.contactMgr.WX_CONTACT_MGR_OFFSET);
-    var verify_msg_addr = moduleBaseAddress.add(wxOffsets.contact.WX_VERIFY_MSG_OFFSET);
-    var set_value_addr = moduleBaseAddress.add(wxOffsets.setChatMsgValue.WX_INIT_CHAT_MSG_OFFSET);
-    var do_verify_user_addr = moduleBaseAddress.add(wxOffsets.contact.WX_DO_VERIFY_USER_OFFSET);
-    var fn1_addr = moduleBaseAddress.add(0x7591b0);
-    // 创建未知结构体null_obj，并初始化
-    var nullObjSize = 24; // 根据C++代码中Unkown结构体的大小进行调整
-    var nullObj = Memory.alloc(nullObjSize);
-    nullObj.writeByteArray([0, 0, 0, 0, 0, 0, 0xF]); // 根据C++代码中的初始化逻辑进行调整
-    Memory.patchCode(txtAsm, Process.pageSize, function (code) {
-        var writer = new X86Writer(code, {
-            pc: txtAsm
-        });
-        // PUSHAD
-        // PUSHFD
-        writer.putPushfx();
-        writer.putPushax();
-        // 调用contact_mgr_addr函数获取实例
-        writer.putCallAddress(contact_mgr_addr);
-        // 根据C++代码逻辑设置EDI, ESI和其他参数
-        // 注意：这部分逻辑可能需要根据实际情况调整
-        writer.putSubRegImm('edi', 0xE);
-        writer.putSubRegImm('esi', 0x8);
-        // 这里使用临时栈空间的逻辑需要特别注意，因为在Frida中直接操作ESP可能不是最佳实践
-        // 如果fn1_addr函数对ESP的操作是必需的，那么需要确保在Frida脚本中正确模拟
-        // 可能需要创建一个足够大的buffer来模拟这部分内存操作，而不是直接操作ESP
-        // 调用fn1_addr函数
-        writer.putCallAddress(fn1_addr);
-        // 准备verify_msg_addr函数的参数
-        writer.putMovRegAddress('eax', w_msg);
-        writer.putPushReg('eax');
-        writer.putCallAddress(verify_msg_addr);
-        // 准备set_value_addr函数的参数
-        writer.putMovRegPtrReg('eax', wxidPtr);
-        writer.putPushReg('eax');
-        writer.putCallAddress(set_value_addr);
-        // 调用do_verify_user_addr函数
-        writer.putCallAddress(do_verify_user_addr);
-        // POPFD         
-        // POPAD
-        writer.putPopax();
-        writer.putPopfx();
-        writer.putRet();
-        writer.flush();
-    });
-    // console.log('----------txtAsm', txtAsm)
-    var nativeativeFunction = new NativeFunction(ptr(txtAsm), 'int', []);
-    try {
-        success = nativeativeFunction();
-    }
-    catch (e) {
-        console.error('Error during function execution:', e);
-        return '';
-    }
-};
-// addFriendByWxid('ledongmao', 'hello')
-// 获取群组列表
-var getChatroomMemberInfoFunction = function () {
-    // 获取群组列表地址
-    var getChatroomNodeAddress = function () {
-        var baseAddress = moduleBaseAddress.add(wxOffsets.storage.CONTACT_G_PINSTANCE_OFFSET).readPointer();
-        if (baseAddress.isNull()) {
-            return baseAddress;
-        }
-        return baseAddress.add(0x8c8).readPointer();
-    };
-    // 递归遍历群组节点
-    var chatroomRecurse = function (node, chatroomNodeList, chatroomMemberList) {
-        var chatroomNodeAddress = getChatroomNodeAddress();
-        if (chatroomNodeAddress.isNull() || node.equals(chatroomNodeAddress)) {
-            return;
-        }
-        if (chatroomNodeList.some(function (n) { return node.equals(n); })) {
-            return;
-        }
-        chatroomNodeList.push(node);
-        var roomid = readWideString(node.add(0x10));
-        // try{
-        //   console.log('获取群信息...', roomid)
-        //   GetMemberFromChatRoom(roomid)
-        // }catch(e){
-        //   console.error('获取群信息失败：', e)
-        // }
-        var len = node.add(0x54).readU32();
-        if (len > 4) {
-            var memberStr = readString(node.add(0x44));
-            if (memberStr.length > 0) {
-                var admin = readWideString(node.add(0x74));
-                // console.log('获取到的admin', admin)
-                var memberList = memberStr.split(/[\\^][G]/);
-                chatroomMemberList.push({ roomid: roomid, roomMember: memberList, admin: admin });
-            }
-        }
-        chatroomRecurse(node.add(0x0).readPointer(), chatroomNodeList, chatroomMemberList);
-        chatroomRecurse(node.add(0x04).readPointer(), chatroomNodeList, chatroomMemberList);
-        chatroomRecurse(node.add(0x08).readPointer(), chatroomNodeList, chatroomMemberList);
-    };
-    // 主函数逻辑
-    var chatroomNodeAddress = getChatroomNodeAddress();
-    if (chatroomNodeAddress.isNull()) {
-        return '[]';
-    }
-    var chatroomNodeList = [];
-    var chatroomMemberList = [];
-    var startNode = chatroomNodeAddress.add(0x0).readPointer();
-    chatroomRecurse(startNode, chatroomNodeList, chatroomMemberList);
-    var results = '[]';
-    try {
-        results = JSON.stringify(chatroomMemberList);
-        // console.log('群组列表：', results)
-    }
-    catch (e) {
-        console.log('格式转换错误：', 'e');
-    }
-    return results;
-};
-// 获取群成员昵称
-var memberNickBuffAsm = null;
-var nickRoomId = null;
-var nickMemberId = null;
-var nickBuff = null;
-var getChatroomMemberNickInfoFunction = (function (memberId, roomId) {
-    // console.log('Function called with wxid:', memberId, 'chatRoomId:', roomId);
-    nickBuff = Memory.alloc(0x7e4);
-    //const nickRetAddr = Memory.alloc(0x04)
-    memberNickBuffAsm = Memory.alloc(Process.pageSize);
-    //console.log('asm address----------',memberNickBuffAsm)
-    nickRoomId = initidStruct(roomId);
-    //console.log('nick room id',nickRoomId)
-    nickMemberId = initidStruct(memberId);
-    //console.log('nick nickMemberId id',nickMemberId)
-    //const nickStructPtr = initmsgStruct('')
-    Memory.patchCode(memberNickBuffAsm, Process.pageSize, function (code) {
-        var cw = new X86Writer(code, {
-            pc: memberNickBuffAsm
-        });
-        cw.putPushfx();
-        cw.putPushax();
-        cw.putMovRegAddress('edi', nickRoomId);
-        cw.putMovRegAddress('eax', nickBuff);
-        cw.putMovRegReg('edx', 'edi');
-        cw.putPushReg('eax');
-        cw.putMovRegAddress('ecx', nickMemberId);
-        // console.log('moduleBaseAddress', moduleBaseAddress)
-        cw.putCallAddress(moduleBaseAddress.add(0xC06F10));
-        cw.putAddRegImm('esp', 0x04);
-        cw.putPopax();
-        cw.putPopfx();
-        cw.putRet();
-        cw.flush();
-    });
-    var nativeativeFunction = new NativeFunction(ptr(memberNickBuffAsm), 'void', []);
-    nativeativeFunction();
-    var nickname = readWideString(nickBuff);
-    // console.log('--------------------------nickname', nickname)
-    return nickname;
-});
-// getChatroomMemberNickInfoFunction('xxx', 'xxx@chatroom')
-// 移除群成员——未完成,2024-03-13，会导致微信崩溃
-var delMemberFromChatRoom = function (chat_room_id, wxids) {
-    var success = 0;
-    var txtAsm = Memory.alloc(Process.pageSize);
-    var get_chat_room_mgr_addr = moduleBaseAddress.add(wxOffsets.chatRoomMgr.WX_CHAT_ROOM_MGR_OFFSET);
-    var del_member_addr = moduleBaseAddress.add(wxOffsets.chatRoom.WX_DEL_CHAT_ROOM_MEMBER_OFFSET);
-    var init_chat_msg_addr = moduleBaseAddress.add(wxOffsets.setChatMsgValue.WX_INIT_CHAT_MSG_OFFSET);
-    var chatRoomPtr = Memory.allocUtf16String(chat_room_id);
-    var membersBuffer = Memory.alloc(Process.pointerSize * (wxids.length + 1));
-    for (var i = 0; i < wxids.length; i++) {
-        var wxidPtr = Memory.allocUtf16String(wxids[i]);
-        membersBuffer.add(Process.pointerSize * i).writePointer(wxidPtr);
-    }
-    membersBuffer.add(Process.pointerSize * wxids.length).writePointer(NULL); // 确保数组以NULL结尾
-    Memory.patchCode(txtAsm, Process.pageSize, function (code) {
-        var writer = new X86Writer(code, {
-            pc: txtAsm
-        });
-        writer.putPushfx();
-        writer.putPushax();
-        console.log('get_chat_room_mgr_addr:', get_chat_room_mgr_addr);
-        writer.putCallAddress(get_chat_room_mgr_addr);
-        writer.putSubRegImm('esp', 0x14);
-        writer.putMovRegReg('esi', 'eax');
-        // writer.putMovRegReg('ecx', 'esp');
-        console.log('chat_room:', chatRoomPtr);
-        writer.putMovRegAddress('ecx', chatRoomPtr);
-        writer.putPushReg('ecx');
-        console.log('init_chat_msg_addr:', init_chat_msg_addr);
-        writer.putCallAddress(init_chat_msg_addr);
-        writer.putMovRegReg('ecx', 'esi');
-        console.log('membersBuffer:', membersBuffer);
-        writer.putMovRegAddress('eax', membersBuffer);
-        writer.putPushReg('eax');
-        console.log('del_member_addr:', del_member_addr);
-        writer.putCallAddress(del_member_addr);
-        console.log('putPopax:', 'putPopax');
-        writer.putPopax();
-        writer.putPopfx();
-        writer.putRet();
-        writer.flush();
-        console.log('writer.flush();');
-    });
-    console.log('----------txtAsm', txtAsm);
-    // 调用刚才写入的汇编代码
-    var nativeFunction = new NativeFunction(ptr(txtAsm), 'int', []);
-    try {
-        success = nativeFunction();
-        console.log('[踢出群聊]delMemberFromChatRoom success:', success);
-        return success;
-    }
-    catch (e) {
-        console.error('[踢出群聊]Error during delMemberFromChatRoom nativeFunction function execution:', e);
-        return false;
-    }
-};
-// delMemberFromChatRoom('21341182572@chatroom', ['ledongmao'])
-// 未完成，添加群成员
-var addMemberToChatRoom = function (chat_room_id, wxids) {
-    var base_addr = moduleBaseAddress; // 假设基础地址已经定义好
-    var chat_room = Memory.allocUtf16String(chat_room_id);
-    var members = wxids.map(function (id) { return Memory.allocUtf16String(id); });
-    var membersBuffer = Memory.alloc(Process.pointerSize * (members.length + 2));
-    membersBuffer.writePointer(NULL);
-    membersBuffer.add(Process.pointerSize).writePointer(membersBuffer.add(Process.pointerSize * 2));
-    for (var i = 0; i < members.length; i++) {
-        membersBuffer.add(Process.pointerSize * (2 + i)).writePointer(members[i]);
-    }
-    var get_chat_room_mgr_addr = base_addr.add(wxOffsets.chatRoomMgr.WX_CHAT_ROOM_MGR_OFFSET);
-    var add_member_addr = base_addr.add(wxOffsets.chatRoom.WX_ADD_MEMBER_TO_CHAT_ROOM_OFFSET);
-    var init_chat_msg_addr = base_addr.add(wxOffsets.setChatMsgValue.WX_INIT_CHAT_MSG_OFFSET);
-    var txtAsm = Memory.alloc(Process.pageSize);
-    Memory.patchCode(txtAsm, Process.pageSize, function (code) {
-        var writer = new X86Writer(code, { pc: txtAsm });
-        writer.putPushax();
-        writer.putPushfx();
-        writer.putCallAddress(get_chat_room_mgr_addr);
-        writer.putSubRegImm('esp', 0x8);
-        writer.putMovRegReg('ebx', 'eax'); // 存储 get_chat_room_mgr_addr 调用的结果到 EBX
-        var tempPtr = Memory.alloc(8); // 分配 8 字节以包含 tempPtr 和 tempPtr + 4
-        writer.putMovRegU32('eax', 0x0);
-        writer.putMovRegAddress('ecx', tempPtr);
-        writer.putMovRegPtrReg('ecx', 'eax'); // 将 EAX (0x0) 写入 tempPtr 指向的地址
-        writer.putLeaRegRegOffset('ecx', 'ecx', 4); // 加载 tempPtr + 4 的地址到 ECX
-        writer.putMovRegPtrReg('ecx', 'eax'); // 将 EAX (0x0) 写入 ECX 指向的地址（tempPtr + 4）
-        writer.putTestRegReg('esi', 'esi');
-        writer.putSubRegImm('esp', 0x14);
-        writer.putMovRegAddress('ecx', chat_room);
-        writer.putPushReg('eax');
-        writer.putCallAddress(init_chat_msg_addr);
-        writer.putMovRegReg('ecx', 'ebx'); // 使用 EBX 替代 temp
-        writer.putMovRegAddress('eax', membersBuffer.add(Process.pointerSize));
-        writer.putPushReg('eax');
-        writer.putCallAddress(add_member_addr);
-        writer.putPopfx();
-        writer.putPopax();
-        writer.flush();
-    });
-    var nativeFunction = new NativeFunction(ptr(txtAsm), 'void', []);
-    try {
-        var success = nativeFunction();
-        console.log('success:', success);
-        return success;
-    }
-    catch (e) {
-        console.error('[添加群成员]Error during addMemberToChatRoom nativeFunction function execution:', e);
-        return false;
-    }
-};
-// addMemberToChatRoom('21341182572@chatroom', ['ledongmao'])
-// 未完成，邀请群成员
-var inviteMemberToChatRoom = function (chat_room_id, wxids) {
-    console.log('chat_room_id:', chat_room_id, 'wxids:', wxids);
-    var base_addr = moduleBaseAddress; // 假设基础地址已经定义好
-    var chat_room = Memory.allocUtf16String(chat_room_id);
-    var members = wxids.map(function (id) { return Memory.allocUtf16String(id); });
-    var membersBuffer = Memory.alloc(Process.pointerSize * (members.length + 2));
-    membersBuffer.writePointer(NULL);
-    membersBuffer.add(Process.pointerSize).writePointer(membersBuffer.add(Process.pointerSize * 2));
-    for (var i = 0; i < members.length; i++) {
-        membersBuffer.add(Process.pointerSize * (2 + i)).writePointer(members[i]);
-    }
-    var get_chat_room_mgr_addr = base_addr.add(wxOffsets.chatRoomMgr.WX_CHAT_ROOM_MGR_OFFSET);
-    var invite_addr = base_addr.add(0xbd1a00); // 示例偏移量
-    var get_share_record_mgr_addr = base_addr.add(wxOffsets.shareRecordMgr.WX_SHARE_RECORD_MGR_OFFSET);
-    var init_chat_msg_addr = base_addr.add(wxOffsets.setChatMsgValue.WX_INIT_CHAT_MSG_OFFSET);
-    var fn1 = base_addr.add(0x7f99d0); // 示例偏移量
-    var fn2 = base_addr.add(0x78cef0); // 示例偏移量
-    var fn3 = base_addr.add(0x7fa980); // 示例偏移量
-    var fn4 = base_addr.add(0x755060); // 示例偏移量
-    var sys_addr = base_addr.add(0x116C); // 示例偏移量
-    var addr = Memory.alloc(Process.pointerSize * 2);
-    addr.writePointer(sys_addr);
-    addr.add(Process.pointerSize).writePointer(NULL);
-    var txtAsm = Memory.alloc(Process.pageSize);
-    Memory.patchCode(txtAsm, Process.pageSize, function (code) {
-        var writer = new X86Writer(code, { pc: txtAsm });
-        writer.putPushax();
-        writer.putPushfx();
-        writer.putCallAddress(get_share_record_mgr_addr);
-        writer.putMovRegAddress('ecx', addr);
-        writer.putPushReg('ecx');
-        writer.putMovRegReg('ecx', 'eax');
-        writer.putCallAddress(fn1);
-        writer.putCallAddress(get_chat_room_mgr_addr);
-        writer.putSubRegImm('esp', 0x8);
-        writer.putMovRegAddress('eax', addr);
-        writer.putMovRegAddress('ecx', txtAsm.add(8)); // 使用 txtAsm 的一部分来模拟栈
-        writer.putPushReg('eax');
-        writer.putCallAddress(fn2);
-        writer.putSubRegImm('esp', 0x14);
-        writer.putMovRegAddress('ecx', txtAsm.add(24)); // 使用 txtAsm 的另一部分来模拟栈
-        writer.putMovRegAddress('eax', chat_room);
-        writer.putPushReg('eax');
-        writer.putCallAddress(init_chat_msg_addr);
-        writer.putMovRegAddress('eax', membersBuffer.add(Process.pointerSize));
-        writer.putPushReg('eax');
-        writer.putCallAddress(invite_addr);
-        writer.putCallAddress(get_share_record_mgr_addr);
-        writer.putPushU32(0x0);
-        writer.putPushU32(0x1);
-        writer.putMovRegReg('ecx', 'eax');
-        writer.putCallAddress(fn3);
-        writer.putMovRegAddress('ecx', addr);
-        writer.putCallAddress(fn4);
-        writer.putPopfx();
-        writer.putPopax();
-        writer.flush();
-    });
-    var nativeFunction = new NativeFunction(ptr(txtAsm), 'void', []);
-    try {
-        var success = nativeFunction();
-        return success;
-    }
-    catch (e) {
-        console.error('[邀请进群]Error during inviteMemberToChatRoom nativeFunction function execution:', e);
-        return false;
-    }
-};
-// inviteMemberToChatRoom('21341182572@chatroom', ['ledongmao'])
+// console.info('myselfInfo:', getMyselfInfoFunction())
 // 发送文本消息
-var sendMsgNativeFunction = function (talkerId, content) {
-    var txtAsm = Memory.alloc(Process.pageSize);
-    // const buffwxid = Memory.alloc(0x20)
-    var wxidPtr = Memory.alloc(talkerId.length * 2 + 2);
-    wxidPtr.writeUtf16String(talkerId);
-    var picWxid = Memory.alloc(0x0c);
-    picWxid.writePointer(ptr(wxidPtr)).add(0x04)
-        .writeU32(talkerId.length * 2).add(0x04)
-        .writeU32(talkerId.length * 2).add(0x04);
-    var contentPtr = Memory.alloc(content.length * 2 + 2);
-    contentPtr.writeUtf16String(content);
-    var sizeOfStringStruct = Process.pointerSize * 5;
-    var contentStruct = Memory.alloc(sizeOfStringStruct);
-    contentStruct
-        .writePointer(contentPtr).add(0x4)
-        .writeU32(content.length).add(0x4)
-        .writeU32(content.length * 2);
-    var ecxBuffer = Memory.alloc(0x2d8);
-    Memory.patchCode(txtAsm, Process.pageSize, function (code) {
-        var cw = new X86Writer(code, {
-            pc: txtAsm
-        });
-        cw.putPushfx();
-        cw.putPushax();
-        cw.putPushU32(0x0);
-        cw.putPushU32(0x0);
-        cw.putPushU32(0x0);
-        cw.putPushU32(0x1);
-        cw.putPushU32(0x0);
-        // cw.putMovRegReg
-        cw.putMovRegAddress('eax', contentStruct);
-        cw.putPushReg('eax');
-        cw.putMovRegAddress('edx', picWxid); // room_id
-        cw.putMovRegAddress('ecx', ecxBuffer);
-        cw.putCallAddress(moduleBaseAddress.add(wxOffsets.sendText.WX_SEND_TEXT_OFFSET));
-        cw.putAddRegImm('esp', 0x18);
-        cw.putPopax();
-        cw.putPopfx();
-        cw.putRet();
-        cw.flush();
-    });
-    // console.log('----------txtAsm', txtAsm)
-    var nativeativeFunction = new NativeFunction(ptr(txtAsm), 'void', []);
-    nativeativeFunction();
-};
-// 发送@消息
-var asmAtMsg = null;
-var roomid_, msg_, wxid_, atid_;
-var ecxBuffer;
-var sendAtMsgNativeFunction = (function (roomId, text, contactId, nickname) {
-    // console.log('Function called with roomId:', roomId, 'text:', text, 'contactId:', contactId, 'nickname:', nickname)
-    asmAtMsg = Memory.alloc(Process.pageSize);
-    ecxBuffer = Memory.alloc(0x3b0);
-    // console.log('xxxx', text.indexOf('@'+nickname))
-    var atContent = text.indexOf('@' + nickname) !== -1 ? text : ('@' + nickname + ' ' + text);
-    roomid_ = initStruct(roomId);
-    wxid_ = initidStruct(contactId);
-    msg_ = initmsgStruct(atContent);
-    atid_ = initAtMsgStruct(wxid_);
-    Memory.patchCode(asmAtMsg, Process.pageSize, function (code) {
-        var cw = new X86Writer(code, {
-            pc: asmAtMsg
-        });
-        cw.putPushfx();
-        cw.putPushax();
-        cw.putPushU32(0x0);
-        cw.putPushU32(0x0);
-        cw.putPushU32(0x0);
-        cw.putPushU32(0x1);
-        //cw.putPushU32(0x0)
-        cw.putMovRegAddress('eax', atid_);
-        cw.putPushReg('eax');
-        //cw.putMovRegReg
-        cw.putMovRegAddress('eax', msg_);
-        cw.putPushReg('eax');
-        cw.putMovRegAddress('edx', roomid_); //room_id
-        cw.putMovRegAddress('ecx', ecxBuffer);
-        cw.putCallAddress(moduleBaseAddress.add(wxOffsets.sendText.WX_SEND_TEXT_OFFSET));
-        cw.putAddRegImm('esp', 0x18);
-        cw.putPopax();
-        cw.putPopfx();
-        cw.putRet();
-        cw.flush();
-    });
-    //console.log('----------txtAsm', asmAtMsg)
-    var nativeativeFunction = new NativeFunction(ptr(asmAtMsg), 'void', []);
-    nativeativeFunction();
+/**
+ * @Call: sendMsgNativeFunction -> agentSendMsg
+ */
+var sendMsgNativeFunction = (function (contactId, text) {
+    // console.log('\n\n');
+    var to_user = null;
+    var text_msg = null;
+    // const to_user = Memory.alloc(wxid.length * 2 + 2)
+    // to_user.writeUtf16String(wxid)
+    // to_user = new WeChatString(wxid).getMemoryAddress();
+    // console.info('wxid:', wxid)
+    to_user = writeWStringPtr(contactId);
+    console.info('to_user wxid :', readWStringPtr(to_user).readUtf16String());
+    // const text_msg = Memory.alloc(msg.length * 2 + 2)
+    // text_msg.writeUtf16String(msg)
+    // text_msg = new WeChatString(msg).getMemoryAddress();
+    text_msg = writeWStringPtr(text);
+    console.info('text_msg msg:', readWStringPtr(text_msg).readUtf16String());
+    // console.log('\n\n');
+    var send_message_mgr_addr = moduleBaseAddress.add(wxOffsets.kGetSendMessageMgr);
+    var send_text_msg_addr = moduleBaseAddress.add(wxOffsets.kSendTextMsg);
+    var free_chat_msg_addr = moduleBaseAddress.add(wxOffsets.kFreeChatMsg);
+    var chat_msg = Memory.alloc(0x460 * Process.pointerSize); // 在frida中分配0x460字节的内存
+    chat_msg.writeByteArray(Array(0x460 * Process.pointerSize).fill(0)); // 清零分配的内存
+    var temp = Memory.alloc(3 * Process.pointerSize); // 分配临时数组内存
+    temp.writeByteArray(Array(3 * Process.pointerSize).fill(0)); // 初始化数组
+    // 定义函数原型并实例化 NativeFunction 对象
+    var mgr = new NativeFunction(send_message_mgr_addr, 'void', []);
+    var send = new NativeFunction(send_text_msg_addr, 'uint64', ['pointer', 'pointer', 'pointer', 'pointer', 'int64', 'int64', 'int64', 'int64']);
+    var free = new NativeFunction(free_chat_msg_addr, 'void', ['pointer']);
+    // 调用发送消息管理器初始化
+    mgr();
+    // 发送文本消息
+    // console.info('chat_msg:', chat_msg);
+    // console.info('to_user:', to_user);
+    // console.info('text_msg:', text_msg);
+    // console.info('temp:', temp);
+    var success = send(chat_msg, to_user, text_msg, temp, 1, 1, 0, 0);
+    console.info('sendText success:', success);
+    // 释放ChatMsg内存
+    free(chat_msg);
 });
-// sendAtMsgNativeFunction('21341182572@chatroom', new Date().toLocaleString(), 'atorber', '超哥')
-// 发送图片消息
-var sendPicMsgNativeFunction = function (contactId, path) {
-    var picAsm = Memory.alloc(Process.pageSize);
-    var buffwxid = Memory.alloc(0x20);
-    var picbuff = Memory.alloc(0x2D8);
-    var pathPtr = Memory.alloc(path.length * 2 + 1);
-    pathPtr.writeUtf16String(path);
-    var imagefilepath = Memory.alloc(0x24);
-    imagefilepath.writePointer(pathPtr).add(0x04)
-        .writeU32(path.length * 2).add(0x04)
-        .writeU32(path.length * 2).add(0x04);
-    var picWxidPtr = Memory.alloc(contactId.length * 2 + 1);
-    picWxidPtr.writeUtf16String(contactId);
-    var picWxid = Memory.alloc(0x0c);
-    picWxid.writePointer(ptr(picWxidPtr)).add(0x04)
-        .writeU32(contactId.length * 2).add(0x04)
-        .writeU32(contactId.length * 2).add(0x04);
-    // const test_offset1 = 0x701DC0;
-    Memory.patchCode(picAsm, Process.pageSize, function (code) {
-        var cw = new X86Writer(code, {
-            pc: picAsm
-        });
-        cw.putPushfx();
-        cw.putPushax();
-        cw.putCallAddress(moduleBaseAddress.add(wxOffsets.sendMessageMgr.WX_SEND_MESSAGE_MGR_OFFSET));
-        cw.putMovRegReg('edx', 'eax'); // 缓存
-        cw.putSubRegImm('esp', 0x14);
-        cw.putMovRegAddress('eax', buffwxid);
-        cw.putMovRegReg('ecx', 'esp');
-        cw.putMovRegAddress('edi', imagefilepath);
-        cw.putPushReg('eax');
-        cw.putCallAddress(moduleBaseAddress.add(wxOffsets.setChatMsgValue.WX_INIT_CHAT_MSG_OFFSET));
-        cw.putMovRegReg('ecx', 'edx');
-        cw.putMovRegAddress('eax', picWxid); //= lea
-        cw.putMovRegAddress('edi', imagefilepath);
-        cw.putPushReg('edi');
-        cw.putPushReg('eax');
-        cw.putMovRegAddress('eax', picbuff);
-        cw.putPushReg('eax');
-        cw.putMovRegAddress('edi', picWxid); // edi
-        cw.putCallAddress(moduleBaseAddress.add(wxOffsets.sendImage.WX_SEND_IMAGE_OFFSET));
-        cw.putPopax();
-        cw.putPopfx();
-        cw.putRet();
-        cw.flush();
-    });
-    // console.log('----------picAsm',picAsm)
-    var nativeativeFunction = new NativeFunction(ptr(picAsm), 'void', []);
-    nativeativeFunction();
-};
-// 发送link消息——未完成
-function sendLinkMsgNativeFunction(wxid, title, url, thumburl, senderId, senderName, digest) {
-    console.log('Function called with wxid:', wxid, 'title:', title, 'url:', url, 'thumburl:', thumburl, 'senderId:', senderId, 'senderName:', senderName, 'digest:', digest);
-    var success = -1;
-    // 假设已经有了这些函数和基地址的相对偏移量
-    var initChatMsgAddr = moduleBaseAddress.add(wxOffsets.setChatMsgValue.WX_INIT_CHAT_MSG_OFFSET); // 这些偏移量需要替换为实际的偏移量
-    var appMsgMgrAddr = moduleBaseAddress.add(wxOffsets.appMsgMgr.WX_APP_MSG_MGR_OFFSET);
-    var newItemAddr = moduleBaseAddress.add(wxOffsets.sendLink.NEW_MM_READ_ITEM_OFFSET);
-    var freeItem2Addr = moduleBaseAddress.add(wxOffsets.sendLink.FREE_MM_READ_ITEM_2_OFFSET);
-    var forwardPublicMsgAddr = moduleBaseAddress.add(wxOffsets.sendLink.FORWARD_PUBLIC_MSG_OFFSET);
-    var buff = Memory.alloc(0x238);
-    // 调用 newItemAddr 函数初始化 buff
-    var newItem = new NativeFunction(newItemAddr, 'void', ['pointer']);
-    newItem(buff);
-    // 创建WeChatString对象
-    var toUser = Memory.allocUtf16String(wxid);
-    var wTitle = Memory.allocUtf16String(title);
-    var wUrl = Memory.allocUtf16String(url);
-    var wThumburl = Memory.allocUtf16String(thumburl);
-    var wSender = Memory.allocUtf16String(senderId);
-    var wName = Memory.allocUtf16String(senderName);
-    var wDigest = Memory.allocUtf16String(digest);
-    // 将WeChatString对象的地址复制到buff中的相应位置
-    // 注意：这里的偏移量需要根据实际的结构体布局调整
-    buff.add(0x4).writePointer(wTitle);
-    buff.add(0x2c).writePointer(wUrl);
-    buff.add(0x6c).writePointer(wThumburl);
-    buff.add(0x94).writePointer(wDigest);
-    buff.add(0x1A0).writePointer(wSender);
-    buff.add(0x1B4).writePointer(wName);
-    // 调用其他函数完成消息的转发
-    try {
-        var appMsgMgr = new NativeFunction(appMsgMgrAddr, 'pointer', [])();
-        var initChatMsg = new NativeFunction(initChatMsgAddr, 'void', ['pointer', 'pointer']);
-        initChatMsg(buff, toUser);
-        var forwardPublicMsg = new NativeFunction(forwardPublicMsgAddr, 'int', ['pointer']);
-        success = forwardPublicMsg(appMsgMgr);
-        var freeItem2 = new NativeFunction(freeItem2Addr, 'void', ['pointer', 'int']);
-        freeItem2(buff, 0);
-    }
-    catch (e) {
-        console.error('Error during sendLinkMsgNativeFunction function execution:', e);
-        return false;
-    }
-    return success;
-}
-// sendLinkMsgNativeFunction('ledongmao', '标题是测试', 'https://www.json.cn', 'C:\\Users\\tyutl\\Documents\\GitHub\\puppet-xp\\examples\\file\\message-cltngju1k0030wko48uiwa2qs-url-1.jpg', 'ledongmao', '超哥', '这是描述...')
+// sendMsgNativeFunction('filehelper', 'hello world')
 // 接收消息回调
+/**
+ * @Hook: recvMsg -> recvMsgNativeCallback
+ */
 var recvMsgNativeCallback = (function () {
     var nativeCallback = new NativeCallback(function () { }, 'void', ['int32', 'pointer', 'pointer', 'pointer', 'pointer', 'int32']);
     var nativeativeFunction = new NativeFunction(nativeCallback, 'void', ['int32', 'pointer', 'pointer', 'pointer', 'pointer', 'int32']);
     try {
         Interceptor.attach(moduleBaseAddress.add(wxOffsets.hookMsg.WX_RECV_MSG_HOOK_OFFSET), {
-            onEnter: function () {
+            onEnter: function (args) {
                 try {
-                    var addr = this.context.ecx; // 0xc30-0x08
-                    var msgType_1 = addr.add(0x38).readU32();
-                    var isMyMsg_1 = addr.add(0x3C).readU32(); // add isMyMsg
-                    if (msgType_1 > 0) {
-                        var talkerIdPtr = addr.add(0x48).readPointer();
-                        // console.log('txt msg',talkerIdPtr.readUtf16String())
-                        var talkerIdLen = addr.add(0x48 + 0x04).readU32() * 2 + 2;
-                        var myTalkerIdPtr_1 = Memory.alloc(talkerIdLen);
-                        Memory.copy(myTalkerIdPtr_1, talkerIdPtr, talkerIdLen);
-                        var contentPtr = null;
-                        var contentLen = 0;
-                        var myContentPtr_1 = null;
-                        // console.log('msgType', msgType)
-                        if (msgType_1 === 3) { // pic path
-                            var thumbPtr = addr.add(0x19c).readPointer();
-                            var hdPtr = addr.add(0x1b0).readPointer();
-                            var thumbPath = thumbPtr.readUtf16String();
-                            var hdPath = hdPtr.readUtf16String();
-                            var picData = [
-                                thumbPath,
-                                thumbPath,
-                                hdPath,
-                                hdPath, //  PUPPET.types.Image.Artwork
-                            ];
-                            var content = JSON.stringify(picData);
-                            console.log('pic msg', content);
-                            myContentPtr_1 = Memory.allocUtf16String(content);
-                        }
-                        else {
-                            contentPtr = addr.add(0x70).readPointer();
-                            contentLen = addr.add(0x70 + 0x04).readU32() * 2 + 2;
-                            myContentPtr_1 = Memory.alloc(contentLen);
-                            Memory.copy(myContentPtr_1, contentPtr, contentLen);
-                        }
-                        //  console.log('----------------------------------------')
-                        //  console.log(msgType)
-                        //  console.log(contentPtr.readUtf16String())
-                        //  console.log('----------------------------------------')
-                        var groupMsgAddr = addr.add(0x174).readU32(); //* 2 + 2
-                        var myGroupMsgSenderIdPtr_1 = null;
-                        if (groupMsgAddr === 0) { // weChatPublic is zero，type is 49
-                            myGroupMsgSenderIdPtr_1 = Memory.alloc(0x10);
-                            myGroupMsgSenderIdPtr_1.writeUtf16String('null');
-                        }
-                        else {
-                            var groupMsgSenderIdPtr = addr.add(0x174).readPointer();
-                            var groupMsgSenderIdLen = addr.add(0x174 + 0x04).readU32() * 2 + 2;
-                            myGroupMsgSenderIdPtr_1 = Memory.alloc(groupMsgSenderIdLen);
-                            Memory.copy(myGroupMsgSenderIdPtr_1, groupMsgSenderIdPtr, groupMsgSenderIdLen);
-                        }
-                        var xmlNullPtr = addr.add(0x1f0).readU32(); // 3.9.2.23
-                        var myXmlContentPtr_1 = null;
-                        if (xmlNullPtr === 0) {
-                            myXmlContentPtr_1 = Memory.alloc(0x10);
-                            myXmlContentPtr_1.writeUtf16String('null');
-                        }
-                        else {
-                            var xmlContentPtr = addr.add(0x1f0).readPointer(); // 3.9.2.23
-                            var xmlContentLen = addr.add(0x1f0 + 0x04).readU32() * 2 + 2;
-                            myXmlContentPtr_1 = Memory.alloc(xmlContentLen);
-                            Memory.copy(myXmlContentPtr_1, xmlContentPtr, xmlContentLen);
-                        }
-                        setImmediate(function () { return nativeativeFunction(msgType_1, myTalkerIdPtr_1, myContentPtr_1, myGroupMsgSenderIdPtr_1, myXmlContentPtr_1, isMyMsg_1); });
+                    // 参数打印
+                    console.log("doAddMsg called with args: " + args[0] + ", " + args[1] + ", " + args[2]);
+                    // 调用处理函数
+                    var msg = HandleSyncMsg(args[0], args[1], args[2]);
+                    // console.log("msg: " + JSON.stringify(msg, null, 2));
+                    var room = '';
+                    var talkerId = '';
+                    var content = '';
+                    var signature = msg.signature;
+                    var msgType_1 = msg.type;
+                    if (msg.fromUser.indexOf('@') !== -1) {
+                        room = msg.fromUser;
                     }
+                    else if (msg.toUser.indexOf('@') !== -1) {
+                        room = msg.toUser;
+                    }
+                    if (room) {
+                        var contentArr = msg.content.split(':\n');
+                        // console.log('contentArr:', contentArr)
+                        if (contentArr.length > 1) {
+                            talkerId = contentArr[0];
+                            content = msg.content.replace("".concat(contentArr[0], ":\n"), '');
+                        }
+                        else {
+                            content = msg.content;
+                        }
+                    }
+                    else {
+                        talkerId = msg.fromUser;
+                        content = msg.content;
+                    }
+                    if (content === 'ding') {
+                        sendMsgNativeFunction(talkerId, 'dong');
+                    }
+                    var myContentPtr_1 = Memory.alloc(content.length * 2 + 1);
+                    myContentPtr_1.writeUtf16String(content);
+                    var myTalkerIdPtr_1 = Memory.alloc(talkerId.length * 2 + 1);
+                    myTalkerIdPtr_1.writeUtf16String(talkerId);
+                    var myGroupMsgSenderIdPtr_1 = Memory.alloc(room.length * 2 + 1);
+                    myGroupMsgSenderIdPtr_1.writeUtf16String(room);
+                    var myXmlContentPtr_1 = Memory.alloc(signature.length * 2 + 1);
+                    myXmlContentPtr_1.writeUtf16String(signature);
+                    var isMyMsg_1 = 0;
+                    var newMsg = {
+                        msgType: msgType_1,
+                        talkerId: talkerId,
+                        content: content,
+                        room: room,
+                        signature: signature,
+                        isMyMsg: isMyMsg_1
+                    };
+                    console.log('回调消息:', JSON.stringify(newMsg));
+                    setImmediate(function () { return nativeativeFunction(msgType_1, myTalkerIdPtr_1, myContentPtr_1, myGroupMsgSenderIdPtr_1, myXmlContentPtr_1, isMyMsg_1); });
                 }
                 catch (e) {
                     console.error('接收消息回调失败：', e);
