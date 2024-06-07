@@ -29,7 +29,7 @@ wechaty-puppet-xp is a local puppet for Wechaty:
 
 - STEP 1: Install wechat client in your Windows computer.
 
-> 1.13.0+ is the latest version, only support WeChat v3.9.2.23. Note to use the npm package that matches the WeChat version.
+> 1.13.+ is the latest version, only support WeChat v3.9.2.23. Note to use the npm package that matches the WeChat version.
 
 - STEP 2: Login the wechat client on the computer.
 - STEP 3: Getting Started with TypeScript/JavaScript (RECOMMENDED).
@@ -62,18 +62,18 @@ puppet-xp also have already released the installation package on NPM. Running wi
 
 XP is a young puppet,it keeps growing and improving.
 
-版本|3.3.0.115|3.6.0.18|3.9.2.23|
-:---|:---|:---|:---|
+版本|3.3.0.115|3.6.0.18|3.9.2.23|3.9.10.19|
+:---|:---|:---|:---|:---|
 **<消息>**|
-接收文本|✅|✅|✅
+接收文本|✅|✅|✅|✅
 接收图片|✅|✅|✅
-接收文件|✅|✅|✅
-接收动图|✅|✅|✅
-接收表情|✅|✅|✅
+接收文件|✅|✅|✅|✅
+接收动图|✅|✅|✅|✅
+接收表情|✅|✅|✅|✅
 接收小程序卡片|✅|✅|✅
 接收联系人卡片|✅|✅|✅
 接收位置卡片|✅|✅|✅
-发送文本|✅|✅|✅
+发送文本|✅|✅|✅|✅
 发送图片|✅|✅|✅
 发送文件|✅|✅|✅
 发送动图|✅|✅|✅
@@ -87,7 +87,7 @@ XP is a young puppet,it keeps growing and improving.
 好友列表|✅|✅|✅
 好友详情|✅|✅|✅
 **<其他>**|
-登录事件|✅|✅|✅
+登录事件|✅|✅|✅|✅
 扫码登录|||✅
 
 ## VERSION SUPPORT
@@ -97,7 +97,7 @@ Note: You need to install an NPM version that matches your WeChat client version
 puppet-xp|wechat|npm install|
 |:---|:---|:---|
 |2.0.0|[WeChat-v3.9.10.19](https://github.com/tom-snow/wechat-windows-versions/releases/download/v3.9.10.19/WeChatSetup-3.9.10.19.exe)|npm i wechaty-puppet-xp@2.0.0|
-|1.3.12|[WeChat-v3.9.2.23](https://github.com/tom-snow/wechat-windows-versions/releases/download/v3.9.2.23/WeChatSetup-3.9.2.23.exe)|npm i wechaty-puppet-xp@1.3.12|
+|1.13.12|[WeChat-v3.9.2.23](https://github.com/tom-snow/wechat-windows-versions/releases/download/v3.9.2.23/WeChatSetup-3.9.2.23.exe)|npm i wechaty-puppet-xp@1.3.12|
 |1.12.7|[WeChat-v3.6.0.18](https://github.com/tom-snow/wechat-windows-versions/releases/download/v3.6.0.18/WeChatSetup-3.6.0.18.exe)|npm i wechaty-puppet-xp@1.12.7|
 |1.11.14|[WeChat-v3.3.0.115](https://github.com/wechaty/wechaty-puppet-xp/releases/download/v0.5/WeChatSetup-v3.3.0.115.exe)|npm i wechaty-puppet-xp@1.11.14|
 
