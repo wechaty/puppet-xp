@@ -232,7 +232,7 @@ var wxOffsets = {
     }
 };
 var moduleBaseAddress = Module.getBaseAddress('WeChatWin.dll');
-// console.info('moduleBaseAddress:', moduleBaseAddress)
+// console.log('moduleBaseAddress:', moduleBaseAddress)
 /* -----------------base------------------------- */
 var writeWStringPtr = function (str) {
     console.log("\u8F93\u5165\u5B57\u7B26\u4E32\u5185\u5BB9: ".concat(str));
@@ -544,7 +544,7 @@ var getMyselfInfoFunction = function () {
             out.private_key = serviceAddr.add(0x7D8).readPointer().readUtf8String(serviceAddr.add(0x7D8 + 0x10).readU32());
         }
     }
-    // console.info('out:', JSON.stringify(out, null, 2))
+    // console.log('out:', JSON.stringify(out, null, 2))
     var myself = {
         id: out.wxid,
         code: out.account,
@@ -552,54 +552,54 @@ var getMyselfInfoFunction = function () {
         head_img_url: out.head_img
     };
     var myselfJson = JSON.stringify(myself, null, 2);
-    // console.info('myselfJson:', myselfJson)
+    // console.log('myselfJson:', myselfJson)
     return myselfJson;
 };
-// console.info('myselfInfo:', getMyselfInfoFunction())
-// 发送文本消息
-/**
- * @Call: sendMsgNativeFunction -> agentSendMsg
- */
 var sendMsgNativeFunction = (function (contactId, text) {
-    // console.log('\n\n');
+    console.log('\n\n');
+    console.log('sendMsgNativeFunction contactId:', contactId);
     var to_user = null;
     var text_msg = null;
     // const to_user = Memory.alloc(wxid.length * 2 + 2)
     // to_user.writeUtf16String(wxid)
     // to_user = new WeChatString(wxid).getMemoryAddress();
-    // console.info('wxid:', wxid)
+    // console.log('wxid:', wxid)
     to_user = writeWStringPtr(contactId);
-    console.info('to_user wxid :', readWStringPtr(to_user).readUtf16String());
+    console.log('to_user wxid :', readWStringPtr(to_user).readUtf16String());
     // const text_msg = Memory.alloc(msg.length * 2 + 2)
     // text_msg.writeUtf16String(msg)
     // text_msg = new WeChatString(msg).getMemoryAddress();
     text_msg = writeWStringPtr(text);
-    console.info('text_msg msg:', readWStringPtr(text_msg).readUtf16String());
+    console.log('text_msg msg:', readWStringPtr(text_msg).readUtf16String());
     // console.log('\n\n');
     var send_message_mgr_addr = moduleBaseAddress.add(wxOffsets.kGetSendMessageMgr);
     var send_text_msg_addr = moduleBaseAddress.add(wxOffsets.kSendTextMsg);
     var free_chat_msg_addr = moduleBaseAddress.add(wxOffsets.kFreeChatMsg);
+    console.log('send_message_mgr_addr:', send_message_mgr_addr);
     var chat_msg = Memory.alloc(0x460 * Process.pointerSize); // 在frida中分配0x460字节的内存
     chat_msg.writeByteArray(Array(0x460 * Process.pointerSize).fill(0)); // 清零分配的内存
+    console.log('chat_msg:', chat_msg);
     var temp = Memory.alloc(3 * Process.pointerSize); // 分配临时数组内存
     temp.writeByteArray(Array(3 * Process.pointerSize).fill(0)); // 初始化数组
+    console.log('temp:', temp);
     // 定义函数原型并实例化 NativeFunction 对象
     var mgr = new NativeFunction(send_message_mgr_addr, 'void', []);
-    var send = new NativeFunction(send_text_msg_addr, 'uint64', ['pointer', 'pointer', 'pointer', 'pointer', 'int64', 'int64', 'int64', 'int64']);
+    var sendMsg = new NativeFunction(send_text_msg_addr, 'uint64', ['pointer', 'pointer', 'pointer', 'pointer', 'int64', 'int64', 'int64', 'int64']);
     var free = new NativeFunction(free_chat_msg_addr, 'void', ['pointer']);
+    console.log('mgr:', mgr);
     // 调用发送消息管理器初始化
     mgr();
     // 发送文本消息
-    // console.info('chat_msg:', chat_msg);
-    // console.info('to_user:', to_user);
-    // console.info('text_msg:', text_msg);
-    // console.info('temp:', temp);
-    var success = send(chat_msg, to_user, text_msg, temp, 1, 1, 0, 0);
-    console.info('sendText success:', success);
+    // console.log('chat_msg:', chat_msg);
+    // console.log('to_user:', to_user);
+    // console.log('text_msg:', text_msg);
+    // console.log('temp:', temp);
+    var success = sendMsg(chat_msg, to_user, text_msg, temp, 1, 1, 0, 0);
+    console.log('sendText success:', success);
     // 释放ChatMsg内存
     free(chat_msg);
+    console.log('sendMsgNativeFunction success:', success);
 });
-// sendMsgNativeFunction('filehelper', 'hello world')
 // 接收消息回调
 /**
  * @Hook: recvMsg -> recvMsgNativeCallback
@@ -612,7 +612,7 @@ var recvMsgNativeCallback = (function () {
             onEnter: function (args) {
                 try {
                     // 参数打印
-                    console.log("doAddMsg called with args: " + args[0] + ", " + args[1] + ", " + args[2]);
+                    // console.log("doAddMsg called with args: " + args[0] + ", " + args[1] + ", " + args[2]);
                     // 调用处理函数
                     var msg = HandleSyncMsg(args[0], args[1], args[2]);
                     // console.log("msg: " + JSON.stringify(msg, null, 2));
@@ -642,9 +642,6 @@ var recvMsgNativeCallback = (function () {
                         talkerId = msg.fromUser;
                         content = msg.content;
                     }
-                    if (content === 'ding') {
-                        sendMsgNativeFunction(talkerId, 'dong');
-                    }
                     var myContentPtr_1 = Memory.alloc(content.length * 2 + 1);
                     myContentPtr_1.writeUtf16String(content);
                     var myTalkerIdPtr_1 = Memory.alloc(talkerId.length * 2 + 1);
@@ -667,7 +664,7 @@ var recvMsgNativeCallback = (function () {
                 }
                 catch (e) {
                     console.error('接收消息回调失败：', e);
-                    throw new Error(e);
+                    // throw new Error(e)
                 }
             }
         });
@@ -678,3 +675,11 @@ var recvMsgNativeCallback = (function () {
         return null;
     }
 })();
+rpc.exports = {
+    sendMsgNativeFunction: function (contactId, text) {
+        return sendMsgNativeFunction(contactId, text);
+    },
+    getMyselfInfoFunction: function () {
+        return getMyselfInfoFunction();
+    }
+};

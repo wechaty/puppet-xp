@@ -78,8 +78,12 @@ async function main () {
     console.info('text:', text)
     if (talkerId && text === 'ding') {
       console.info('叮咚测试: ding found, reply dong')
-      await sidecar.sendMsg(talkerId || toId, 'dong')
-      // await sidecar.sendAtMsg(toId, 'dong',talkerId)
+      try {
+        await sidecar.sendMsg(talkerId || toId, 'dong')
+        // await sidecar.sendAtMsg(toId, 'dong',talkerId)
+      } catch (e) {
+        console.error('发送消息失败:', e)
+      }
     }
   }
 

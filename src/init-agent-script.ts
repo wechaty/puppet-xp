@@ -234,11 +234,11 @@ const wxOffsets = {
 }
 
 const moduleBaseAddress = Module.getBaseAddress('WeChatWin.dll')
-// console.info('moduleBaseAddress:', moduleBaseAddress)
+// console.log('moduleBaseAddress:', moduleBaseAddress)
 
 /* -----------------base------------------------- */
 
-const writeWStringPtr = (str:string) => {
+const writeWStringPtr = (str: string) => {
   console.log(`输入字符串内容: ${str}`);
   const strLength = str.length;
   // console.log(`字符串长度: ${strLength}`);
@@ -248,15 +248,15 @@ const writeWStringPtr = (str:string) => {
 
   // 计算我们需要为字符串对象结构分配的总内存空间，结构包含：指针 (Process.pointerSize) + 长度 (4 bytes) + 容量 (4 bytes)
   const structureSize = Process.pointerSize + 4 + 4;
-  
+
   // 为字符串数据和结构体分配连续的内存空间
   const totalSize = utf16Length + 2 + structureSize; // +2 用于 null 终止符
   const basePointer = Memory.alloc(totalSize);
-  
+
   // 将结构体指针定位到分配的内存起始位置
   const structurePointer = basePointer;
   // console.log(`字符串分配空间内存指针: ${structurePointer}`);
-  
+
   // 将字符串数据指针定位到结构体之后的位置
   const stringDataPointer = basePointer.add(structureSize);
   // console.log(`字符串保存地址指针: ${stringDataPointer}`);
@@ -287,7 +287,7 @@ const writeWStringPtr = (str:string) => {
   // console.log(`写入字符地址再次确认: ${structurePointer.readPointer()}`);
   // console.log(`读取32位测试: ${structurePointer.readPointer().readS32()}`);
   // console.log(`return写入字符串结构体: ${structurePointer}`);
-  
+
   // 返回分配的结构体表面的起始地址
   return structurePointer;
 };
@@ -608,7 +608,7 @@ const getMyselfInfoFunction = () => {
 
   }
 
-  // console.info('out:', JSON.stringify(out, null, 2))
+  // console.log('out:', JSON.stringify(out, null, 2))
 
   const myself = {
     id: out.wxid,
@@ -617,73 +617,67 @@ const getMyselfInfoFunction = () => {
     head_img_url: out.head_img,
   }
   const myselfJson = JSON.stringify(myself, null, 2)
-  // console.info('myselfJson:', myselfJson)
+  // console.log('myselfJson:', myselfJson)
   return myselfJson
 
 }
 
-// console.info('myselfInfo:', getMyselfInfoFunction())
-
-// 发送文本消息
-/**
- * @Call: sendMsgNativeFunction -> agentSendMsg
- */
 const sendMsgNativeFunction = ((contactId: any, text: any) => {
-  // console.log('\n\n');
+  console.log('\n\n');
+  console.log('sendMsgNativeFunction contactId:', contactId)
   let to_user: any = null
   let text_msg: any = null
   // const to_user = Memory.alloc(wxid.length * 2 + 2)
   // to_user.writeUtf16String(wxid)
   // to_user = new WeChatString(wxid).getMemoryAddress();
-  // console.info('wxid:', wxid)
+  // console.log('wxid:', wxid)
   to_user = writeWStringPtr(contactId);
-  console.info('to_user wxid :', readWStringPtr(to_user).readUtf16String());
+  console.log('to_user wxid :', readWStringPtr(to_user).readUtf16String());
 
   // const text_msg = Memory.alloc(msg.length * 2 + 2)
   // text_msg.writeUtf16String(msg)
   // text_msg = new WeChatString(msg).getMemoryAddress();
 
   text_msg = writeWStringPtr(text);
-  console.info('text_msg msg:', readWStringPtr(text_msg).readUtf16String());
+  console.log('text_msg msg:', readWStringPtr(text_msg).readUtf16String());
   // console.log('\n\n');
 
   var send_message_mgr_addr = moduleBaseAddress.add(wxOffsets.kGetSendMessageMgr);
   var send_text_msg_addr = moduleBaseAddress.add(wxOffsets.kSendTextMsg);
   var free_chat_msg_addr = moduleBaseAddress.add(wxOffsets.kFreeChatMsg);
-
+  console.log('send_message_mgr_addr:', send_message_mgr_addr)
   var chat_msg = Memory.alloc(0x460 * Process.pointerSize); // 在frida中分配0x460字节的内存
   chat_msg.writeByteArray(Array(0x460 * Process.pointerSize).fill(0)); // 清零分配的内存
-
+console.log('chat_msg:', chat_msg)
   var temp = Memory.alloc(3 * Process.pointerSize); // 分配临时数组内存
   temp.writeByteArray(Array(3 * Process.pointerSize).fill(0)); // 初始化数组
-
+console.log('temp:', temp)
   // 定义函数原型并实例化 NativeFunction 对象
   var mgr = new NativeFunction(send_message_mgr_addr, 'void', []);
-  var send = new NativeFunction(send_text_msg_addr, 'uint64', ['pointer', 'pointer', 'pointer', 'pointer', 'int64', 'int64', 'int64', 'int64']);
+  var sendMsg = new NativeFunction(send_text_msg_addr, 'uint64', ['pointer', 'pointer', 'pointer', 'pointer', 'int64', 'int64', 'int64', 'int64']);
   var free = new NativeFunction(free_chat_msg_addr, 'void', ['pointer']);
-
+console.log('mgr:', mgr)
   // 调用发送消息管理器初始化
   mgr();
 
   // 发送文本消息
-  // console.info('chat_msg:', chat_msg);
-  // console.info('to_user:', to_user);
-  // console.info('text_msg:', text_msg);
-  // console.info('temp:', temp);
-  var success = send(chat_msg, to_user, text_msg, temp, 1, 1, 0, 0);
+  // console.log('chat_msg:', chat_msg);
+  // console.log('to_user:', to_user);
+  // console.log('text_msg:', text_msg);
+  // console.log('temp:', temp);
+  var success = sendMsg(chat_msg, to_user, text_msg, temp, 1, 1, 0, 0);
 
-  console.info('sendText success:', success);
+  console.log('sendText success:', success);
 
   // 释放ChatMsg内存
   free(chat_msg);
+  console.log('sendMsgNativeFunction success:', success)
 })
 
-// sendMsgNativeFunction('filehelper', 'hello world')
-
 // 接收消息回调
- /**
-  * @Hook: recvMsg -> recvMsgNativeCallback
-  */
+/**
+ * @Hook: recvMsg -> recvMsgNativeCallback
+ */
 const recvMsgNativeCallback = (() => {
 
   const nativeCallback = new NativeCallback(() => { }, 'void', ['int32', 'pointer', 'pointer', 'pointer', 'pointer', 'int32'])
@@ -695,7 +689,7 @@ const recvMsgNativeCallback = (() => {
       onEnter(args) {
         try {
           // 参数打印
-          console.log("doAddMsg called with args: " + args[0] + ", " + args[1] + ", " + args[2]);
+          // console.log("doAddMsg called with args: " + args[0] + ", " + args[1] + ", " + args[2]);
 
           // 调用处理函数
           const msg = HandleSyncMsg(args[0], args[1], args[2]);
@@ -718,7 +712,7 @@ const recvMsgNativeCallback = (() => {
             // console.log('contentArr:', contentArr)
             if (contentArr.length > 1) {
               talkerId = contentArr[0]
-                content = msg.content.replace(`${contentArr[0]}:\n`, '')
+              content = msg.content.replace(`${contentArr[0]}:\n`, '')
             } else {
               content = msg.content
             }
@@ -727,9 +721,6 @@ const recvMsgNativeCallback = (() => {
             content = msg.content
           }
 
-          if (content === 'ding') {
-            sendMsgNativeFunction(talkerId, 'dong')
-          }
           const myContentPtr = Memory.alloc(content.length * 2 + 1)
           myContentPtr.writeUtf16String(content)
 
@@ -751,7 +742,7 @@ const recvMsgNativeCallback = (() => {
 
         } catch (e: any) {
           console.error('接收消息回调失败：', e)
-          throw new Error(e)
+          // throw new Error(e)
         }
       },
     })
@@ -762,3 +753,12 @@ const recvMsgNativeCallback = (() => {
   }
 
 })()
+
+rpc.exports = {
+  sendMsgNativeFunction: function (contactId: any, text: any) {
+    return sendMsgNativeFunction(contactId, text);
+  },
+  getMyselfInfoFunction: function () {
+    return getMyselfInfoFunction();
+  }
+};

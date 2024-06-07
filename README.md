@@ -102,6 +102,14 @@ puppet-xp|wechat|npm install|
 
 ## HISTORY
 
+### v2.0.0
+
+1. Support WeChat version 3.9.10.19
+2. Support list
+    - getMyselfInfo
+    - sendMsg
+    - recvMsg
+
 ### v1.13.12
 
 1. Fixed the bug where the system crashes upon receiving a message before successful startup

@@ -537,7 +537,8 @@ class PuppetXp extends PUPPET.Puppet {
   }
 
   private async loadContactList () {
-    const contactList = JSON.parse(await this.sidecar.getContact())
+    // const contactList = JSON.parse(await this.sidecar.getContact())
+    const contactList:any = []
 
     for (const contactKey in contactList) {
       const contactInfo = contactList[contactKey]
@@ -568,7 +569,9 @@ class PuppetXp extends PUPPET.Puppet {
   private async loadRoomList () {
     let roomList: any[] = []
     try {
-      const ChatroomMemberInfo = await this.sidecar.getChatroomMemberInfo()
+      // const ChatroomMemberInfo = await this.sidecar.getChatroomMemberInfo()
+      const ChatroomMemberInfo = '{}'
+
       roomList = JSON.parse(ChatroomMemberInfo)
     } catch (err) {
       log.error('loadRoomList fail:', err)
@@ -598,7 +601,10 @@ class PuppetXp extends PUPPET.Puppet {
           const memberId = roomMember[memberKey]
           if (!this.contactStore[memberId]) {
             try {
-              const memberNickName = await this.sidecar.getChatroomMemberNickInfo(memberId, roomId)
+              // const memberNickName = await this.sidecar.getChatroomMemberNickInfo(memberId, roomId)
+              // const memberNickName = await this.sidecar.getChatroomMemberNickInfo(memberId, roomId)
+              const memberNickName:any = ''
+
               const contact = {
                 alias: '',
                 avatar: '',
@@ -654,7 +660,7 @@ class PuppetXp extends PUPPET.Puppet {
   override async contactAlias (contactId: string, alias?: string | null): Promise<void | string> {
     log.verbose('PuppetXp', 'contactAlias(%s, %s)', contactId, alias)
     if (alias) {
-      await this.sidecar.modifyContactRemark(contactId, alias)
+      // await this.sidecar.modifyContactRemark(contactId, alias)
       return alias
     }
     const contact = await this.contactRawPayload(contactId)
@@ -914,9 +920,10 @@ class PuppetXp extends PUPPET.Puppet {
     mentionIdList?: string[],
   ): Promise<void> {
     if (conversationId.split('@').length === 2 && mentionIdList && mentionIdList[0]) {
-      const wxid = mentionIdList[0]
-      const contact = await this.contactRawPayload(wxid)
-      await this.sidecar.sendAtMsg(conversationId, text, mentionIdList[0], contact.name)
+      // const wxid = mentionIdList[0]
+      // const contact = await this.contactRawPayload(wxid)
+      // await this.sidecar.sendAtMsg(conversationId, text, mentionIdList[0], contact.name)
+      await this.sidecar.sendMsg(conversationId, text)
     } else {
       await this.sidecar.sendMsg(conversationId, text)
     }
@@ -932,7 +939,8 @@ class PuppetXp extends PUPPET.Puppet {
     await file.toFile(filePath, true)
     if (file.type === FileBoxType.Url) {
       try {
-        await this.sidecar.sendPicMsg(conversationId, filePath)
+        // await this.sidecar.sendPicMsg(conversationId, filePath)
+        return this.notSupported('sendPicMsg')
         // fs.unlinkSync(filePath)
       } catch {
         fs.unlinkSync(filePath)
@@ -941,7 +949,8 @@ class PuppetXp extends PUPPET.Puppet {
     } else {
       // filePath = 'C:\\Users\\wechaty\\Documents\\GitHub\\wechat-openai-qa-bot\\data1652169999200.xls'
       try {
-        await this.sidecar.sendPicMsg(conversationId, filePath)
+        // await this.sidecar.sendPicMsg(conversationId, filePath)
+        return this.notSupported('sendPicMsg')
         // fs.unlinkSync(filePath)
       } catch (err) {
         PUPPET.throwUnsupportedError(conversationId, file)
@@ -978,39 +987,40 @@ class PuppetXp extends PUPPET.Puppet {
   ): Promise<void> {
     log.verbose('PuppetXp', 'messageSendMiniProgram(%s, %s)', conversationId, JSON.stringify(miniProgramPayload))
 
-    const xmlstr = `<?xml version="1.0" encoding="UTF-8" ?>
-     <msg>
-       <fromusername>${this.selfInfo.id}</fromusername>
-       <scene>0</scene>
-       <appmsg appid="${miniProgramPayload.appid}">
-         <title>${miniProgramPayload.title}</title>
-         <action>view</action>
-         <type>33</type>
-         <showtype>0</showtype>
-         <url>${miniProgramPayload.pagePath}</url>
-         <thumburl>${miniProgramPayload.thumbUrl}</thumburl>
-         <sourcedisplayname>${miniProgramPayload.description}</sourcedisplayname>
-         <appattach>
-           <totallen>0</totallen>
-         </appattach>
-         <weappinfo>
-           <username>${miniProgramPayload.username}</username>
-           <appid>${miniProgramPayload.appid}</appid>
-           <type>1</type>
-           <weappiconurl>${miniProgramPayload.iconUrl}</weappiconurl>
-           <appservicetype>0</appservicetype>
-           <shareId>2_wx65cc950f42e8fff1_875237370_${new Date().getTime()}_1</shareId>
-         </weappinfo>
-       </appmsg>
-       <appinfo>
-         <version>1</version>
-         <appname>Window wechat</appname>
-       </appinfo>
-     </msg>
-   `
+    //   const xmlstr = `<?xml version="1.0" encoding="UTF-8" ?>
+    //    <msg>
+    //      <fromusername>${this.selfInfo.id}</fromusername>
+    //      <scene>0</scene>
+    //      <appmsg appid="${miniProgramPayload.appid}">
+    //        <title>${miniProgramPayload.title}</title>
+    //        <action>view</action>
+    //        <type>33</type>
+    //        <showtype>0</showtype>
+    //        <url>${miniProgramPayload.pagePath}</url>
+    //        <thumburl>${miniProgramPayload.thumbUrl}</thumburl>
+    //        <sourcedisplayname>${miniProgramPayload.description}</sourcedisplayname>
+    //        <appattach>
+    //          <totallen>0</totallen>
+    //        </appattach>
+    //        <weappinfo>
+    //          <username>${miniProgramPayload.username}</username>
+    //          <appid>${miniProgramPayload.appid}</appid>
+    //          <type>1</type>
+    //          <weappiconurl>${miniProgramPayload.iconUrl}</weappiconurl>
+    //          <appservicetype>0</appservicetype>
+    //          <shareId>2_wx65cc950f42e8fff1_875237370_${new Date().getTime()}_1</shareId>
+    //        </weappinfo>
+    //      </appmsg>
+    //      <appinfo>
+    //        <version>1</version>
+    //        <appname>Window wechat</appname>
+    //      </appinfo>
+    //    </msg>
+    //  `
     // const xmlstr=`<msg><fromusername>${this.selfInfo.id}</fromusername><scene>0</scene><commenturl></commenturl><appmsg appid="wx65cc950f42e8fff1" sdkver=""><title>腾讯出行服务｜加油代驾公交</title><des></des><action>view</action><type>33</type><showtype>0</showtype><content></content><url>https://mp.weixin.qq.com/mp/waerrpage?appid=wx65cc950f42e8fff1&amp;amp;type=upgrade&amp;amp;upgradetype=3#wechat_redirect</url><dataurl></dataurl><lowurl></lowurl><lowdataurl></lowdataurl><recorditem><![CDATA[]]></recorditem><thumburl>http://mmbiz.qpic.cn/mmbiz_png/NM1fK7leWGPaFnMAe95jbg4sZAI3fkEZWHq69CIk6zA00SGARbmsGTbgLnZUXFoRwjROelKicbSp9K34MaZBuuA/640?wx_fmt=png&amp;wxfrom=200</thumburl><messageaction></messageaction><extinfo></extinfo><sourceusername></sourceusername><sourcedisplayname>腾讯出行服务｜加油代驾公交</sourcedisplayname><commenturl></commenturl><appattach><totallen>0</totallen><attachid></attachid><emoticonmd5></emoticonmd5><fileext></fileext><aeskey></aeskey></appattach><weappinfo><pagepath></pagepath><username>gh_ad64296dc8bd@app</username><appid>wx65cc950f42e8fff1</appid><type>1</type><weappiconurl>http://mmbiz.qpic.cn/mmbiz_png/NM1fK7leWGPaFnMAe95jbg4sZAI3fkEZWHq69CIk6zA00SGARbmsGTbgLnZUXFoRwjROelKicbSp9K34MaZBuuA/640?wx_fmt=png&amp;wxfrom=200</weappiconurl><appservicetype>0</appservicetype><shareId>2_wx65cc950f42e8fff1_875237370_1644979747_1</shareId></weappinfo><websearch /></appmsg><appinfo><version>1</version><appname>Window wechat</appname></appinfo></msg>`
     log.info('SendMiniProgram is supported by xp, but only support send the MiniProgram-contact card.')
-    await this.sidecar.SendMiniProgram('', conversationId, xmlstr)
+    // await this.sidecar.SendMiniProgram('', conversationId, xmlstr)
+    this.notSupported('SendMiniProgram')
   }
 
   override async messageSendLocation (

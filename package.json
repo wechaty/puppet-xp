@@ -1,6 +1,6 @@
 {
   "name": "wechaty-puppet-xp",
-  "version": "1.13.12",
+  "version": "2.0.0",
   "description": "Puppet XP for Wechaty",
   "type": "module",
   "exports": {
@@ -30,7 +30,6 @@
     "start:raw:nobuild": "cross-env BROLOG_LEVEL=info NODE_OPTIONS=\"--no-warnings --loader=ts-node/esm\" node examples/raw-sidecar.ts",
     "start:raw:info": "npm run build:agent && cross-env BROLOG_LEVEL=info NODE_OPTIONS=\"--no-warnings --loader=ts-node/esm\" node examples/raw-sidecar.ts",
     "start:raw:hook": "npm run build:agent && cross-env BROLOG_LEVEL=info NODE_OPTIONS=\"--no-warnings --loader=ts-node/esm\" node examples/raw-sidecar-hook.ts",
-    "start:xp:3.9.10.19": "frida -l src/init-agent-script.js WeChat.exe",
     "start:ripe": "cross-env WECHATY_LOG=verbose NODE_OPTIONS=\"--no-warnings --loader=ts-node/esm\" node examples/ripe-wechaty.ts",
     "start:ripe:info": "npm run build:agent && cross-env WECHATY_LOG=info NODE_OPTIONS=\"--no-warnings --loader=ts-node/esm\" node examples/ripe-wechaty.ts",
     "start:ripe:demo": "npm run build:agent && cross-env WECHATY_LOG=info NODE_OPTIONS=\"--no-warnings --loader=ts-node/esm\" node examples/demo.ts",
@@ -102,10 +101,5 @@
   "publishConfig": {
     "access": "public",
     "tag": "latest"
-  },
-  "git": {
-    "scripts": {
-      "pre-push": "npx git-scripts-pre-push"
-    }
   }
 }
