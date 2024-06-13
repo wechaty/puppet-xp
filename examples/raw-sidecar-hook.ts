@@ -29,13 +29,13 @@ import {
 } from '../src/wechat-sidecar.js'
 
 async function main () {
-  console.info('WeChat Sidecar starting...')
+  console.log('WeChat Sidecar starting...')
   // new XpSidecar({ wechatVersion: '3.9.2.23' })
 
   const sidecar = new WeChatSidecar()
   await attach(sidecar)
 
-  console.info('WeChat Sidecar started.')
+  console.log('WeChat Sidecar started.')
 
   sidecar.on('hook', ({ method, args }) => {
     // console.log(`onhook事件消息：${new Date().toLocaleString()}\n`, method, JSON.stringify(args))
@@ -54,13 +54,13 @@ async function main () {
         console.log('agentReady...')
         break
       default:
-        console.info('onHook没有匹配到处理方法:', method, JSON.stringify(args))
+        console.log('onHook没有匹配到处理方法:', method, JSON.stringify(args))
         break
     }
   })
 
   const onRecvMsg = async (args: any) => {
-    console.info('onRecvMsg事件触发:', JSON.stringify(args))
+    console.log('onRecvMsg事件触发:', JSON.stringify(args))
 
     if (args instanceof Error) {
       console.error('onRecvMsg: 参数错误 Error', args)
@@ -73,11 +73,11 @@ async function main () {
 
     // const nickname = await sidecar.GetContactOrChatRoomNickname(talkerId)
     // console.log('发言人昵称：', nickname)
-    console.info('talkerId:', talkerId)
-    console.info('toId:', toId)
-    console.info('text:', text)
+    console.log('talkerId:', talkerId)
+    console.log('toId:', toId)
+    console.log('text:', text)
     if (talkerId && text === 'ding') {
-      console.info('叮咚测试: ding found, reply dong')
+      console.log('叮咚测试: ding found, reply dong')
       try {
         await sidecar.sendMsg(talkerId || toId, 'dong')
         // await sidecar.sendAtMsg(toId, 'dong',talkerId)
@@ -88,7 +88,7 @@ async function main () {
   }
 
   const clean =  () => {
-    console.info('Sidecar detaching...')
+    console.log('Sidecar detaching...')
     void detach(sidecar)
   }
 
