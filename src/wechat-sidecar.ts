@@ -44,13 +44,29 @@ const initAgentScript = fs.readFileSync(scriptPath, 'utf-8')
 
 // console.info('XpSidecar initAgentScript:', XpSidecar.initAgentScript)
 
+// 用户账号名称接口定义
+export interface AccountInfo {
+  id: string; // UserName 类型需要您自行定义
+  custom_account?: string; // 可选的账号名称
+  del_flag: string; // 删除标志
+  type: number; // 类型
+  verify_flag: number; // 验证标志
+  alias?: string; // 别名，可选
+  name: string; // 昵称
+  pinyin: string; // 拼音
+  pinyin_all?: string; // 全拼，可选
+}
+
 @Sidecar('WeChat.exe', initAgentScript)
 class WeChatSidecar extends SidecarBody {
 
-  @Call(agentTarget('getMyselfInfoFunction'))
-  getMyselfInfo ():Promise<string> { return Ret() }
+  @Call(agentTarget('contactSelfInfo'))
+  getMyselfInfo ():Promise<any> { return Ret() }
 
-  @Call(agentTarget('sendMsgNativeFunction'))
+  @Call(agentTarget('contactList'))
+  contactList ():Promise<AccountInfo[]> { return Ret() }
+
+  @Call(agentTarget('messageSendText'))
   sendMsg (
     contactId: string,
     text: string,

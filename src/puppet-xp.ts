@@ -44,7 +44,7 @@ import {
   VERSION,
 } from './config.js'
 
-import { WeChatSidecar } from './wechat-sidecar.js'
+import { WeChatSidecar, AccountInfo } from './wechat-sidecar.js'
 import { ImageDecrypt } from './pure-functions/image-decrypt.js'
 import { XmlDecrypt } from './pure-functions/xml-msgpayload.js'
 // import type { Contact } from 'wechaty'
@@ -164,7 +164,7 @@ class PuppetXp extends PUPPET.Puppet {
   private async onLogin () {
     // log.info('onLogin：', this.isLoggedIn)
     if (!this.isLoggedIn) {
-      const selfInfoRaw = JSON.parse(await this.sidecar.getMyselfInfo())
+      const selfInfoRaw:any = await this.sidecar.getMyselfInfo()
       // log.debug('selfInfoRaw:\n\n\n', selfInfoRaw)
       const selfInfo: PUPPET.payloads.Contact = {
         alias: '',
@@ -537,11 +537,11 @@ class PuppetXp extends PUPPET.Puppet {
   }
 
   private async loadContactList () {
-    // const contactList = JSON.parse(await this.sidecar.getContact())
-    const contactList:any = []
+    const contactList:AccountInfo[] = await this.sidecar.contactList()
+    // const contactList:any = []
 
     for (const contactKey in contactList) {
-      const contactInfo = contactList[contactKey]
+      const contactInfo = contactList[contactKey] as AccountInfo
       log.verbose('PuppetXp', 'contactInfo:%s', JSON.stringify(contactInfo))
       let contactType = PUPPET.types.Contact.Individual
       // log.info('contactInfo.id', contactInfo.id)
@@ -553,9 +553,9 @@ class PuppetXp extends PUPPET.Puppet {
       }
       const contact = {
         alias: contactInfo.alias,
-        avatar: contactInfo.avatarUrl,
+        avatar: '',
         friend: true,
-        gender: contactInfo.gender,
+        gender: PUPPET.types.ContactGender.Unknown,
         id: contactInfo.id,
         name: contactInfo.name || 'Unknow',
         phone: [],
