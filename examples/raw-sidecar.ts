@@ -25,22 +25,15 @@ import {
 
 import {
   WeChatSidecar,
-  // XpSidecar
 } from '../src/wechat-sidecar.js'
 
 async function main () {
   console.info('WeChat Sidecar starting...')
-  // new XpSidecar({ wechatVersion: '3.9.2.23' })
 
   const sidecar = new WeChatSidecar()
   await attach(sidecar)
 
   console.info('WeChat Sidecar started.')
-
-  // const ver = await sidecar.getWeChatVersion()
-  // const verStr = await sidecar.getWechatVersionString()
-  // const isSupported = await sidecar.checkSupported()
-  // console.info(`\nWeChat Version: ${ver} -> ${verStr} , Supported: ${isSupported}\n`)
 
   // const isLoggedIn = await sidecar.isLoggedIn()
   const myselfInfo = await sidecar.getMyselfInfo()

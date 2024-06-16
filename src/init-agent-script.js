@@ -38,43 +38,92 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
  * WeChat 3.9.10.27
  *
  */
-var getStringByStrAddr = function (addr) {
-    var strLength = addr.add(8).readU32();
-    // console.log('strLength:', strLength)
-    return strLength ? addr.readPointer().readUtf16String(strLength) : '';
+var _this = this;
+/* -----------------base------------------------- */
+var retidPtr = null;
+var retidStruct = null;
+var initidStruct = (function (str) {
+    retidPtr = Memory.alloc(str.length * 2 + 1);
+    retidPtr.writeUtf16String(str);
+    retidStruct = Memory.alloc(0x14); // returns a NativePointer
+    retidStruct
+        .writePointer(retidPtr).add(0x04)
+        .writeU32(str.length * 2).add(0x04)
+        .writeU32(str.length * 2).add(0x04)
+        .writeU32(0).add(0x04)
+        .writeU32(0);
+    return retidStruct;
+});
+var retPtr = null;
+var retStruct = null;
+var initStruct = (function (str) {
+    retPtr = Memory.alloc(str.length * 2 + 1);
+    retPtr.writeUtf16String(str);
+    retStruct = Memory.alloc(0x14); // returns a NativePointer
+    retStruct
+        .writePointer(retPtr).add(0x04)
+        .writeU32(str.length * 2).add(0x04)
+        .writeU32(str.length * 2).add(0x04)
+        .writeU32(0).add(0x04)
+        .writeU32(0);
+    return retStruct;
+});
+var msgstrPtr = null;
+var msgStruct = null;
+var initmsgStruct = function (str) {
+    msgstrPtr = Memory.alloc(str.length * 2 + 1);
+    msgstrPtr.writeUtf16String(str);
+    msgStruct = Memory.alloc(0x14); // returns a NativePointer
+    msgStruct
+        .writePointer(msgstrPtr).add(0x04)
+        .writeU32(str.length * 2).add(0x04)
+        .writeU32(str.length * 2).add(0x04)
+        .writeU32(0).add(0x04)
+        .writeU32(0);
+    return msgStruct;
+};
+var atStruct = null;
+var initAtMsgStruct = function (wxidStruct) {
+    atStruct = Memory.alloc(0x10);
+    atStruct.writePointer(wxidStruct).add(0x04)
+        .writeU32(wxidStruct.toInt32() + 0x14).add(0x04) // 0x14 = sizeof(wxid structure)
+        .writeU32(wxidStruct.toInt32() + 0x14).add(0x04)
+        .writeU32(0);
+    return atStruct;
+};
+var readStringPtr = function (address) {
+    var addr = ptr(address);
+    var size = addr.add(16).readU32();
+    var capacity = addr.add(20).readU32();
+    addr.ptr = addr;
+    addr.size = size;
+    addr.capacity = capacity;
+    if (capacity > 15 && !addr.readPointer().isNull()) {
+        addr.ptr = addr.readPointer();
+    }
+    addr.ptr._readCString = addr.ptr.readCString;
+    addr.ptr._readAnsiString = addr.ptr.readAnsiString;
+    addr.ptr._readUtf8String = addr.ptr.readUtf8String;
+    addr.readCString = function () {
+        return addr.size ? addr.ptr._readCString(addr.size) : '';
+    };
+    addr.readAnsiString = function () {
+        return addr.size ? addr.ptr._readAnsiString(addr.size) : '';
+    };
+    addr.readUtf8String = function () {
+        return addr.size ? addr.ptr._readUtf8String(addr.size) : '';
+    };
+    // console.log('readStringPtr() address:',address,' -> str ptr:', addr.ptr, 'size:', addr.size, 'capacity:', addr.capacity)
+    // console.log('readStringPtr() str:' , addr.readUtf8String())
+    // console.log('readStringPtr() address:', addr,'dump:', addr.readByteArray(24))
+    return addr;
+};
+var readString = function (address) {
+    return readStringPtr(address).readUtf8String();
 };
 var readWideString = function (address) {
     return readWStringPtr(address).readUtf16String();
 };
-// 将字符串转换为 Uint8Array
-function stringToUint8Array(str) {
-    var utf8 = unescape(encodeURIComponent(str));
-    var arr = new Uint8Array(utf8.length);
-    for (var i = 0; i < utf8.length; i++) {
-        arr[i] = utf8.charCodeAt(i);
-    }
-    return arr;
-}
-function ReadWeChatStr(addr) {
-    // console.log("addr: " + addr);
-    addr = ptr(addr);
-    var len = addr.add(0x10).readS64(); // 使用 ptr的`.readS64`方法
-    // console.log("len: " + len);
-    if (len == 0)
-        return "";
-    var max_len = addr.add(0x18).readS64();
-    // console.log("max_len: " + max_len);
-    var res = '';
-    if ((max_len.or(0xF)).equals(0xF)) {
-        res = addr.readUtf8String(len);
-    }
-    else {
-        var char_from_user = addr.readPointer();
-        res = char_from_user.readUtf8String(len);
-    }
-    // console.log("res: " + res);
-    return res;
-}
 var writeWStringPtr = function (str) {
     // console.log(`输入字符串内容: ${str}`);
     var strLength = str.length;
@@ -139,6 +188,139 @@ var readWStringPtr = function (addr) {
         }
     };
 };
+//   string GetStringByStrAddr(UINT64 addr)
+// {
+//     size_t strLength = GET_DWORD(addr + 8);
+//     return strLength ? string(GET_STRING(addr), strLength) : string();
+// }
+var getStringByStrAddr = function (addr) {
+    var strLength = addr.add(8).readU32();
+    // console.log('strLength:', strLength)
+    return strLength ? addr.readPointer().readUtf16String(strLength) : '';
+};
+function ReadWeChatStr(addr) {
+    // console.log("addr: " + addr);
+    addr = ptr(addr);
+    var len = addr.add(0x10).readS64(); // 使用 ptr的`.readS64`方法
+    // console.log("len: " + len);
+    if (len == 0)
+        return "";
+    var max_len = addr.add(0x18).readS64();
+    // console.log("max_len: " + max_len);
+    var res = '';
+    if ((max_len.or(0xF)).equals(0xF)) {
+        res = addr.readUtf8String(len);
+    }
+    else {
+        var char_from_user = addr.readPointer();
+        res = char_from_user.readUtf8String(len);
+    }
+    // console.log("res: " + res);
+    return res;
+}
+function ReadSKBuiltinString(addr) {
+    console.log("addr: " + addr);
+    var inner_string = ptr(addr.add(0x8)).readS64();
+    console.log("inner_string: " + inner_string);
+    // if (inner_string.isNull()) return "";
+    return ReadWeChatStr(inner_string);
+}
+var findIamgePathAddr = function (param2) {
+    var len = 0x180;
+    console.log('param2:', param2);
+    console.log('len:', len);
+    var path = '';
+    var isPath = false;
+    for (var i = 0; i < len; i++) {
+        var offset = (i + 1) + 0x280 * 0;
+        console.log('offset:', offset);
+        try {
+            path = ReadSKBuiltinString(param2.add(offset).readS64()); // 发送者
+            isPath = hasPath(path);
+            if (isPath) {
+                console.log('ReadSKBuiltinString offset:', offset);
+                console.log('path:', path);
+                break;
+            }
+        }
+        catch (error) {
+            // console.error('error:', error)
+        }
+        try {
+            path = ReadWeChatStr(param2.add(offset).readS64()); // 消息签名
+            isPath = hasPath(path);
+            if (isPath) {
+                console.log('ReadWeChatStr offset:', offset);
+                console.log('path:', path);
+                break;
+            }
+        }
+        catch (error) {
+            // console.error('error:', error)
+        }
+    }
+};
+var hasPath = function (path) {
+    // return path.indexOf('Thumb') !== -1
+    if (path && path.length > 0) {
+        console.log('path is :', path);
+    }
+    return false;
+};
+// 接收消息
+function uint8ArrayToString(arr) {
+    var utf8 = Array.from(arr).map(function (byte) { return String.fromCharCode(byte); }).join('');
+    return decodeURIComponent(escape(utf8));
+}
+// 将字符串转换为 Uint8Array
+function stringToUint8Array(str) {
+    var utf8 = unescape(encodeURIComponent(str));
+    var arr = new Uint8Array(utf8.length);
+    for (var i = 0; i < utf8.length; i++) {
+        arr[i] = utf8.charCodeAt(i);
+    }
+    return arr;
+}
+// 读取流数据
+var readAll = function (input) { return __awaiter(_this, void 0, void 0, function () {
+    var chunks, size, chunk, i, isEnd, receivedData, message, error_1;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                chunks = [];
+                size = 1024;
+                i = 0;
+                isEnd = false;
+                _a.label = 1;
+            case 1:
+                if (!!isEnd) return [3 /*break*/, 6];
+                _a.label = 2;
+            case 2:
+                _a.trys.push([2, 4, , 5]);
+                return [4 /*yield*/, input.read(size)
+                    // console.log('chunk:', chunk);
+                    // console.log('chunk.byteLength:', chunk.byteLength);
+                    // 示例接收数据
+                ];
+            case 3:
+                chunk = _a.sent();
+                receivedData = new Uint8Array(chunk);
+                message = uint8ArrayToString(receivedData);
+                chunks.push(message);
+                if (chunk.byteLength < size) {
+                    isEnd = true;
+                    return [3 /*break*/, 6];
+                }
+                return [3 /*break*/, 5];
+            case 4:
+                error_1 = _a.sent();
+                console.error('Failed to read chunk:', error_1);
+                return [3 /*break*/, 5];
+            case 5: return [3 /*break*/, 1];
+            case 6: return [2 /*return*/, chunks.join('')];
+        }
+    });
+}); };
 /*
 偏移地址
 */
@@ -211,19 +393,12 @@ var offsets = {
     kNewChatMsg: 0x1C28800
 };
 var moduleBaseAddress = Module.getBaseAddress('WeChatWin.dll');
+var selfInfo = {};
 /*---------------------ContactSelf---------------------*/
 /*
 获取登录二维码
 */
 function contactSelfQRCode() {
-    return __awaiter(this, void 0, void 0, function () { return __generator(this, function (_a) {
-        return [2 /*return*/];
-    }); });
-}
-/*
-获取自己的签名
-*/
-function contactSelfSignature(signature) {
     return __awaiter(this, void 0, void 0, function () { return __generator(this, function (_a) {
         return [2 /*return*/];
     }); });
@@ -338,15 +513,25 @@ var contactSelfInfo = function () {
     // console.log('out:', JSON.stringify(out, null, 2))
     var myself = {
         id: out.wxid,
-        code: out.account,
+        gender: 1,
+        type: out.type,
         name: out.name,
-        head_img_url: out.head_img
+        coworker: true,
+        avatar: out.head_img,
+        address: '',
+        alias: '',
+        city: out.city,
+        province: out.province,
+        weixin: out.account,
+        corporation: '',
+        title: '',
+        description: '',
+        phone: [out.mobile]
     };
-    // const myselfJson = JSON.stringify(myself, null, 2)
-    // console.log('myselfJson:', myselfJson)
     return myself;
 };
-// console.log('myselfInfo:', contactSelfInfo())
+selfInfo = contactSelfInfo();
+// console.log('call contactSelfInfo res:\n', JSON.stringify(contactSelfInfo(), null, 2))
 /*---------------------Contact---------------------*/
 /*
 获取联系人列表 3.9.10.27
@@ -362,11 +547,7 @@ var contactList = function () {
     var contactVecPlaceholder = Memory.alloc(Process.pointerSize * 3);
     contactVecPlaceholder.writePointer(ptr(0)); // 初始化指针数组
     var success = getContactListFunction(contactMgrInstance, contactVecPlaceholder);
-    console.log('success:', success);
-    // 现在需要处理contactVecPlaceholder指向的数据
-    // // 注意: 下面的代码是假设代码，实际操作需要根据contactVec的具体结构来进行调整
     var contactVecPtr = contactVecPlaceholder.readU32();
-    console.log('contactVecPtr:', contactVecPtr);
     // 解析联系人信息
     if (success) {
         var contactPtr = contactVecPlaceholder;
@@ -374,27 +555,189 @@ var contactList = function () {
         var end = contactPtr.add(Process.pointerSize * 2).readPointer();
         var CONTACT_SIZE = 0x6A8; // 假设每个联系人数据结构的大小
         while (start.compare(end) < 0) {
-            console.log('\n\n');
             try {
+                // console.log('start:', start)
                 var contact = parseContact(start);
-                console.log('contact:', JSON.stringify(contact, null, 2));
-                if (contact.id) {
+                // console.log('contact:', JSON.stringify(contact, null, 2))
+                if (contact.id && (!contact.id.endsWith('chatroom'))) {
                     contacts.push(contact);
                 }
             }
             catch (error) {
-                console.log('error:', error);
+                console.log('contactList() error:', error);
             }
             start = start.add(CONTACT_SIZE);
-            console.log('contacts.length:', contacts.length);
         }
     }
-    console.log('contacts size:', contacts.length);
-    // const contactsString = JSON.stringify(contacts)
-    // console.log('contacts:', contactsString)
     return contacts;
 };
-// console.log('contactList:', contactList())
+// console.log('call contactList() res:\n', JSON.stringify(contactList().length))
+// 解析联系人信息，信息不准确
+function parseContact(start) {
+    // console.log('contactPtr:', contactPtr)
+    /* Get Contacts:
+    call1, call2, wxId, Code, Remark,Name, Gender, Country, Province, City*/
+    // { 0x75A4A0, 0xC089F0, 0x10, 0x24, 0x58, 0x6C, 0x0E, 0x00, 0x00, 0x00 },
+    var temp = {
+        wxid: readWideString(start.add(0x10)),
+        custom_account: readWideString(start.add(0x30)),
+        encrypt_name: readWideString(start.add(0x50)),
+        remark: readWideString(start.add(0x80)),
+        remark_pinyin: readWideString(start.add(0x148)),
+        remark_pinyin_all: readWideString(start.add(0x168)),
+        label_ids: readWideString(start.add(0xc0)),
+        nickname: readWideString(start.add(0xA0)),
+        pinyin: readWideString(start.add(0x108)),
+        pinyin_all: readWideString(start.add(0x128)),
+        verify_flag: start.add(0x70).readS32(),
+        type: start.add(0x74).readS32(),
+        reserved1: start.add(0x1F0).readS32(),
+        reserved2: start.add(0x1F4).readS32()
+    };
+    // console.log('temp:', JSON.stringify(temp, null, 2))
+    var info = {};
+    /*
+    // mmString   UserName;			//0x10  + 0x20
+    info.UserName = start.add(0x10 + 0x20).readPointer().readUtf16String();
+    // mmString   Alias;				//0x30  + 0x20
+    info.Alias = start.add(0x30 + 0x20).readPointer().readUtf16String();
+    // mmString   EncryptUserName;		//0x50  + 0x20
+    // const EncryptUserName = start.add(0x50 + 0x20).readPointer().readUtf16String();
+    // console.log('EncryptUserName:', EncryptUserName)
+    // int32_t	   DelFlag;				//0x70  + 0x4
+    info.DelFlag = start.add(0x70).readU32();
+    // int32_t    Type;				//0x74  + 0x4
+    info.Type = start.add(0x74 + 0x4).readU32();
+    // int32_t    VerifyFlag;			//0x78  + 0x4
+    // int32_t	   _0x7C;				//0x7C  + 0x4
+    // mmString   Remark;				//0x80  + 0x20
+    info.Remark = start.add(0x80 + 0x20).readPointer().readUtf16String();
+    // mmString   NickName;			//0xA0  + 0x20
+    info.NickName = start.add(0xA0 + 0x20).readPointer().readUtf16String();
+    // mmString   LabelIDList;			//0xC0  + 0x20
+    info.LabelIDList = start.add(0xC0 + 0x20).readPointer().readUtf16String();
+    // mmString   DomainList;			//0xE0  + 0x20
+    // int64_t    ChatRoomType;		//0x100 + 0x8
+    info.ChatRoomType = start.add(0x100).readPointer().readUtf16String();
+    // mmString   PYInitial;			//0x108 + 0x20
+    info.PYInitial = start.add(0x108 + 0x20).readPointer().readUtf16String();
+    // mmString   QuanPin;				//0x128 + 0x20
+    info.QuanPin = start.add(0x128 + 0x20).readPointer().readUtf16String();
+    // mmString   RemarkPYInitial;		//0x148 + 0x20
+    // mmString   RemarkQuanPin;		//0x168 + 0x20
+    // mmString   BigHeadImgUrl;		//0x188 + 0x20
+    info.BigHeadImgUrl = start.add(0x188 + 0x20).readPointer().readUtf16String();
+    // mmString   SmallHeadImgUrl;		//0x1A8 + 0x20
+    info.SmallHeadImgUrl = start.add(0x1A8 + 0x20).readPointer().readUtf16String();
+    // mmString   _HeadImgMd5;			//0x1C8 + 0x20 //�����ʽ��һ����Ҫ���� ֻռλ
+  
+    // //int64_t  ChatRoomNotify;      //0x1E8
+    info.ChatRoomNotify = start.add(0x1E8).readPointer().readUtf16String();
+    // char       _0x1E8[24];			//0x1E8 + 0x18
+    // mmString   ExtraBuf;			//0x200 + 0x20
+    info.ExtraBuf = start.add(0x200 + 0x20).readPointer().readUtf16String();
+  
+    // int32_t    ImgFlag;			   //0x220 + 0x4
+    info.ImgFlag = start.add(0x220).readU32();
+    // int32_t    Sex;				   //0x224 + 0x4
+    info.Sex = start.add(0x224).readU32();
+    // int32_t    ContactType;		   //0x228 + 0x4
+    info.ContactType = start.add(0x228).readU32();
+    // int32_t   _0x22C;			   //0x22c + 0x4
+  
+    // mmString  Weibo;				//0x230 + 0x20
+    // int32_t   WeiboFlag;			//0x250 + 0x4
+    // int32_t   _0x254;				//0x254 + 0x4
+  
+    // mmString  WeiboNickname;		//0x258 + 0x20
+    info.WeiboNickname = start.add(0x258 + 0x20).readPointer().readUtf16String();
+  
+    // int32_t  PersonalCard;		   //0x278 + 0x4
+    // int32_t  _0x27C;			   //0x27c + 0x4
+  
+    // mmString  Signature;		  //0x280 + 0x20
+    // mmString  Country;			  //0x2A0 + 0x20
+    info.Country = start.add(0x2A0 + 0x20).readPointer().readUtf16String();
+  
+    // std::vector<mmString>  PhoneNumberList; //0x2C0 + 0x18
+  
+    // mmString  Province;				//0x2D8 + 0x20
+    info.Province = start.add(0x2D8 + 0x20).readPointer().readUtf16String();
+    // mmString  City;					//0x2F8 + 0x20
+    info.City = start.add(0x2F8 + 0x20).readPointer().readUtf16String();
+    // int32_t   Source;				//0x318 + 0x4
+    info.Source = start.add(0x318).readU32();
+    // int32_t   _0x31C;				//0x31C + 0x4
+  
+    // mmString  VerifyInfo;			//0x320 + 0x20
+    // mmString  RemarkDesc;		   //0x340 + 0x20
+    // mmString  RemarkImgUrl;		   //0x360 + 0x20
+  
+    // int32_t   BitMask;			  //0x380 + 0x4
+    // int32_t   BitVal;			  //0x384 + 0x4
+    // int32_t   AddContactScene;	  //0x388 + 0x4
+    // int32_t   HasWeiXinHdHeadImg; //0x38c + 0x4
+    // int32_t   Level;			  //0x390 + 0x4
+    // int32_t   _0x394;			  //0x394 + 0x4
+  
+    // mmString  VerifyContent;      //0x398 + 0x20
+    info.VerifyContent = start.add(0x398 + 0x20).readPointer().readUtf16String();
+    // int32_t  AlbumStyle;	      //0x3B8 + 0x4
+    // int32_t  AlbumFlag;			  //0x3BC + 0x4
+    // mmString AlbumBGImgID;		  //0x3C0 + 0x20
+  
+    // int64_t  _0x3E0;			 //0x3E0 + 0x8
+  
+    // int32_t  SnsFlag;			//0x3E8	+ 0x4
+    // int32_t  _0x3EC;			//0x3EC + 0x4
+  
+    // mmString  SnsBGImgID;		//0x3F0 + 0x20
+  
+    // int64_t  SnsBGObjectID;		//0x410 + 0x8
+  
+    // int32_t  SnsFlagEx;			//0x418 + 0x4
+    // int32_t  _0x41C;			//0x41C + 0x4
+  
+    // mmString IDCardNum;			//0x420 + 0x20
+    info.IDCardNum = start.add(0x420 + 0x20).readPointer().readUtf16String();
+    // mmString RealName;			//0x440 + 0x20
+    info.RealName = start.add(0x440 + 0x20).readPointer().readUtf16String();
+  
+    // mmString MobileHash;		//0x460 + 0x20
+    // mmString MobileFullHash;    //0x480 + 0x20
+  
+    // mmString ExtInfo;			//0x4A0 + 0x20
+    info.ExtInfo = start.add(0x4A0 + 0x20).readPointer().readUtf16String();
+    // mmString _0x4C0;		    //0x4C0 + 0x20
+  
+    // mmString CardImgUrl;	    //0x4EO + 0x20
+    info.CardImgUrl = start.add(0x4E0 + 0x20).readPointer().readUtf16String();
+    // char _res[0x1A8];           //0x500 +
+  
+    // console.log('contact info:', JSON.stringify(info, null, 2))
+  
+    */
+    var contact = {
+        id: temp.wxid,
+        gender: 1,
+        type: temp.type,
+        name: temp.nickname,
+        friend: true,
+        star: false,
+        coworker: temp.wxid.indexOf('@openim') > -1,
+        avatar: info.SmallHeadImgUrl,
+        address: info.Province + info.City,
+        alias: info.Alias,
+        city: info.City,
+        province: info.Province,
+        weixin: temp.custom_account,
+        corporation: '',
+        title: '',
+        description: '',
+        phone: []
+    };
+    return contact;
+}
 /*
 获取联系人详情
 */
@@ -405,152 +748,47 @@ function contactRawPayload(id) {
         });
     });
 }
-function parseContact(start) {
-    // console.log('contactPtr:', contactPtr)
-    // mmString   UserName;			//0x10  + 0x20
-    var UserName = start.add(0x10 + 0x20).readPointer().readUtf16String();
-    console.log('UserName:', UserName);
-    // mmString   Alias;				//0x30  + 0x20
-    var Alias = start.add(0x30 + 0x20).readPointer().readUtf16String();
-    console.log('Alias:', Alias);
-    // mmString   EncryptUserName;		//0x50  + 0x20
-    // const EncryptUserName = start.add(0x50 + 0x20).readPointer().readUtf16String();
-    // console.log('EncryptUserName:', EncryptUserName)
-    // int32_t	   DelFlag;				//0x70  + 0x4
-    var DelFlag = start.add(0x70).readU32();
-    console.log('DelFlag:', DelFlag);
-    // int32_t    Type;				//0x74  + 0x4
-    var Type = start.add(0x74 + 0x4).readU32();
-    console.log('Type:', Type);
-    // int32_t    VerifyFlag;			//0x78  + 0x4
-    // int32_t	   _0x7C;				//0x7C  + 0x4
-    // mmString   Remark;				//0x80  + 0x20
-    var Remark = start.add(0x80 + 0x20).readPointer().readUtf16String();
-    console.log('Remark:', Remark);
-    // mmString   NickName;			//0xA0  + 0x20
-    var NickName = start.add(0xA0 + 0x20).readPointer().readUtf16String();
-    console.log('NickName:', NickName);
-    // mmString   LabelIDList;			//0xC0  + 0x20
-    var LabelIDList = start.add(0xC0 + 0x20).readPointer().readUtf16String();
-    console.log('LabelIDList:', LabelIDList);
-    // mmString   DomainList;			//0xE0  + 0x20
-    // int64_t    ChatRoomType;		//0x100 + 0x8
-    var ChatRoomType = start.add(0x100).readPointer().readUtf16String();
-    console.log('ChatRoomType:', ChatRoomType);
-    // mmString   PYInitial;			//0x108 + 0x20
-    var PYInitial = start.add(0x108 + 0x20).readPointer().readUtf16String();
-    console.log('PYInitial:', PYInitial);
-    // mmString   QuanPin;				//0x128 + 0x20
-    var QuanPin = start.add(0x128 + 0x20).readPointer().readUtf16String();
-    console.log('QuanPin:', QuanPin);
-    // mmString   RemarkPYInitial;		//0x148 + 0x20
-    // mmString   RemarkQuanPin;		//0x168 + 0x20
-    // mmString   BigHeadImgUrl;		//0x188 + 0x20
-    var BigHeadImgUrl = start.add(0x188 + 0x20).readPointer().readUtf16String();
-    console.log('BigHeadImgUrl:', BigHeadImgUrl);
-    // mmString   SmallHeadImgUrl;		//0x1A8 + 0x20
-    var SmallHeadImgUrl = start.add(0x1A8 + 0x20).readPointer().readUtf16String();
-    console.log('SmallHeadImgUrl:', SmallHeadImgUrl);
-    // mmString   _HeadImgMd5;			//0x1C8 + 0x20 //�����ʽ��һ����Ҫ���� ֻռλ
-    // //int64_t  ChatRoomNotify;      //0x1E8
-    var ChatRoomNotify = start.add(0x1E8).readPointer().readUtf16String();
-    console.log('ChatRoomNotify:', ChatRoomNotify);
-    // char       _0x1E8[24];			//0x1E8 + 0x18
-    // mmString   ExtraBuf;			//0x200 + 0x20
-    var ExtraBuf = start.add(0x200 + 0x20).readPointer().readUtf16String();
-    console.log('ExtraBuf:', ExtraBuf);
-    // int32_t    ImgFlag;			   //0x220 + 0x4
-    var ImgFlag = start.add(0x220).readU32();
-    console.log('ImgFlag:', ImgFlag);
-    // int32_t    Sex;				   //0x224 + 0x4
-    var Sex = start.add(0x224).readU32();
-    console.log('Sex', Sex);
-    // int32_t    ContactType;		   //0x228 + 0x4
-    var ContactType = start.add(0x228).readU32();
-    console.log('ContactType:', ContactType);
-    // int32_t   _0x22C;			   //0x22c + 0x4
-    // mmString  Weibo;				//0x230 + 0x20
-    // int32_t   WeiboFlag;			//0x250 + 0x4
-    // int32_t   _0x254;				//0x254 + 0x4
-    // mmString  WeiboNickname;		//0x258 + 0x20
-    var WeiboNickname = start.add(0x258 + 0x20).readPointer().readUtf16String();
-    console.log('WeiboNickname:', WeiboNickname);
-    // int32_t  PersonalCard;		   //0x278 + 0x4
-    // int32_t  _0x27C;			   //0x27c + 0x4
-    // mmString  Signature;		  //0x280 + 0x20
-    // mmString  Country;			  //0x2A0 + 0x20
-    var Country = start.add(0x2A0 + 0x20).readPointer().readUtf16String();
-    console.log('Country:', Country);
-    // std::vector<mmString>  PhoneNumberList; //0x2C0 + 0x18
-    // mmString  Province;				//0x2D8 + 0x20
-    var Province = start.add(0x2D8 + 0x20).readPointer().readUtf16String();
-    console.log('Province:', Province);
-    // mmString  City;					//0x2F8 + 0x20
-    var City = start.add(0x2F8 + 0x20).readPointer().readUtf16String();
-    console.log('City:', City);
-    // int32_t   Source;				//0x318 + 0x4
-    var Source = start.add(0x318).readU32();
-    console.log('Source:', Source);
-    // int32_t   _0x31C;				//0x31C + 0x4
-    // mmString  VerifyInfo;			//0x320 + 0x20
-    // mmString  RemarkDesc;		   //0x340 + 0x20
-    // mmString  RemarkImgUrl;		   //0x360 + 0x20
-    // int32_t   BitMask;			  //0x380 + 0x4
-    // int32_t   BitVal;			  //0x384 + 0x4
-    // int32_t   AddContactScene;	  //0x388 + 0x4
-    // int32_t   HasWeiXinHdHeadImg; //0x38c + 0x4
-    // int32_t   Level;			  //0x390 + 0x4
-    // int32_t   _0x394;			  //0x394 + 0x4
-    // mmString  VerifyContent;      //0x398 + 0x20
-    var VerifyContent = start.add(0x398 + 0x20).readPointer().readUtf16String();
-    console.log('VerifyContent:', VerifyContent);
-    // int32_t  AlbumStyle;	      //0x3B8 + 0x4
-    // int32_t  AlbumFlag;			  //0x3BC + 0x4
-    // mmString AlbumBGImgID;		  //0x3C0 + 0x20
-    // int64_t  _0x3E0;			 //0x3E0 + 0x8
-    // int32_t  SnsFlag;			//0x3E8	+ 0x4
-    // int32_t  _0x3EC;			//0x3EC + 0x4
-    // mmString  SnsBGImgID;		//0x3F0 + 0x20
-    // int64_t  SnsBGObjectID;		//0x410 + 0x8
-    // int32_t  SnsFlagEx;			//0x418 + 0x4
-    // int32_t  _0x41C;			//0x41C + 0x4
-    // mmString IDCardNum;			//0x420 + 0x20
-    var IDCardNum = start.add(0x420 + 0x20).readPointer().readUtf16String();
-    console.log('IDCardNum:', IDCardNum);
-    // mmString RealName;			//0x440 + 0x20
-    var RealName = start.add(0x440 + 0x20).readPointer().readUtf16String();
-    // mmString MobileHash;		//0x460 + 0x20
-    // mmString MobileFullHash;    //0x480 + 0x20
-    // mmString ExtInfo;			//0x4A0 + 0x20
-    var ExtInfo = start.add(0x4A0 + 0x20).readPointer().readUtf16String();
-    console.log('ExtInfo:', ExtInfo);
-    // mmString _0x4C0;		    //0x4C0 + 0x20
-    // mmString CardImgUrl;	    //0x4EO + 0x20
-    var CardImgUrl = start.add(0x4E0 + 0x20).readPointer().readUtf16String();
-    console.log('CardImgUrl:', CardImgUrl);
-    // char _res[0x1A8];           //0x500 + 
-    var contact = {
-        id: UserName,
-        custom_account: UserName,
-        del_flag: DelFlag,
-        type: Type,
-        verify_flag: VerifyContent,
-        alias: Alias || '',
-        name: NickName,
-        pinyin: QuanPin,
-        pinyin_all: QuanPin
-    };
-    return contact;
-}
 /*---------------------Room---------------------*/
 /*
 获取群列表
 */
 function roomList() {
-    return __awaiter(this, void 0, void 0, function () { return __generator(this, function (_a) {
-        return [2 /*return*/];
-    }); });
+    // 使用NativeFunction调用相关函数
+    var getContactMgrInstance = new NativeFunction(moduleBaseAddress.add(offsets.kGetContactMgr), 'pointer', []);
+    var getContactListFunction = new NativeFunction(moduleBaseAddress.add(offsets.kGetContactList), 'int64', ['pointer', 'pointer']);
+    // 获取联系人管理器的实例
+    var contactMgrInstance = getContactMgrInstance();
+    // 准备用于存储联系人信息的数组
+    var contacts = [];
+    var contactVecPlaceholder = Memory.alloc(Process.pointerSize * 3);
+    contactVecPlaceholder.writePointer(ptr(0)); // 初始化指针数组
+    var success = getContactListFunction(contactMgrInstance, contactVecPlaceholder);
+    var contactVecPtr = contactVecPlaceholder.readU32();
+    // 解析联系人信息
+    if (success) {
+        var contactPtr = contactVecPlaceholder;
+        var start = contactPtr.readPointer();
+        var end = contactPtr.add(Process.pointerSize * 2).readPointer();
+        var CONTACT_SIZE = 0x6A8; // 假设每个联系人数据结构的大小
+        while (start.compare(end) < 0) {
+            try {
+                // console.log('start:', start)
+                var contact = parseContact(start);
+                // console.log('contact:', JSON.stringify(contact, null, 2))
+                if (contact.id && (contact.id.endsWith('chatroom'))) {
+                    contacts.push(contact);
+                }
+            }
+            catch (error) {
+                console.log('contactList() error:', error);
+            }
+            start = start.add(CONTACT_SIZE);
+        }
+    }
+    return contacts;
 }
+;
+// console.log('call roomList() res:\n', JSON.stringify(roomList().length))
 /*
 解散群
 */
@@ -754,21 +992,10 @@ function roomAnnounce(roomId, text) {
 发送文本消息 3.9.10.27
 */
 var messageSendText = function (contactId, text) {
-    // console.log('\n\n');
     var to_user = null;
     var text_msg = null;
-    // const to_user = Memory.alloc(wxid.length * 2 + 2)
-    // to_user.writeUtf16String(wxid)
-    // to_user = new WeChatString(wxid).getMemoryAddress();
-    // console.log('wxid:', wxid)
     to_user = writeWStringPtr(contactId);
-    // console.log('to_user wxid :', readWStringPtr(to_user).readUtf16String());
-    // const text_msg = Memory.alloc(msg.length * 2 + 2)
-    // text_msg.writeUtf16String(msg)
-    // text_msg = new WeChatString(msg).getMemoryAddress();
     text_msg = writeWStringPtr(text);
-    // console.log('text_msg msg:', readWStringPtr(text_msg).readUtf16String());
-    // console.log('\n\n');
     var send_message_mgr_addr = moduleBaseAddress.add(offsets.kGetSendMessageMgr);
     var send_text_msg_addr = moduleBaseAddress.add(offsets.kSendTextMsg);
     var free_chat_msg_addr = moduleBaseAddress.add(offsets.kFreeChatMsg);
@@ -783,10 +1010,6 @@ var messageSendText = function (contactId, text) {
     // 调用发送消息管理器初始化
     mgr();
     // 发送文本消息 
-    // console.log('chat_msg:', chat_msg);
-    // console.log('to_user:', to_user);
-    // console.log('text_msg:', text_msg);
-    // console.log('temp:', temp);
     var success = send(chat_msg, to_user, text_msg, temp, 1, 1, 0, 0);
     console.log('sendText success:', success);
     // 释放ChatMsg内存
@@ -916,41 +1139,83 @@ var recvMsgNativeCallback = (function () {
                     // console.log("msg: " + JSON.stringify(msg, null, 2));
                     var room = '';
                     var talkerId = '';
-                    var content = '';
+                    var listenerId = '';
+                    var text = msg.content;
                     var signature = msg.signature;
                     var msgType_1 = msg.type;
+                    var isSelf = msg.isSelf;
+                    var filename = '';
                     if (msg.fromUser.indexOf('@') !== -1) {
                         room = msg.fromUser;
                     }
                     else if (msg.toUser && msg.toUser.indexOf('@') !== -1) {
                         room = msg.toUser;
+                        talkerId = msg.fromUser;
                     }
                     if (room && msg.toUser) {
                         talkerId = msg.toUser;
-                        content = msg.content;
+                    }
+                    else if (room && !msg.toUser) {
+                        talkerId = '';
                     }
                     else {
-                        talkerId = msg.fromUser;
-                        content = msg.content;
+                        if (msg.isSelf) {
+                            talkerId = '';
+                            listenerId = msg.fromUser;
+                        }
+                        else {
+                            talkerId = msg.fromUser;
+                        }
                     }
-                    var myContentPtr_1 = Memory.alloc(content.length * 2 + 1);
-                    myContentPtr_1.writeUtf16String(content);
+                    if (msgType_1 === 3) {
+                        filename = JSON.parse(msg.content)[0];
+                    }
+                    if (msgType_1 === 49) {
+                        var content = msg.content;
+                        // <title>example_upsert.json</title>\n        <des></des>\n        <action>view</action>\n        <type>6</type>\n   
+                        // 使用正则提取出文件名和type
+                        var subType = content.match(/<type>(\d+)<\/type>/);
+                        if (subType && subType[1] === '6') {
+                            var filenames = content.match(/<title>(.*)<\/title>/);
+                            if (filenames) {
+                                var curTime = new Date();
+                                filename = "".concat(selfInfo.id, "\\FileStorage\\File\\").concat(curTime.getFullYear(), "-").concat(curTime.getMonth() < 9 ? '0' : '').concat(curTime.getMonth() + 1, "\\").concat(filenames[1]);
+                                console.log('filename:', filename);
+                            }
+                        }
+                    }
+                    var message = {
+                        id: msg.msgId,
+                        filename: filename,
+                        text: text,
+                        timestamp: msg.createTime,
+                        type: msgType_1,
+                        talkerId: talkerId,
+                        roomId: room,
+                        mentionIds: [],
+                        listenerId: listenerId,
+                        isSelf: isSelf
+                    };
+                    // console.log('message:', JSON.stringify(message, null, 2))
+                    // send(message)
+                    var myContentPtr_1 = Memory.alloc(text.length * 2 + 1);
+                    myContentPtr_1.writeUtf16String(text);
                     var myTalkerIdPtr_1 = Memory.alloc(talkerId.length * 2 + 1);
                     myTalkerIdPtr_1.writeUtf16String(talkerId);
                     var myGroupMsgSenderIdPtr_1 = Memory.alloc(room.length * 2 + 1);
                     myGroupMsgSenderIdPtr_1.writeUtf16String(room);
                     var myXmlContentPtr_1 = Memory.alloc(signature.length * 2 + 1);
                     myXmlContentPtr_1.writeUtf16String(signature);
-                    var isMyMsg_1 = msg.isSelf ? 1 : 0;
+                    var isMyMsg_1 = 0;
                     var newMsg = {
                         msgType: msgType_1,
                         talkerId: talkerId,
-                        content: content,
+                        text: text,
                         room: room,
                         signature: signature,
                         isMyMsg: isMyMsg_1
                     };
-                    console.log('agent 回调消息:', JSON.stringify(newMsg));
+                    // console.log('agent 回调消息:', JSON.stringify(newMsg))
                     setImmediate(function () { return nativeativeFunction(msgType_1, myTalkerIdPtr_1, myContentPtr_1, myGroupMsgSenderIdPtr_1, myXmlContentPtr_1, isMyMsg_1); });
                 }
                 catch (e) {
@@ -1023,18 +1288,13 @@ function HandleSyncMsg(param1, param2, param3) {
     // console.log("HandleSyncMsg msg: " + JSON.stringify(msg, null, 2));
     return msg;
 }
-// 调试：监听函数调试
-Interceptor.attach(moduleBaseAddress.add(offsets.kDoAddMsg), {
-    onEnter: function (args) {
-        try {
-            // 参数打印
-            // console.log("doAddMsg called with args: " + args[0] + ", " + args[1] + ", " + args[2]);
-            // findIamgePathAddr(args[0])
-            HandleSyncMsg(args[0], args[1], args[2]);
-        }
-        catch (e) {
-            console.error('接收消息回调失败：', e);
-            throw new Error(e);
-        }
+/*---------------------send&recv---------------------*/
+function onMessage(message) {
+    console.log("agent onMessage:", JSON.stringify(message, null, 2));
+}
+recv(onMessage);
+rpc.exports = {
+    callFunction: function (contactId, text) {
+        return messageSendText(contactId, text);
     }
-});
+};

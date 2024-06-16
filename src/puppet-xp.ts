@@ -44,7 +44,7 @@ import {
   VERSION,
 } from './config.js'
 
-import { WeChatSidecar, AccountInfo } from './wechat-sidecar.js'
+import { WeChatSidecar, ContactOrRoom } from './wechat-sidecar.js'
 import { ImageDecrypt } from './pure-functions/image-decrypt.js'
 import { XmlDecrypt } from './pure-functions/xml-msgpayload.js'
 // import type { Contact } from 'wechaty'
@@ -83,7 +83,6 @@ class PuppetXp extends PUPPET.Puppet {
   constructor (
     public override options: PuppetXpOptions = {},
   ) {
-    log.info('options...', JSON.stringify(options))
     super(options)
     log.verbose('PuppetXp', 'constructor(%s)', JSON.stringify(options))
 
@@ -111,7 +110,7 @@ class PuppetXp extends PUPPET.Puppet {
     this.#sidecar = new WeChatSidecar()
 
     await attach(this.sidecar)
-    // await this.onLogin()
+    await this.onLogin()
     await this.onAgentReady()
 
     this.sidecar.on('hook', ({ method, args }) => {
@@ -537,11 +536,11 @@ class PuppetXp extends PUPPET.Puppet {
   }
 
   private async loadContactList () {
-    const contactList:AccountInfo[] = await this.sidecar.contactList()
+    const contactList:ContactOrRoom[] = await this.sidecar.contactList()
     // const contactList:any = []
 
     for (const contactKey in contactList) {
-      const contactInfo = contactList[contactKey] as AccountInfo
+      const contactInfo = contactList[contactKey] as ContactOrRoom
       log.verbose('PuppetXp', 'contactInfo:%s', JSON.stringify(contactInfo))
       let contactType = PUPPET.types.Contact.Individual
       // log.info('contactInfo.id', contactInfo.id)
@@ -567,32 +566,31 @@ class PuppetXp extends PUPPET.Puppet {
   }
 
   private async loadRoomList () {
-    let roomList: any[] = []
+    const roomList: ContactOrRoom[] = await this.sidecar.roomList()
+    // console.info('roomList:', roomList)
     try {
       // const ChatroomMemberInfo = await this.sidecar.getChatroomMemberInfo()
-      const ChatroomMemberInfo = '{}'
-
-      roomList = JSON.parse(ChatroomMemberInfo)
+      // const ChatroomMemberInfo = '{}'
     } catch (err) {
       log.error('loadRoomList fail:', err)
     }
 
     for (const roomKey in roomList) {
-      const roomInfo = roomList[roomKey]
+      const roomInfo = roomList[roomKey] as ContactOrRoom
 
       // log.info(JSON.stringify(Object.keys(roomInfo)))
 
-      const roomId = roomInfo.roomid
+      const roomId = roomInfo.id
       if (roomId.indexOf('@chatroom') !== -1) {
-        const roomMember = roomInfo.roomMember || []
+        const roomMember:any[] = []
         const topic = this.contactStore[roomId]?.name || ''
         const room = {
-          adminIdList: [ roomInfo.admin || '' ],
+          adminIdList: [ '' ],
           avatar: '',
           external: false,
           id: roomId,
           memberIdList: roomMember,
-          ownerId: roomInfo.admin || '',
+          ownerId: '',
           topic,
         }
         this.roomStore[roomId] = room

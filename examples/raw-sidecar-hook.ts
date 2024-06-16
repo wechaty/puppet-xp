@@ -30,7 +30,6 @@ import {
 
 async function main () {
   console.log('WeChat Sidecar starting...')
-  // new XpSidecar({ wechatVersion: '3.9.2.23' })
 
   const sidecar = new WeChatSidecar()
   await attach(sidecar)

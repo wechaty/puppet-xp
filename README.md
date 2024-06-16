@@ -62,7 +62,7 @@ puppet-xp also have already released the installation package on NPM. Running wi
 
 XP is a young puppet,it keeps growing and improving.
 
-版本|3.3.0.115|3.6.0.18|3.9.2.23|3.9.10.19|
+版本|3.3.0.115|3.6.0.18|3.9.2.23|3.9.10.27|
 :---|:---|:---|:---|:---|
 **<消息>**|
 接收文本|✅|✅|✅|✅
@@ -79,12 +79,12 @@ XP is a young puppet,it keeps growing and improving.
 发送动图|✅|✅|✅
 **<群组>**|
 @群成员|✅|✅|✅
-群列表|✅|✅|✅
+群列表|✅|✅|✅|✅
 群成员列表|✅|✅|✅
 群详情|✅|✅|✅
 进群提示|✅|✅|✅
 **<联系人>**|
-好友列表|✅|✅|✅
+好友列表|✅|✅|✅|✅
 好友详情|✅|✅|✅
 **<其他>**|
 登录事件|✅|✅|✅|✅
@@ -96,15 +96,14 @@ Note: You need to install an NPM version that matches your WeChat client version
 
 puppet-xp|wechat|npm install|
 |:---|:---|:---|
-|2.1.0|[WeChat-v3.9.10.27](https://github.com/tom-snow/wechat-windows-versions/releases/download/v3.9.10.27/WeChatSetup-3.9.10.27.exe)|npm i wechaty-puppet-xp@2.0.0|
-|2.0.0|[WeChat-v3.9.10.19](https://github.com/tom-snow/wechat-windows-versions/releases/download/v3.9.10.19/WeChatSetup-3.9.10.19.exe)|npm i wechaty-puppet-xp@2.0.0|
+|2.1.1|[WeChat-v3.9.10.27](https://github.com/tom-snow/wechat-windows-versions/releases/download/v3.9.10.27/WeChatSetup-3.9.10.27.exe)|npm i wechaty-puppet-xp@2.1.1|
 |1.13.12|[WeChat-v3.9.2.23](https://github.com/tom-snow/wechat-windows-versions/releases/download/v3.9.2.23/WeChatSetup-3.9.2.23.exe)|npm i wechaty-puppet-xp@1.3.12|
 |1.12.7|[WeChat-v3.6.0.18](https://github.com/tom-snow/wechat-windows-versions/releases/download/v3.6.0.18/WeChatSetup-3.6.0.18.exe)|npm i wechaty-puppet-xp@1.12.7|
 |1.11.14|[WeChat-v3.3.0.115](https://github.com/wechaty/wechaty-puppet-xp/releases/download/v0.5/WeChatSetup-v3.3.0.115.exe)|npm i wechaty-puppet-xp@1.11.14|
 
 ## HISTORY
 
-### v2.1.0
+### v2.1.1
 
 1. Support WeChat version 3.9.10.27
 2. Support list

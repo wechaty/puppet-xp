@@ -32,7 +32,6 @@ import {
 }                 from 'sidecar'
 
 import { codeRoot } from './cjs.js'
-// import { WeChatVersion } from './agents/winapi-sidecar.js'
 
 const scriptPath =  path.join(
   codeRoot,
@@ -44,17 +43,26 @@ const initAgentScript = fs.readFileSync(scriptPath, 'utf-8')
 
 // console.info('XpSidecar initAgentScript:', XpSidecar.initAgentScript)
 
-// 用户账号名称接口定义
-export interface AccountInfo {
-  id: string; // UserName 类型需要您自行定义
-  custom_account?: string; // 可选的账号名称
-  del_flag: string; // 删除标志
-  type: number; // 类型
-  verify_flag: number; // 验证标志
-  alias?: string; // 别名，可选
-  name: string; // 昵称
-  pinyin: string; // 拼音
-  pinyin_all?: string; // 全拼，可选
+// 联系人接口，包含所有提供的属性
+export interface ContactOrRoom {
+  id: string;
+  gender: number;
+  type: number;
+  name: string;
+  avatar: string; // profile picture, optional
+  address: string; // residential or mailing address, optional
+  alias: string; // alias or nickname, optional
+  city: string; // city of residence, optional
+  friend?: boolean; // denotes if the contact is a friend
+  province: string; // province of residence, optional
+  signature?: string; // personal signature or motto, optional
+  star?: boolean; // denotes if the contact is starred
+  weixin: string; // WeChat handle, optional
+  corporation: string; // associated company or organization, optional
+  title: string; // job title or position, optional
+  description: string; // a description for the contact, optional
+  coworker: boolean; // denotes if the contact is a coworker
+  phone: string[]; // list of phone numbers
 }
 
 @Sidecar('WeChat.exe', initAgentScript)
@@ -64,7 +72,10 @@ class WeChatSidecar extends SidecarBody {
   getMyselfInfo ():Promise<any> { return Ret() }
 
   @Call(agentTarget('contactList'))
-  contactList ():Promise<AccountInfo[]> { return Ret() }
+  contactList ():Promise<ContactOrRoom[]> { return Ret() }
+
+  @Call(agentTarget('roomList'))
+  roomList ():Promise<ContactOrRoom[]> { return Ret() }
 
   @Call(agentTarget('messageSendText'))
   sendMsg (
