@@ -238,7 +238,7 @@ class PuppetXp extends PUPPET.Puppet {
 
   private onHookRecvMsg (args: any) {
     // log.info('onHookRecvMsg', JSON.stringify(args))
-    let type = PUPPET.types.Message.Unknown
+    let type:any = PUPPET.types.Message.Unknown
     let roomId = ''
     let toId = ''
     let talkerId = ''
@@ -251,7 +251,7 @@ class PuppetXp extends PUPPET.Puppet {
           xml2js.parseString(String(args[4]), { explicitArray: false, ignoreAttrs: true }, function (err: any, json: any) {
             log.verbose('PuppetXp', 'xml2json err:%s', err)
             //  log.verbose('PuppetXp', 'json content:%s', JSON.stringify(json))
-            if (json.msgsource && json.msgsource.atuserlist === 'atuserlist') {
+            if (json && json.msgsource && json.msgsource.atuserlist === 'atuserlist') {
               type = PUPPET.types.Message.GroupNote
             } else {
               type = PUPPET.types.Message.Text
@@ -495,7 +495,7 @@ class PuppetXp extends PUPPET.Puppet {
 
             this.emit('room-join', { inviteeIdList: inviteeList, inviterId: inviter.id, roomId })
           }
-        } else {
+        } else if (type === PUPPET.types.Message.Transfer) { /* empty */ } else {
           this.messageStore[payload.id] = payload
           if (this.isReady) {
             this.emit('message', { messageId: payload.id })
