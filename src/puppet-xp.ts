@@ -47,7 +47,6 @@ import {
 import { WeChatSidecar, ContactOrRoom } from './wechat-sidecar.js'
 import { ImageDecrypt } from './pure-functions/image-decrypt.js'
 import { XmlDecrypt } from './pure-functions/xml-msgpayload.js'
-import { Message } from 'wechaty-puppet/types'
 // import type { Contact } from 'wechaty'
 
 // 定义一个延时方法
