@@ -380,8 +380,8 @@ class PuppetXp extends PUPPET.Puppet {
     }
 
     // revert talkerId and toId according to isMyMsg
-    if (args[5] === 1) {
-      toId = talkerId
+    if (!talkerId) {
+      toId = this.selfInfo.id
       talkerId = this.selfInfo.id
     }
 
