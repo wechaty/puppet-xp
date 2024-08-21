@@ -495,7 +495,7 @@ class PuppetXp extends PUPPET.Puppet {
 
             this.emit('room-join', { inviteeIdList: inviteeList, inviterId: inviter.id, roomId })
           }
-        } else if (type === PUPPET.types.Message.Transfer) { /* empty */ } else {
+        }  else {
           this.messageStore[payload.id] = payload
           if (this.isReady) {
             this.emit('message', { messageId: payload.id })
