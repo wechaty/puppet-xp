@@ -36,11 +36,6 @@ async function main() {
 
   console.info('WeChat Sidecar started.')
 
-  const ver = await sidecar.getWeChatVersion()
-  const verStr = await sidecar.getWechatVersionString()
-  const isSupported = await sidecar.checkSupported()
-  console.info(`\nWeChat Version: ${ver} -> ${verStr} , Supported: ${isSupported}\n`)
-
   /*const isLoggedIn = await sidecar.isLoggedIn()
   console.info(`has Logged In: ${isLoggedIn}`)
   
@@ -65,7 +60,7 @@ async function main() {
   const baseName     = path.basename(fullFilePath)
   const statsObj = fs.statSync(fullFilePath)
   const size = statsObj.size
-  await sidecar.sendAttatchMsg('23023281066@chatroom','zhanghua_cd',fullFilePath,baseName,size)
+  // await sidecar.sendAttatchMsg('23023281066@chatroom','zhanghua_cd',fullFilePath,baseName,size)
   
   //await sidecar.trunOnLog()
   //await sidecar.getWxTest('23023281066@chatroom',fullFilePath)

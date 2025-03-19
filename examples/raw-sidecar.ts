@@ -25,29 +25,22 @@ import {
 
 import {
   WeChatSidecar,
-  // XpSidecar
 } from '../src/wechat-sidecar.js'
 
 async function main () {
   console.info('WeChat Sidecar starting...')
-  // new XpSidecar({ wechatVersion: '3.9.2.23' })
 
   const sidecar = new WeChatSidecar()
   await attach(sidecar)
 
   console.info('WeChat Sidecar started.')
 
-  const ver = await sidecar.getWeChatVersion()
-  const verStr = await sidecar.getWechatVersionString()
-  const isSupported = await sidecar.checkSupported()
-  console.info(`\nWeChat Version: ${ver} -> ${verStr} , Supported: ${isSupported}\n`)
-
-  const isLoggedIn = await sidecar.isLoggedIn()
+  // const isLoggedIn = await sidecar.isLoggedIn()
   const myselfInfo = await sidecar.getMyselfInfo()
   console.info(`当前登陆账号信息: ${myselfInfo}`)
 
-  const loginUrl = await sidecar.getLoginUrl()
-  console.info(`登陆二维码地址loginUrl: ${loginUrl}`)
+  // const loginUrl = await sidecar.getLoginUrl()
+  // console.info(`登陆二维码地址loginUrl: ${loginUrl}`)
 
   // const contact = await sidecar.getChatroomMemberInfo()
   // //console.log(contact)
@@ -74,18 +67,18 @@ async function main () {
         void onScan(args)
         break
       case 'loginEvent':{
-        if (!isLoggedIn) {
-          let loginRes = false
-          sidecar.isLoggedIn().then(res => {
-            loginRes = res
-            if (loginRes) {
-              void onLogin()
-            }
-            return res
-          }).catch(e => {
-            console.error('登录状态检查失败:', e)
-          })
-        }
+        // if (!isLoggedIn) {
+        //   let loginRes = false
+        //   sidecar.isLoggedIn().then(res => {
+        //     loginRes = res
+        //     if (loginRes) {
+        //       void onLogin()
+        //     }
+        //     return res
+        //   }).catch(e => {
+        //     console.error('登录状态检查失败:', e)
+        //   })
+        // }
         break
       }
       case 'agentReady':
@@ -100,31 +93,31 @@ async function main () {
     }
   })
 
-  const onLogin = async () => {
-    console.info('登陆事件触发')
-    console.info(`登陆状态: ${isLoggedIn}`)
-    // await sidecar.sendMsg('filehelper', 'Sidecar is ready!')
-    const contacts = await sidecar.getContact()
-    // console.log(`contacts: ${contacts}`)
-    const contactsJSON = JSON.parse(contacts)
-    console.log('contacts列表:', contactsJSON.length)
+  // const onLogin = async () => {
+  //   console.info('登陆事件触发')
+  //   console.info(`登陆状态: ${isLoggedIn}`)
+  //   await sidecar.sendMsg('filehelper', 'Sidecar is ready!')
+  //   const contacts = await sidecar.getContact()
+  //   console.log(`contacts: ${contacts}`)
+  //   const contactsJSON = JSON.parse(contacts)
+  //   console.log('contacts列表:', contactsJSON.length)
 
-    for (const contact of contactsJSON) {
-      if (!contact.name) {
-        console.info('好友:', JSON.stringify(contact))
-      }
-    }
+  //   for (const contact of contactsJSON) {
+  //     if (!contact.name) {
+  //       console.info('好友:', JSON.stringify(contact))
+  //     }
+  //   }
 
-    const roomList = await sidecar.getChatroomMemberInfo()
-    // console.log(`roomList: ${roomList}`)
-    const roomListJSON = JSON.parse(roomList)
-    console.log('roomList列表:', roomListJSON.length)
-    // for (const room of roomListJSON) {
-    //   console.info('room:', room)
-    // }
-    // await sidecar.sendAtMsg('21341182572@chatroom', new Date().toLocaleString(), 'atorber', '超哥');
+  //   const roomList = await sidecar.getChatroomMemberInfo()
+  //   console.log(`roomList: ${roomList}`)
+  //   const roomListJSON = JSON.parse(roomList)
+  //   console.log('roomList列表:', roomListJSON.length)
+  //   for (const room of roomListJSON) {
+  //     console.info('room:', room)
+  //   }
+  //   await sidecar.sendAtMsg('21341182572@chatroom', new Date().toLocaleString(), 'atorber', '超哥');
 
-  }
+  // }
 
   const onLogout = (bySrv: number) => {
     console.info('登出事件触发:', bySrv)
@@ -170,8 +163,8 @@ async function main () {
     // const nickname = await sidecar.GetContactOrChatRoomNickname(talkerId)
     // console.log('发言人昵称：', nickname)
 
-    const talker = await sidecar.getChatroomMemberNickInfo(talkerId, toId)
-    console.log('发言人：', talker)
+    // const talker = await sidecar.getChatroomMemberNickInfo(talkerId, toId)
+    // console.log('发言人：', talker)
     if (talkerId && text === 'ding') {
       console.info('叮咚测试: ding found, reply dong')
       await sidecar.sendMsg(toId, 'dong')
